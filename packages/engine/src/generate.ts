@@ -134,8 +134,8 @@ export function generateBuild(
 
   if (piCap !== null && car.stockPI > piCap) {
     warnings.unshift(
-      `This car's stock PI (${car.stockPI}) already exceeds the ${piCap} cap. It can't be made legal ` +
-        `for this target by adding parts (upgrades only raise PI). Pick a higher class/PI, or a different car.`,
+      `This car's stock PI (${car.stockPI}) already exceeds the ${piCap} cap. Legalizing it would mean ` +
+        `de-tuning (e.g. worse tires) rather than building for the goal — pick a higher class/PI, or a different car.`,
     );
   }
 

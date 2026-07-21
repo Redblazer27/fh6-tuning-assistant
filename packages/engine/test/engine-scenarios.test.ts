@@ -27,10 +27,11 @@ describe('PI cap boundary', () => {
 });
 
 describe('stock over cap (infeasible)', () => {
-  it('flags a car whose stock PI already exceeds the cap', () => {
+  it('flags a car whose stock PI is too far over the cap to legalize', () => {
+    // Corvette Z06 (830) vs a C cap (600): even de-tuning (worse tires) can't reach it.
     const result = generateBuild(
       store,
-      makeRequest({ carId: 'chevrolet-corvette-z06-2015', discipline: 'road', targetClass: 'A' }),
+      makeRequest({ carId: 'chevrolet-corvette-z06-2015', discipline: 'road', targetClass: 'C' }),
     );
     expect(result.warnings[0]).toMatch(/already exceeds/i);
     expect(result.strategies.every((s) => !s.legal)).toBe(true);

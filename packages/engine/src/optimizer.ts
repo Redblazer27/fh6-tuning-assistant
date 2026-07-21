@@ -45,12 +45,16 @@ function candidatesFor(
   if (c.noSwaps && (category === 'engine_swap' || category === 'drivetrain_swap')) {
     list = list.filter((p) => p.tierRank === 0);
   }
-  if (category === 'engine_swap' && c.allowEngineSwap === false) {
-    list = list.filter((p) => p.tierRank === 0);
-  }
-  if (category === 'engine_swap' && c.preferredEngineSwapId !== undefined) {
-    if (c.preferredEngineSwapId === null) list = list.filter((p) => p.tierRank === 0);
-    else list = list.filter((p) => p.id === c.preferredEngineSwapId || p.tierRank === 0);
+  if (category === 'engine_swap') {
+    if (c.noSwaps || c.allowEngineSwap === false) {
+      list = list.filter((p) => p.tierRank === 0);
+    } else if (c.preferredEngineSwapId === null) {
+      list = list.filter((p) => p.tierRank === 0);
+    } else if (c.preferredEngineSwapId) {
+      // An explicit engine-swap choice is forced (over-cap is surfaced as a warning).
+      const sw = all.find((p) => p.id === c.preferredEngineSwapId);
+      if (sw) list = [sw];
+    }
   }
   if (category === 'drivetrain_swap') {
     if (c.allowDrivetrainSwap === false) list = list.filter((p) => p.tierRank === 0);
