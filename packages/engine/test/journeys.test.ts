@@ -54,8 +54,8 @@ const journeys: Journey[] = [
     },
   },
   {
-    name: 'F-150 Raptor · cross country · C',
-    req: { carId: 'ford-f150-raptor-2017', discipline: 'cross_country', targetClass: 'C' },
+    name: 'F-150 Raptor · cross country · A',
+    req: { carId: 'ford-f150-raptor-2017', discipline: 'cross_country', targetClass: 'A' },
   },
 ];
 

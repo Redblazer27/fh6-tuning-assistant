@@ -1,8 +1,9 @@
+import { piToClass } from '@fh6/shared';
 import type { CarInput } from '../types.ts';
 import { DATA_VERSION } from './version.ts';
 
 /**
- * Curated FH6 starter roster (17 cars) spanning FWD/RWD/AWD, classes D..X, and
+ * Curated FH6 starter roster (17 cars) spanning FWD/RWD/AWD, classes D..R, and
  * eras from the 1980s to the 2020s.
  *
  * IMPORTANT (see docs/data-policy.md): make/model/year/availability lean on the
@@ -21,7 +22,7 @@ const base = {
   stockTireCompound: 'stock',
 } as const;
 
-export const cars: CarInput[] = [
+const rawCars: CarInput[] = [
   {
     ...base,
     id: 'mazda-mx5-nd-2019',
@@ -451,3 +452,12 @@ export const cars: CarInput[] = [
     notes: 'Top-speed / drag hero. Stats estimated (low confidence).',
   },
 ];
+
+// stockClass is fully determined by stockPI under FH6's class bands, so we derive
+// it here rather than trust each hand-authored literal (which predated the FH6
+// class-boundary correction). stockPI stays the estimated anchor for these seed
+// cars (medium/low confidence); the official roster import carries real values.
+export const cars: CarInput[] = rawCars.map((c) => ({
+  ...c,
+  stockClass: piToClass(c.stockPI),
+}));

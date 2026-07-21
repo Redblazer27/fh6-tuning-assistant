@@ -85,7 +85,7 @@ describe('constraints', () => {
       makeRequest({
         carId: 'koenigsegg-jesko-2020',
         discipline: 'top_speed',
-        targetClass: 'X',
+        targetClass: 'R',
         constraints: { preferredEngineSwapId: 'engine-swap-highperf', allowEngineSwap: true },
       }),
     );

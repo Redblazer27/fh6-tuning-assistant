@@ -29,17 +29,18 @@ const sampleBuild: SavedBuild = {
 };
 
 describe('PI class mapping', () => {
-  it('maps PI values to the right class', () => {
-    expect(piToClass(500)).toBe('D');
-    expect(piToClass(650)).toBe('B');
-    expect(piToClass(800)).toBe('A');
-    expect(piToClass(901)).toBe('S2');
-    expect(piToClass(999)).toBe('X');
+  it('maps PI values to the right class (FH6 bands)', () => {
+    expect(piToClass(400)).toBe('D');
+    expect(piToClass(500)).toBe('C');
+    expect(piToClass(650)).toBe('A');
+    expect(piToClass(800)).toBe('S1');
+    expect(piToClass(901)).toBe('R');
+    expect(piToClass(999)).toBe('R');
   });
 
   it('returns the class upper bound', () => {
-    expect(classMaxPi('A')).toBe(800);
-    expect(classMaxPi('S1')).toBe(900);
+    expect(classMaxPi('A')).toBe(700);
+    expect(classMaxPi('S1')).toBe(800);
   });
 });
 

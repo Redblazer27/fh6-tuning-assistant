@@ -87,18 +87,21 @@ export const TIRE_COMPOUNDS = [
 export type TireCompound = (typeof TIRE_COMPOUNDS)[number];
 
 // --- PI classes ---------------------------------------------------------------
-export const CLASS_LETTERS = ['D', 'C', 'B', 'A', 'S1', 'S2', 'X'] as const;
+// FH6 class letters and PI bands, derived empirically from the official car list
+// (forza.net/fh6cars, 627 cars, zero overlaps). NOTE: FH6 shifted every band down
+// ~100 from the FH5 convention and renamed the top class X → R.
+export const CLASS_LETTERS = ['D', 'C', 'B', 'A', 'S1', 'S2', 'R'] as const;
 export type ClassLetter = (typeof CLASS_LETTERS)[number];
 
-/** Inclusive PI ranges per class (FH-series convention). Admin-correctable. */
+/** Inclusive PI ranges per class (FH6, from official data). Admin-correctable. */
 export const CLASS_PI_RANGE: Record<ClassLetter, readonly [number, number]> = {
-  D: [100, 500],
-  C: [501, 600],
-  B: [601, 700],
-  A: [701, 800],
-  S1: [801, 900],
-  S2: [901, 998],
-  X: [999, 999],
+  D: [100, 400],
+  C: [401, 500],
+  B: [501, 600],
+  A: [601, 700],
+  S1: [701, 800],
+  S2: [801, 900],
+  R: [901, 999],
 };
 
 export const PI_MIN = 100;
@@ -110,7 +113,7 @@ export function piToClass(pi: number): ClassLetter {
     const [min, max] = CLASS_PI_RANGE[letter];
     if (pi >= min && pi <= max) return letter;
   }
-  return pi < PI_MIN ? 'D' : 'X';
+  return pi < PI_MIN ? 'D' : 'R';
 }
 
 /** The maximum legal PI for a target class (its upper bound). */
