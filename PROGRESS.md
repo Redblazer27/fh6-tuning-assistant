@@ -32,12 +32,19 @@ Last updated: 2026-07-21
   (win/mac/linux) bundled with the web app.
 - **Docs:** data-policy, competitor-research, product-spec, tuning-engine-design.
 
-## Not yet verified (this machine has no Node.js)
+## Verified (via GitHub Actions CI — green)
 
-- `npm install`, typecheck, lint, and the test suite have **not been run locally**. They are wired into
-  CI (`.github/workflows/ci.yml`) and will run on push, or locally once Node is available. Two known
-  `noUncheckedIndexedAccess` issues were fixed by inspection; others may surface on first run.
-- The **release packaging** (pkg → executables) is CI-targeted and unproven until a tag is pushed.
+- Repo pushed to **github.com/Redblazer27/fh6-tuning-assistant** (private, `main`).
+- CI run passes: **lint ✓, typecheck ✓, all 54 tests ✓, web build ✓** (`.github/workflows/ci.yml`).
+  This machine has no Node.js, so CI is the source of truth for build/test.
+- `format:check` is currently **non-blocking** (no local Prettier pass yet). Run `npm run format` in a
+  Codespace/with Node, commit, then flip the CI step back to blocking (remove `continue-on-error`).
+
+## Not yet verified
+
+- The **release packaging** (`scripts/package-release.mjs` → standalone executables via pkg) is
+  CI-targeted and unproven until a version tag (`v*`) is pushed to trigger `release.yml`.
+- GitHub Pages deploy is manual-only and needs Pages enabled (private-repo constraint).
 
 ## Assumed / needs real-world validation
 
