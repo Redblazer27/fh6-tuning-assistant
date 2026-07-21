@@ -182,7 +182,7 @@ function computeGearing(
   // Geometric spacing between 1st and top gear so shift points sit near the peak.
   const gears: number[] = [];
   for (let i = 0; i < gearCount; i += 1) {
-    const t = gearCount === 1 ? 0 : i / (gearCount - 1);
+    const t = i / (gearCount - 1); // gearCount is always 6 or 7
     const ratio = firstGearRatio * (topGearRatio / firstGearRatio) ** t;
     gears.push(snapRange(ranges.gearRatio, ratio));
   }
