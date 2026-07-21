@@ -34,9 +34,13 @@ rmSync(releaseDir, { recursive: true, force: true });
 mkdirSync(binDir, { recursive: true });
 
 // 3. Compile the bridge to standalone executables.
+// Node 22 base: @yao-pkg/pkg-fetch dropped Node 20 prebuilt binaries (v3.6+), so a
+// `node20-*` target 404s and falls back to an (impossible, cross-platform) source
+// build. Node 22 has prebuilt win/linux/macos bases; the bundle is node20-compatible
+// and runs fine on the newer base. Verified producing + running a standalone .exe.
 run(
   `npx --yes @yao-pkg/pkg "${bridgeBundle}" ` +
-    `--targets node20-win-x64,node20-linux-x64,node20-macos-x64 ` +
+    `--targets node22-win-x64,node22-linux-x64,node22-macos-x64 ` +
     `--output "${path.join(binDir, 'fh6-bridge')}"`,
 );
 
