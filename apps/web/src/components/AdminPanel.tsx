@@ -70,7 +70,10 @@ export function AdminPanel({ store, usingImported, onImport, onReset }: Props) {
           type="file"
           accept="application/json"
           style={{ display: 'none' }}
-          onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) onFile(f);
+          }}
         />
       </div>
 

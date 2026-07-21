@@ -67,7 +67,10 @@ export function Trust({ result, savedBuild, savedBuilds, onSave, onLoad, onDelet
           type="file"
           accept="application/json"
           style={{ display: 'none' }}
-          onChange={(e) => e.target.files?.[0] && importFile(e.target.files[0])}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) importFile(f);
+          }}
         />
       </div>
 
