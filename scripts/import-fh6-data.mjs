@@ -211,7 +211,16 @@ function parseCar(title, wt) {
   }
   const wLbs = info.weight ? Number(String(info.weight).replace(/[^0-9.]/g, '')) : undefined;
   const num = (v) => (v ? Number(String(v).replace(/[^0-9.]/g, '')) : undefined);
+  // FH6 PI from the CarStats|fh6 block: the integer 100..999 among the positional args.
+  const statsBlock = extractTemplate(wt, 'CarStats|fh6');
+  let pi;
+  if (statsBlock) {
+    const nums = [...statsBlock.matchAll(/\|\s*(\d{2,3}(?:\.\d+)?)\b/g)].map((m) => Number(m[1]));
+    pi = nums.find((n) => Number.isInteger(n) && n >= 100 && n <= 999);
+  }
   return {
+    title,
+    pi,
     make: info.manufacturer,
     model: info.model,
     year: info.year ? Number(info.year) : undefined,
@@ -291,71 +300,78 @@ const q = (s) => `'${String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
 const arr = (a) => `[${a.map(q).join(', ')}]`;
 
 async function main() {
-  console.log('Fetching official roster (forza.net)…');
+  // forza.net is consulted only for ownership/DLC. The wiki (Fandom) is authoritative
+  // for identity/class/PI/physics/conversions — on any discrepancy, the wiki wins.
+  console.log('Fetching ownership (forza.net)…');
   const forza = await fetchForza();
   console.log(`  ${forza.length} cars.`);
-  console.log('Fetching physics + conversions (forza.fandom.com)…');
+  console.log('Fetching cars from the wiki (forza.fandom.com)…');
   const fandom = await fetchFandom();
-  console.log(`  ${fandom.length} cars.`);
+  console.log(`  ${fandom.length} pages.`);
 
-  const fByKey = new Map(),
-    fByNY = new Map();
-  for (const c of fandom) {
-    fByKey.set(key(c.make, c.model, c.year), c);
-    if (!fByNY.has(keyNY(c.make, c.model))) fByNY.set(keyNY(c.make, c.model), c);
+  const ownByKey = new Map();
+  for (const c of forza) {
+    const dlc =
+      c.addOns && c.addOns.trim() ? c.addOns.trim() : /DLC/i.test(c.collection) ? c.collection : '';
+    ownByKey.set(key(c.make, c.model, c.year), { ownership: dlc || 'Base game', isBaseGame: !dlc });
   }
-  const match = (c) =>
-    fByKey.get(key(c.make, c.model, c.year)) ?? fByNY.get(keyNY(c.make, c.model));
   const curatedKeys = new Set(CURATED.map(([mk, md, yr]) => key(mk, md, yr)));
   const DT = { AWD: 'dt-swap-awd', RWD: 'dt-swap-rwd', FWD: 'dt-swap-fwd' };
+
+  // Real, tunable cars only: exclude traffic/null/special variants (no PI).
+  const real = fandom.filter((c) => c.make && c.model && c.year && c.pi);
+  console.log(
+    `  ${real.length} real cars with a PI (excluded ${fandom.length - real.length} traffic/special).`,
+  );
 
   const cars = [],
     profiles = [],
     usedIds = new Set();
-  let matched = 0;
-  for (const c of forza) {
-    if (curatedKeys.has(key(c.make, c.model, c.year))) continue;
-    let id = slug(`${c.year}-${c.make}-${c.model}`),
+  let enriched = 0;
+  for (const f of real) {
+    if (curatedKeys.has(key(f.make, f.model, f.year))) continue;
+    let id = slug(`${f.year}-${f.make}-${f.model}`),
       n = 2;
-    while (usedIds.has(id)) id = `${slug(`${c.year}-${c.make}-${c.model}`)}-${n++}`;
+    while (usedIds.has(id)) id = `${slug(`${f.year}-${f.make}-${f.model}`)}-${n++}`;
     usedIds.add(id);
-    const dlc =
-      c.addOns && c.addOns.trim() ? c.addOns.trim() : /DLC/i.test(c.collection) ? c.collection : '';
+    const own = ownByKey.get(key(f.make, f.model, f.year)) ?? {
+      ownership: 'Base game',
+      isBaseGame: true,
+    };
     const car = {
       id,
-      year: c.year,
-      make: c.make,
-      model: c.model,
-      name: c.name,
-      ownership: dlc || 'Base game',
-      isBaseGame: !dlc,
-      stockClass: piToClass(c.pi),
-      stockPI: c.pi,
+      year: f.year,
+      make: f.make,
+      model: f.model,
+      name: `${f.year} ${f.title.replace(/\s*\([^)]*\)\s*$/, '')}`,
+      ownership: own.ownership,
+      isBaseGame: own.isBaseGame,
+      stockClass: piToClass(f.pi),
+      stockPI: f.pi,
     };
-    const f = match(c);
-    if (f) {
-      matched++;
-      if (f.drivetrain) car.drivetrain = f.drivetrain;
-      if (f.aspiration) car.aspiration = f.aspiration;
-      if (f.massKg > 0) car.massKg = f.massKg;
-      if (f.weightDistFrontPct >= 20 && f.weightDistFrontPct <= 80)
-        car.weightDistFrontPct = f.weightDistFrontPct;
-      if (f.powerHp > 0) car.powerHp = f.powerHp;
-      if (f.torqueNm > 0) car.torqueNm = f.torqueNm;
-      if (f.displacementL > 0) car.displacementL = f.displacementL;
-      if (f.cylinders > 0) car.cylinders = f.cylinders;
-      if (f.engineRaw)
-        car.engineName = f.displacementL ? `${f.displacementL}L ${f.engineRaw}` : f.engineRaw;
-      car.confidence = 'medium';
-      car.notes = 'Identity/class/PI: official list (high). Physics: community wiki (medium).';
-    } else {
-      car.confidence = 'low';
-      car.notes = `Identity/class/PI from the official list (high); physics estimated${c.carType ? ` — theme: ${c.carType}` : ''}.`;
-    }
+    if (f.drivetrain) car.drivetrain = f.drivetrain;
+    if (f.aspiration) car.aspiration = f.aspiration;
+    if (f.massKg > 0) car.massKg = f.massKg;
+    if (f.weightDistFrontPct >= 20 && f.weightDistFrontPct <= 80)
+      car.weightDistFrontPct = f.weightDistFrontPct;
+    if (f.powerHp > 0) car.powerHp = f.powerHp;
+    if (f.torqueNm > 0) car.torqueNm = f.torqueNm;
+    if (f.displacementL > 0) car.displacementL = f.displacementL;
+    if (f.cylinders > 0) car.cylinders = f.cylinders;
+    if (f.engineRaw)
+      car.engineName = f.displacementL ? `${f.displacementL}L ${f.engineRaw}` : f.engineRaw;
+    const hasPhysics = f.drivetrain && f.powerHp > 0 && f.massKg > 0;
+    if (hasPhysics) enriched++;
+    car.confidence = hasPhysics ? 'medium' : 'low';
+    car.notes =
+      'Car data from the community wiki (medium); ownership cross-checked with the official list.';
     cars.push(car);
+
     if (
-      f &&
-      (f.engineType || f.engineSwaps.length || f.drivetrainSwaps.length || f.aspirationSwaps.length)
+      f.engineType ||
+      f.engineSwaps.length ||
+      f.drivetrainSwaps.length ||
+      f.aspirationSwaps.length
     ) {
       const dtIds = [...new Set(f.drivetrainSwaps.map((d) => DT[d]).filter(Boolean))].filter(
         (p) => p !== DT[f.drivetrain],
@@ -369,6 +385,7 @@ async function main() {
       });
     }
   }
+  const matched = enriched;
 
   const carLit = (c) => {
     const L = [
@@ -405,9 +422,9 @@ async function main() {
   writeFileSync(
     path.join(SEED, 'roster-cars.ts'),
     `// AUTO-GENERATED by scripts/import-fh6-data.mjs — do not edit by hand.
-// Identity/class/PI/DLC: official list (forza.net/fh6cars, high). Physics: community
-// wiki (forza.fandom.com, medium) where a car matched; otherwise physics is absent and
-// the engine fills class-based defaults (low confidence). ${cars.length} cars, ${matched} enriched.
+// Wiki-primary: identity/class/PI/physics from the Forza Wiki (forza.fandom.com,
+// medium — authoritative on any discrepancy); ownership/DLC cross-checked with the
+// official list (forza.net/fh6cars). ${cars.length} cars, ${matched} with real physics.
 import type { CarInput } from '../types.ts';
 import { DATA_VERSION } from './version.ts';
 
