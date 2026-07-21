@@ -4,6 +4,7 @@ import {
   CLASS_LETTERS,
   CONFIDENCE_LEVELS,
   DRIVETRAINS,
+  ENGINE_TYPES,
   SOURCE_TYPES,
   TIRE_COMPOUNDS,
   TUNING_CATEGORIES,
@@ -29,6 +30,7 @@ export const confidenceSchema = enumOf(CONFIDENCE_LEVELS);
 export const sourceTypeSchema = enumOf(SOURCE_TYPES);
 export const upgradeCategorySchema = enumOf(UPGRADE_CATEGORIES);
 export const tuningCategorySchema = enumOf(TUNING_CATEGORIES);
+export const engineTypeSchema = enumOf(ENGINE_TYPES);
 
 // --- Provenance shared by most records ---------------------------------------
 export const provenanceSchema = z.object({
@@ -145,6 +147,30 @@ export const partSchema = provenanceSchema.extend({
   isAeroPart: z.boolean().default(false),
 });
 
+// --- Per-car upgrade profile --------------------------------------------------
+// Which conversions and parts a *specific* car allows. This is what lets rotary
+// cars, hypercars with locked upgrade paths, and cars with limited swap options
+// differ from the global catalog. Every field is optional/defaulted so that a car
+// WITHOUT a profile behaves exactly as before (full global catalog available).
+export const carUpgradeProfileSchema = provenanceSchema.extend({
+  /** The car this profile applies to. */
+  carId: z.string().min(1),
+  /** Engine family; rotary/electric platforms use different swap & part sets. */
+  engineType: engineTypeSchema.default('piston'),
+  /**
+   * Engine-swap part ids available for this car (a subset of the global
+   * `engine_swap` catalog). Omit = all catalog swaps allowed (default). An empty
+   * array = swaps are locked (the in-game Engine Swap tab does not appear).
+   */
+  availableEngineSwapIds: z.array(z.string().min(1)).optional(),
+  /** Drivetrain-swap part ids available. Omit = all allowed; empty = none. */
+  availableDrivetrainSwapIds: z.array(z.string().min(1)).optional(),
+  /** Upgrade categories this car cannot modify at all (stock part only). */
+  lockedCategories: z.array(upgradeCategorySchema).default([]),
+  /** Specific part ids this car cannot use (blocklist; stock is always allowed). */
+  restrictedPartIds: z.array(z.string().min(1)).default([]),
+});
+
 // --- Tunable ranges -----------------------------------------------------------
 const rangeSchema = z.object({
   min: z.number(),
@@ -195,4 +221,6 @@ export const datasetSchema = z.object({
   cars: z.array(carSchema).min(1),
   parts: z.array(partSchema).min(1),
   tuneRanges: z.array(tuneRangesSchema).min(1),
+  /** Per-car upgrade profiles. Optional — cars without one use the full catalog. */
+  carUpgradeProfiles: z.array(carUpgradeProfileSchema).default([]),
 });

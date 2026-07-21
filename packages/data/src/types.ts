@@ -1,6 +1,7 @@
 import type { z } from 'zod';
 import type {
   carSchema,
+  carUpgradeProfileSchema,
   datasetSchema,
   feedbackSchema,
   gameVersionSchema,
@@ -16,6 +17,7 @@ export type Car = z.infer<typeof carSchema>;
 export type Part = z.infer<typeof partSchema>;
 export type PartEffects = z.infer<typeof partEffectsSchema>;
 export type TuneRanges = z.infer<typeof tuneRangesSchema>;
+export type CarUpgradeProfile = z.infer<typeof carUpgradeProfileSchema>;
 export type Feedback = z.infer<typeof feedbackSchema>;
 export type Dataset = z.infer<typeof datasetSchema>;
 
@@ -23,4 +25,5 @@ export type Dataset = z.infer<typeof datasetSchema>;
 export type CarInput = z.input<typeof carSchema>;
 export type PartInput = z.input<typeof partSchema>;
 export type TuneRangesInput = z.input<typeof tuneRangesSchema>;
+export type CarUpgradeProfileInput = z.input<typeof carUpgradeProfileSchema>;
 export type DatasetInput = z.input<typeof datasetSchema>;

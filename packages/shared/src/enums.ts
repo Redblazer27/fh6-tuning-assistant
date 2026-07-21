@@ -20,6 +20,12 @@ export const ASPIRATIONS = [
 ] as const;
 export type Aspiration = (typeof ASPIRATIONS)[number];
 
+// --- Engine type --------------------------------------------------------------
+// Drives which swap/part sets a car can use. Rotary and electric platforms have
+// materially different upgrade paths (and swap options) than piston engines.
+export const ENGINE_TYPES = ['piston', 'rotary', 'electric', 'hybrid'] as const;
+export type EngineType = (typeof ENGINE_TYPES)[number];
+
 // --- Activity / discipline ----------------------------------------------------
 export const DISCIPLINES = [
   'road',

@@ -61,11 +61,105 @@ describe('data store', () => {
   });
 });
 
+describe('per-car upgrade profiles', () => {
+  const JESKO = 'koenigsegg-jesko-2020';
+
+  it('locks engine & drivetrain swaps for a car whose profile forbids them', () => {
+    const swaps = defaultStore.getAvailablePartsByCategory(JESKO, 'engine_swap');
+    expect(swaps).toHaveLength(1);
+    expect(swaps[0]!.tierRank).toBe(0);
+    const dt = defaultStore.getAvailablePartsByCategory(JESKO, 'drivetrain_swap');
+    expect(dt.every((p) => p.tierRank === 0)).toBe(true);
+  });
+
+  it('cars without a profile get the full catalog (backward compatible)', () => {
+    const withProfile = defaultStore.getUpgradeProfile('mazda-mx5-nd-2019');
+    expect(withProfile).toBeUndefined();
+    const all = defaultStore.getPartsByCategory('engine_swap');
+    const forCar = defaultStore.getAvailablePartsByCategory('mazda-mx5-nd-2019', 'engine_swap');
+    expect(forCar).toEqual(all);
+    expect(forCar.some((p) => p.id === 'engine-swap-highperf')).toBe(true);
+  });
+
+  it('exposes the profile and its engine type', () => {
+    expect(defaultStore.getUpgradeProfile(JESKO)?.engineType).toBe('piston');
+  });
+
+  it('restricts swaps to an allowlist, blocklists parts, and locks categories', () => {
+    const raw = structuredClone(rawSeed);
+    raw.carUpgradeProfiles!.push({
+      source: 'community-tuning-consensus',
+      confidence: 'low',
+      dataVersion: raw.version.dataVersion,
+      carId: 'toyota-supra-rz-1998',
+      availableEngineSwapIds: ['engine-swap-highperf'],
+      lockedCategories: ['intake'],
+      restrictedPartIds: ['exhaust-race'],
+    });
+    const store = createDataStore(loadDataset(raw));
+
+    const swaps = store.getAvailablePartsByCategory('toyota-supra-rz-1998', 'engine_swap');
+    expect(swaps.map((p) => p.id).sort()).toEqual(['engine-swap-highperf', 'engine_swap-stock']);
+
+    const intake = store.getAvailablePartsByCategory('toyota-supra-rz-1998', 'intake');
+    expect(intake.every((p) => p.tierRank === 0)).toBe(true);
+
+    const exhaust = store.getAvailablePartsByCategory('toyota-supra-rz-1998', 'exhaust');
+    expect(exhaust.some((p) => p.id === 'exhaust-race')).toBe(false);
+    expect(exhaust.some((p) => p.tierRank === 0)).toBe(true);
+  });
+});
+
 describe('integrity failures', () => {
   it('throws when a car cites an unknown source', () => {
     const broken = structuredClone(rawSeed);
     broken.cars[0]!.source = 'does-not-exist';
     expect(() => loadDataset(broken)).toThrow(/unknown source/);
+  });
+
+  it('throws when an upgrade profile targets an unknown car', () => {
+    const broken = structuredClone(rawSeed);
+    broken.carUpgradeProfiles!.push({
+      source: 'community-tuning-consensus',
+      confidence: 'low',
+      dataVersion: broken.version.dataVersion,
+      carId: 'ghost-car',
+    });
+    expect(() => loadDataset(broken)).toThrow(/unknown car/);
+  });
+
+  it('throws when a profile references an unknown or wrong-category swap part', () => {
+    const unknown = structuredClone(rawSeed);
+    unknown.carUpgradeProfiles!.push({
+      source: 'community-tuning-consensus',
+      confidence: 'low',
+      dataVersion: unknown.version.dataVersion,
+      carId: 'mazda-mx5-nd-2019',
+      availableEngineSwapIds: ['not-a-real-part'],
+    });
+    expect(() => loadDataset(unknown)).toThrow(/unknown part/);
+
+    const wrongCat = structuredClone(rawSeed);
+    wrongCat.carUpgradeProfiles!.push({
+      source: 'community-tuning-consensus',
+      confidence: 'low',
+      dataVersion: wrongCat.version.dataVersion,
+      carId: 'mazda-mx5-nd-2019',
+      availableEngineSwapIds: ['intake-sport'], // exists, but wrong category
+    });
+    expect(() => loadDataset(wrongCat)).toThrow(/not a engine_swap/);
+  });
+
+  it('throws on duplicate profiles for the same car', () => {
+    const broken = structuredClone(rawSeed);
+    const dup = {
+      source: 'community-tuning-consensus',
+      confidence: 'low' as const,
+      dataVersion: broken.version.dataVersion,
+      carId: 'mazda-mx5-nd-2019',
+    };
+    broken.carUpgradeProfiles!.push(dup, structuredClone(dup));
+    expect(() => loadDataset(broken)).toThrow(/Duplicate upgrade profile/);
   });
 
   it('throws when stockPI does not match stockClass', () => {

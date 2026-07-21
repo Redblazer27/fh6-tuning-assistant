@@ -78,6 +78,21 @@ describe('constraints', () => {
     expect(s.selection.engine_swap).toBe('engine-swap-highperf');
   });
 
+  it("a car's locked-swap profile overrides an explicit engine-swap request", () => {
+    // The Jesko's upgrade profile forbids engine swaps, so even an explicit
+    // preferred swap cannot be applied — the car simply can't do it.
+    const s = topOf(
+      makeRequest({
+        carId: 'koenigsegg-jesko-2020',
+        discipline: 'top_speed',
+        targetClass: 'X',
+        constraints: { preferredEngineSwapId: 'engine-swap-highperf', allowEngineSwap: true },
+      }),
+    );
+    expect(s.selection.engine_swap).toBe(store.getStockPart('engine_swap')!.id);
+    expect(s.selection.drivetrain_swap).toBe(store.getStockPart('drivetrain_swap')!.id);
+  });
+
   it('honors the no-aero constraint', () => {
     const s = topOf(
       makeRequest({

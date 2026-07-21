@@ -31,7 +31,9 @@ function candidatesFor(
   notes: string[],
 ): Part[] {
   const c = request.constraints;
-  const all = store.getPartsByCategory(category);
+  // Car-aware catalog: applies the car's upgrade profile (locked categories,
+  // engine/drivetrain swap allowlists, blocklist) before any user constraints.
+  const all = store.getAvailablePartsByCategory(car.id, category);
   const stock = all.find((p) => p.tierRank === 0);
   const onlyStock = (): Part[] => (stock ? [stock] : []);
 

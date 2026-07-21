@@ -1,6 +1,6 @@
 import { piToClass, type UpgradeCategory } from '@fh6/shared';
 import { datasetSchema } from './schemas.ts';
-import type { Car, Dataset, Part, Source, TuneRanges } from './types.ts';
+import type { Car, CarUpgradeProfile, Dataset, Part, Source, TuneRanges } from './types.ts';
 
 /**
  * Validate a raw dataset (seed or imported) against the schemas AND referential
@@ -27,9 +27,11 @@ export function loadDataset(raw: unknown): Dataset {
   }
 
   const partIds = new Set<string>();
+  const partCategoryById = new Map<string, UpgradeCategory>();
   for (const part of dataset.parts) {
     if (partIds.has(part.id)) problems.push(`Duplicate part id: ${part.id}`);
     partIds.add(part.id);
+    partCategoryById.set(part.id, part.category);
     if (!sourceIds.has(part.source))
       problems.push(`Part ${part.id} cites unknown source ${part.source}`);
   }
@@ -44,6 +46,49 @@ export function loadDataset(raw: unknown): Dataset {
   const hasDefaultRanges = dataset.tuneRanges.some((tr) => tr.appliesToCarId === null);
   if (!hasDefaultRanges)
     problems.push('No default tune-ranges template (appliesToCarId === null).');
+
+  // Per-car upgrade profiles: one per car, referencing real parts of the right category.
+  const profileCarIds = new Set<string>();
+  const checkPartRefs = (
+    profileCarId: string,
+    label: string,
+    ids: string[] | undefined,
+    expectedCategory?: UpgradeCategory,
+  ) => {
+    for (const id of ids ?? []) {
+      if (!partIds.has(id)) {
+        problems.push(
+          `Upgrade profile for ${profileCarId}: ${label} references unknown part ${id}`,
+        );
+      } else if (expectedCategory && partCategoryById.get(id) !== expectedCategory) {
+        problems.push(
+          `Upgrade profile for ${profileCarId}: ${label} part ${id} is not a ${expectedCategory}`,
+        );
+      }
+    }
+  };
+  for (const profile of dataset.carUpgradeProfiles) {
+    if (!carIds.has(profile.carId))
+      problems.push(`Upgrade profile targets unknown car ${profile.carId}`);
+    if (profileCarIds.has(profile.carId))
+      problems.push(`Duplicate upgrade profile for car ${profile.carId}`);
+    profileCarIds.add(profile.carId);
+    if (!sourceIds.has(profile.source))
+      problems.push(`Upgrade profile for ${profile.carId} cites unknown source ${profile.source}`);
+    checkPartRefs(
+      profile.carId,
+      'availableEngineSwapIds',
+      profile.availableEngineSwapIds,
+      'engine_swap',
+    );
+    checkPartRefs(
+      profile.carId,
+      'availableDrivetrainSwapIds',
+      profile.availableDrivetrainSwapIds,
+      'drivetrain_swap',
+    );
+    checkPartRefs(profile.carId, 'restrictedPartIds', profile.restrictedPartIds);
+  }
 
   if (problems.length > 0) {
     throw new Error(`Dataset integrity check failed:\n - ${problems.join('\n - ')}`);
@@ -66,6 +111,14 @@ export interface DataStore {
   getStockPart(category: UpgradeCategory): Part | undefined;
   /** Tune ranges for a car: car-specific override if present, else the default template. */
   getTuneRanges(carId: string): TuneRanges;
+  /** Per-car upgrade profile, if one is defined for this car. */
+  getUpgradeProfile(carId: string): CarUpgradeProfile | undefined;
+  /**
+   * Parts available in a category *for a specific car*, applying its upgrade
+   * profile (locked categories, engine/drivetrain swap allowlists, blocklist).
+   * Stock is always retained. Cars without a profile get the full catalog.
+   */
+  getAvailablePartsByCategory(carId: string, category: UpgradeCategory): Part[];
 }
 
 export function createDataStore(dataset: Dataset): DataStore {
@@ -88,6 +141,31 @@ export function createDataStore(dataset: Dataset): DataStore {
   const rangesByCar = new Map(
     dataset.tuneRanges.filter((tr) => tr.appliesToCarId).map((tr) => [tr.appliesToCarId!, tr]),
   );
+  const profilesByCar = new Map(dataset.carUpgradeProfiles.map((p) => [p.carId, p]));
+
+  const getAvailablePartsByCategory = (carId: string, category: UpgradeCategory): Part[] => {
+    const all = partsByCategory.get(category) ?? [];
+    const profile = profilesByCar.get(carId);
+    if (!profile) return all;
+
+    if (profile.lockedCategories.includes(category)) {
+      return all.filter((p) => p.tierRank === 0);
+    }
+    let list = all;
+    if (category === 'engine_swap' && profile.availableEngineSwapIds !== undefined) {
+      const allow = new Set(profile.availableEngineSwapIds);
+      list = list.filter((p) => p.tierRank === 0 || allow.has(p.id));
+    }
+    if (category === 'drivetrain_swap' && profile.availableDrivetrainSwapIds !== undefined) {
+      const allow = new Set(profile.availableDrivetrainSwapIds);
+      list = list.filter((p) => p.tierRank === 0 || allow.has(p.id));
+    }
+    if (profile.restrictedPartIds.length > 0) {
+      const blocked = new Set(profile.restrictedPartIds);
+      list = list.filter((p) => p.tierRank === 0 || !blocked.has(p.id));
+    }
+    return list;
+  };
 
   return {
     dataset,
@@ -99,5 +177,7 @@ export function createDataStore(dataset: Dataset): DataStore {
     getPartsByCategory: (category) => partsByCategory.get(category) ?? [],
     getStockPart: (category) => (partsByCategory.get(category) ?? []).find((p) => p.tierRank === 0),
     getTuneRanges: (carId) => rangesByCar.get(carId) ?? defaultRanges,
+    getUpgradeProfile: (carId) => profilesByCar.get(carId),
+    getAvailablePartsByCategory,
   };
 }
