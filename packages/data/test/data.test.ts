@@ -92,13 +92,26 @@ describe('per-car upgrade profiles', () => {
     expect(dt.every((p) => p.tierRank === 0)).toBe(true);
   });
 
-  it('cars without a profile get the full catalog (backward compatible)', () => {
-    const withProfile = defaultStore.getUpgradeProfile('mazda-mx5-nd-2019');
-    expect(withProfile).toBeUndefined();
-    const all = defaultStore.getPartsByCategory('engine_swap');
-    const forCar = defaultStore.getAvailablePartsByCategory('mazda-mx5-nd-2019', 'engine_swap');
-    expect(forCar).toEqual(all);
-    expect(forCar.some((p) => p.id === 'engine-swap-highperf')).toBe(true);
+  it('a car without a profile gets the full catalog except opt-in real engines', () => {
+    expect(defaultStore.getUpgradeProfile('mazda-mx5-nd-2019')).toBeUndefined();
+    // Non-swap categories are identical to the global catalog (backward compatible).
+    const intakeAll = defaultStore.getPartsByCategory('intake');
+    const intakeForCar = defaultStore.getAvailablePartsByCategory('mazda-mx5-nd-2019', 'intake');
+    expect(intakeForCar).toEqual(intakeAll);
+    // Engine swaps: the generic swap is offered, but concrete real engines are opt-in only.
+    const swaps = defaultStore.getAvailablePartsByCategory('mazda-mx5-nd-2019', 'engine_swap');
+    expect(swaps.some((p) => p.id === 'engine-swap-highperf')).toBe(true);
+    expect(swaps.some((p) => p.id.startsWith('eng-'))).toBe(false);
+  });
+
+  it('a car whose profile allowlists real engines can use them (with real power)', () => {
+    const profiled = defaultDataset.carUpgradeProfiles.find(
+      (p) => (p.availableEngineSwapIds?.length ?? 0) > 0,
+    )!;
+    const swaps = defaultStore.getAvailablePartsByCategory(profiled.carId, 'engine_swap');
+    const realEngines = swaps.filter((p) => p.id.startsWith('eng-'));
+    expect(realEngines.length).toBeGreaterThan(0);
+    expect(realEngines.every((e) => (e.effects.setsPowerHp ?? 0) > 0)).toBe(true);
   });
 
   it('exposes the profile and its engine type', () => {

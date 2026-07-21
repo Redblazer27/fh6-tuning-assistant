@@ -120,6 +120,8 @@ export const aeroCapabilitySchema = z.object({
 export const partEffectsSchema = z.object({
   powerMultiplier: z.number().positive().optional(),
   powerHpDelta: z.number().optional(),
+  /** Absolute base power (hp) an engine swap installs, replacing the stock engine's. */
+  setsPowerHp: z.number().positive().optional(),
   massKgDelta: z.number().optional(),
   massMultiplier: z.number().positive().optional(),
   /** Mechanical grip multiplier (tires, width, compound). */

@@ -36,6 +36,7 @@ export function buildSpec(
 ): BuiltSpec {
   let powerMult = 1;
   let powerDelta = 0;
+  let basePowerHp = car.powerHp; // replaced wholesale by an engine swap's setsPowerHp
   let massMult = 1;
   let massDelta = 0;
   let gripMult = 1;
@@ -58,6 +59,7 @@ export function buildSpec(
     resolvedSelection[category] = part.id;
 
     const e = part.effects;
+    if (e.setsPowerHp) basePowerHp = e.setsPowerHp;
     if (e.powerMultiplier) powerMult *= e.powerMultiplier;
     if (e.powerHpDelta) powerDelta += e.powerHpDelta;
     if (e.massMultiplier) massMult *= e.massMultiplier;
@@ -76,7 +78,7 @@ export function buildSpec(
     totalCost += part.cost;
   }
 
-  const powerHp = car.powerHp * powerMult + powerDelta;
+  const powerHp = basePowerHp * powerMult + powerDelta;
   const massKg = car.massKg * massMult + massDelta;
   const powerToWeight = powerHp / (massKg / 1000);
 

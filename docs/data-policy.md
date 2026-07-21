@@ -65,8 +65,10 @@ therefore estimates exactly the stock PI; an upgraded build estimates `stockPI +
   aspiration/engine) and carry medium confidence; the ~90 unmatched cars have physics filled with
   class-based defaults at build time (low). **Per-car upgrade profiles** (engine-swap options,
   drivetrain swaps, aspiration, rotary/electric engine type) come from the wiki's `CarConversions`
-  data for ~500 cars. Engine-swap options are recorded by name (descriptive); the optimizer still
-  models a swap generically pending per-engine specs. Enrich/correct via Admin/Import.
+  data for ~600 cars. **Swap engines** are modelled as `engine_swap` parts from the wiki's
+  `EngineSwapInfobox` (base power, aspiration) — ~65 engines with real specs, opt-in per car via the
+  profile's `availableEngineSwapIds` so builds simulate the swap's real power. Cars whose swap engines
+  aren't yet spec'd keep the option name (descriptive) + a generic swap. Enrich/correct via Admin/Import.
 - Stock stats / PI for seed cars are **estimates** (medium/low). Cross-check against official data and
   correct.
 - Part effect magnitudes are generic estimates (`medium`/`low`), not per-car measured values.

@@ -7,6 +7,11 @@ import { DATA_VERSION } from './version.ts';
 export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   {
     carId: '2002-acura-rsx-type-s',
+    availableEngineSwapIds: [
+      'eng-2-0l-i4-vvt',
+      'eng-1-6l-i4-turbo-rally-300-hp',
+      'eng-3-2l-i6-321-hp',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-rwd', 'dt-swap-awd'],
     engineSwapOptions: [
       '2.0L I4 - VVT',
@@ -22,6 +27,11 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2001-acura-integra-type-r',
+    availableEngineSwapIds: [
+      'eng-2-0l-i4-vvt',
+      'eng-1-6l-i4-turbo-rally-300-hp',
+      'eng-3-2l-i6-321-hp',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-rwd', 'dt-swap-awd'],
     engineSwapOptions: [
       '2.0L I4 - VVT',
@@ -41,6 +51,11 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1968-abarth-595-esseesse',
+    availableEngineSwapIds: [
+      'eng-1-4l-i4-turbo',
+      'eng-1-4l-i4-motorbike-engine',
+      'eng-1-6l-i4-turbo-rally-300-hp',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '1.4L I4 Turbo',
@@ -64,6 +79,12 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2554-amgtd-m12s-warthog-cst',
+    availableEngineSwapIds: [
+      'eng-7-7l-v12',
+      'eng-racing-7-2l-v8',
+      'eng-8-9l-v8-dsc',
+      'eng-7-4l-v8tt',
+    ],
     engineSwapOptions: ['7.7L V12', 'Racing 7.2L V8', '8.9L V8 DSC', '7.4L V8TT'],
     source: 'fandom-fh6-cars',
     confidence: 'medium',
@@ -71,6 +92,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2016-aston-vulcan',
+    availableEngineSwapIds: ['eng-racing-v12', 'eng-racing-7-2l-v8', 'eng-6-5l-v12-1140-hp'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['Racing V12', 'Racing 7.2L V8', '3.0L V6-TT', '6.5L V12 (1140 hp)'],
     source: 'fandom-fh6-cars',
@@ -85,6 +107,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2017-am-db11',
+    availableEngineSwapIds: ['eng-7-0l-v12', 'eng-3-0l-v6-tt-1042-hp', 'eng-6-5l-v12-1140-hp'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['7.0L V12', '3.0L V6-TT (1042 hp)', '6.5L V12 (1140 hp)'],
     source: 'fandom-fh6-cars',
@@ -93,6 +116,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2013-audi-rs-4-avant',
+    availableEngineSwapIds: ['eng-6-2l-v8-510-hp', 'eng-5-2l-v10-602-hp', 'eng-racing-3-0l-i6t'],
     engineSwapOptions: ['6.2L V8 (510 hp)', '5.2L V10 (602 hp)', 'Racing 3.0L I6T'],
     aspirationOptions: ['Twin Turbo', 'Positive-Displacement Supercharger'],
     source: 'fandom-fh6-cars',
@@ -101,6 +125,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2016-ariel-nomad',
+    availableEngineSwapIds: ['eng-1-6l-i4-turbo-rally-300-hp', 'eng-3-0l-v8-racing'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['1.6L I4 - Turbo Rally (300 hp)', '3.0L V8 - Racing'],
     aspirationOptions: ['Single Turbo', 'Positive-Displacement Supercharger'],
@@ -122,6 +147,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2016-abarth-695-biposto',
+    availableEngineSwapIds: ['eng-1-6l-i4-turbo-rally-300-hp'],
     availableDrivetrainSwapIds: ['dt-swap-rwd', 'dt-swap-awd'],
     engineSwapOptions: [
       '1.2L I3 - Motorbike Engine',
@@ -142,6 +168,11 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1992-alfa-155-q4',
+    availableEngineSwapIds: [
+      'eng-1-6l-i4-turbo-rally-300-hp',
+      'eng-racing-v6',
+      'eng-2-9l-v6tt-506-hp',
+    ],
     engineSwapOptions: [
       '1.6L I4 - Turbo Rally (300 hp)',
       'Racing V6',
@@ -185,6 +216,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1964-aston-db5',
+    availableEngineSwapIds: ['eng-7-0l-v12', 'eng-3-0l-v6-tt-1042-hp', 'eng-6-5l-v12-1140-hp'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['7.0L V12', '3.0L V6-TT (1042 hp)', '6.5L V12 (1140 hp)'],
     aspirationOptions: ['Single Turbo'],
@@ -194,6 +226,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1986-audi-2-audi-sport-quattro-s1',
+    availableEngineSwapIds: ['eng-2-0l-f4-turbo-rally', 'eng-racing-3-0l-i6t'],
     engineSwapOptions: ['2.0L F4 - Turbo Rally', 'Racing 3.0L I6T'],
     source: 'fandom-fh6-cars',
     confidence: 'medium',
@@ -214,6 +247,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2011-audi-rs-5-coupe',
+    availableEngineSwapIds: ['eng-6-2l-v8-510-hp', 'eng-5-2l-v10-602-hp', 'eng-racing-3-0l-i6t'],
     engineSwapOptions: ['6.2L V8 (510 hp)', '5.2L V10 (602 hp)', 'Racing 3.0L I6T'],
     aspirationOptions: [
       'Twin Turbo',
@@ -305,6 +339,12 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2021-aston-martin-dbx',
+    availableEngineSwapIds: [
+      'eng-5-2l-v12-tt',
+      'eng-racing-v12',
+      'eng-7-0l-v12',
+      'eng-6-5l-v12-1140-hp',
+    ],
     engineSwapOptions: [
       '5.2L V12 - TT',
       'Racing V12',
@@ -324,6 +364,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2018-audi-rs-4-avant',
+    availableEngineSwapIds: ['eng-6-2l-v8-510-hp', 'eng-5-2l-v10-602-hp', 'eng-racing-3-0l-i6t'],
     engineSwapOptions: ['6.2L V8 (510 hp)', '5.2L V10 (602 hp)', 'Racing 3.0L I6T'],
     source: 'fandom-fh6-cars',
     confidence: 'medium',
@@ -355,6 +396,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2020-audi-r8-v10-performance',
+    availableEngineSwapIds: ['eng-racing-v12'],
     engineSwapOptions: ['5.2L V10 (643 hp)', '5.2L V10 (542 hp)', 'Racing V12'],
     aspirationOptions: ['Twin Turbo'],
     source: 'fandom-fh6-cars',
@@ -363,6 +405,13 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2022-acura-nsx-type-s',
+    availableEngineSwapIds: [
+      'eng-3-5l-tt-hybrid',
+      'eng-5-2l-v10-602-hp',
+      'eng-6-5l-v12-700-hp',
+      'eng-racing-v12',
+      'eng-racing-7-2l-v8',
+    ],
     engineSwapOptions: [
       '3.5L TT Hybrid',
       '5.2L V10 (602 hp)',
@@ -376,6 +425,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2023-acura-integra-a-spec',
+    availableEngineSwapIds: ['eng-1-6l-i4-turbo-rally-300-hp', 'eng-racing-3-0l-i6t'],
     availableDrivetrainSwapIds: ['dt-swap-rwd', 'dt-swap-awd'],
     engineSwapOptions: ['1.6L I4 - Turbo Rally (300 hp)', '2.0L I4-T (315 hp)', 'Racing 3.0L I6T'],
     source: 'fandom-fh6-cars',
@@ -384,6 +434,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2023-audi-r8-coupe-v10-gt-rwd',
+    availableEngineSwapIds: ['eng-racing-v12'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['5.2L V10 (643 hp)', '5.2L V10 (542 hp)', 'Racing V12'],
     aspirationOptions: ['Twin Turbo'],
@@ -393,6 +444,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2021-alfa-giulia-gtam',
+    availableEngineSwapIds: ['eng-4-5l-v8'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['4.7L V8 (450 hp)', '4.5L V8', '3.5L V12'],
     source: 'fandom-fh6-cars',
@@ -409,6 +461,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2003-aston-db7-gt',
+    availableEngineSwapIds: ['eng-7-0l-v12', 'eng-3-0l-v6-tt-1042-hp', 'eng-6-5l-v12-1140-hp'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['7.0L V12', '3.0L V6-TT (1042 hp)', '6.5L V12 (1140 hp)'],
     aspirationOptions: ['Twin Turbo', 'Positive-Displacement Supercharger'],
@@ -418,6 +471,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2008-bmw-m3',
+    availableEngineSwapIds: ['eng-5-0l-v10'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['5.0L V10', '3.0L I6-TT (503 hp)', '4.4L V8-TT'],
     aspirationOptions: ['Twin Turbo'],
@@ -433,6 +487,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2014-bmw-m4-coupe',
+    availableEngineSwapIds: ['eng-4-0l-v8', 'eng-5-0l-v10'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['4.0L V8', '5.0L V10', '3.0L I6-TT (503 hp)', '4.4L V8-TT'],
     source: 'fandom-fh6-cars',
@@ -447,6 +502,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2015-bmw-i8',
+    availableEngineSwapIds: ['eng-4-0l-v8', 'eng-5-0l-v10', 'eng-6-2l-v8-510-hp'],
     engineSwapOptions: [
       '4.0L V8',
       '5.0L V10',
@@ -478,6 +534,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2015-audi-s1',
+    availableEngineSwapIds: ['eng-2-5l-i5-t-rs-3', 'eng-racing-3-0l-i6t'],
     engineSwapOptions: [
       '1.6L I3-T',
       '2.5L I5-T (RS 3)',
@@ -511,6 +568,12 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2016-cadillac-ats-v',
+    availableEngineSwapIds: [
+      'eng-8-4l-v10',
+      'eng-6-2l-v8-pdsc-668-hp',
+      'eng-7-7l-v12',
+      'eng-racing-7-2l-v8',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['8.4L V10', '6.2L V8-PDSC (668 hp)', '7.7L V12', 'Racing 7.2L V8'],
     source: 'fandom-fh6-cars',
@@ -519,6 +582,12 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1981-bmw-m1',
+    availableEngineSwapIds: [
+      'eng-3-2l-i6-321-hp',
+      'eng-4-0l-v8',
+      'eng-5-0l-v10',
+      'eng-6-2l-v8-510-hp',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '3.2L I6 (321 hp)',
@@ -559,6 +628,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2009-bmw-m5',
+    availableEngineSwapIds: ['eng-4-0l-v8', 'eng-racing-v12'],
     engineSwapOptions: ['4.0L V8', '3.0L I6 - TT', '4.4L V8 - TT', '4.4L V8-TT', 'Racing V12'],
     aspirationOptions: ['Twin Turbo', 'Centrifugal Supercharger'],
     source: 'fandom-fh6-cars',
@@ -579,6 +649,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2011-bmw-x5-m',
+    availableEngineSwapIds: ['eng-6-7l-v8t-diesel', 'eng-5-2l-v10-602-hp', 'eng-6-5l-v12-700-hp'],
     engineSwapOptions: ['6.7L V8T Diesel', '5.2L V10 (602 hp)', '4.4L V8-TT', '6.5L V12 (700 hp)'],
     source: 'fandom-fh6-cars',
     confidence: 'medium',
@@ -634,6 +705,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2019-bmw-z4-roadster',
+    availableEngineSwapIds: ['eng-4-0l-v8', 'eng-5-0l-v10', 'eng-6-2l-v8-510-hp'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['4.0L V8', '5.0L V10', '6.2L V8 (510 hp)'],
     source: 'fandom-fh6-cars',
@@ -642,6 +714,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2020-bmw-m8-competition-coupe',
+    availableEngineSwapIds: ['eng-4-0l-v8', 'eng-5-0l-v10', 'eng-6-2l-v8-510-hp'],
     engineSwapOptions: ['4.0L V8', '5.0L V10', '3.0L I6-TT (503 hp)', '6.2L V8 (510 hp)'],
     source: 'fandom-fh6-cars',
     confidence: 'medium',
@@ -649,6 +722,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2021-bmw-m4-competition-coupe',
+    availableEngineSwapIds: ['eng-4-0l-v8', 'eng-5-0l-v10'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['4.0L V8', '5.0L V10', '4.4L V8-TT'],
     source: 'fandom-fh6-cars',
@@ -657,6 +731,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2021-audi-rs-7-sportback',
+    availableEngineSwapIds: ['eng-6-5l-v12-700-hp'],
     engineSwapOptions: ['4.2L V8', '2.9L V6-TT (444 hp)', '6.5L V12 (700 hp)'],
     source: 'fandom-fh6-cars',
     confidence: 'medium',
@@ -694,6 +769,13 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2021-bentley-continental-gt-convertible',
+    availableEngineSwapIds: [
+      'eng-5-2l-v10-602-hp',
+      'eng-6-0l-w12tt',
+      'eng-7-7l-v12',
+      'eng-racing-3-0l-i6t',
+      'eng-7-4l-v8tt',
+    ],
     engineSwapOptions: [
       '5.2L V10 (602 hp)',
       '6.0L W12TT',
@@ -707,6 +789,12 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2020-bmw-m2-competition-coupe',
+    availableEngineSwapIds: [
+      'eng-3-2l-i6-321-hp',
+      'eng-4-0l-v8',
+      'eng-5-0l-v10',
+      'eng-6-2l-v8-510-hp',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '3.2L I6 (321 hp)',
@@ -721,6 +809,14 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1993-autozam-az-1',
+    availableEngineSwapIds: [
+      'eng-2-0l-i4-vvt',
+      'eng-1-3l-2-rotor',
+      'eng-1-3l-r2-tt',
+      'eng-1-6l-i4-turbo-rally-300-hp',
+      'eng-2-6l-4-rotor-racing',
+      'eng-2-0l-r3-t',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '1.2L I3 - Motorbike Engine',
@@ -746,6 +842,14 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2024-bmw-x6-m-competition',
+    availableEngineSwapIds: [
+      'eng-4-0l-v8',
+      'eng-6-7l-v8t-diesel',
+      'eng-5-0l-v10',
+      'eng-6-2l-v8-510-hp',
+      'eng-5-2l-v10-602-hp',
+      'eng-6-5l-v12-700-hp',
+    ],
     engineSwapOptions: [
       '4.0L V8',
       '6.7L V8T Diesel',
@@ -760,6 +864,12 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2023-bmw-m2-forza-edition',
+    availableEngineSwapIds: [
+      'eng-4-0l-v8',
+      'eng-5-0l-v10',
+      'eng-6-2l-v8-510-hp',
+      'eng-racing-3-0l-i6t',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '4.0L V8',
@@ -775,6 +885,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2021-bmw-m4-competition-coupe-welcome-pack',
+    availableEngineSwapIds: ['eng-4-0l-v8', 'eng-5-0l-v10', 'eng-6-2l-v8-510-hp'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['4.0L V8', '5.0L V10', '6.2L V8 (510 hp)', '4.4L V8-TT'],
     source: 'fandom-fh6-cars',
@@ -783,6 +894,12 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1988-bmw-m3',
+    availableEngineSwapIds: [
+      'eng-1-6l-i4-turbo-rally-300-hp',
+      'eng-3-2l-i6-321-hp',
+      'eng-4-0l-v8',
+      'eng-5-0l-v10',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '1.6L I4 - Turbo Rally (300 hp)',
@@ -846,6 +963,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1957-chevrolet-bel-air',
+    availableEngineSwapIds: ['eng-6-7l-v8t-diesel', 'eng-8-4l-v10', 'eng-8-9l-v8-dsc'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ["6.2L V8 (Camaro '16)", '6.7L V8T Diesel', '8.4L V10', '8.9L V8 DSC'],
     aspirationOptions: ['Twin Turbo', 'Positive-Displacement Supercharger'],
@@ -861,6 +979,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2015-dodge-charger-srt-hellcat',
+    availableEngineSwapIds: ['eng-7-0l-v8-h', 'eng-8-4l-v10', 'eng-7-7l-v12', 'eng-8-9l-v8-dsc'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['7.0L V8 - H', '8.4L V10', '7.7L V12', '8.9L V8 DSC'],
     source: 'fandom-fh6-cars',
@@ -875,6 +994,12 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1970-datsun-510',
+    availableEngineSwapIds: [
+      'eng-2-0l-i4-vvt',
+      'eng-1-6l-i4-turbo-rally-300-hp',
+      'eng-3-2l-i6-321-hp',
+      'eng-2-6l-4-rotor-racing',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '2.0L I4 - VVT',
@@ -896,6 +1021,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1969-datsun-2000-roadster',
+    availableEngineSwapIds: ['eng-3-2l-i6-321-hp', 'eng-racing-3-0l-i6t'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '2.6L I6-TT (281 hp)',
@@ -910,6 +1036,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1988-chevrolet-monte-carlo-super-sport',
+    availableEngineSwapIds: ['eng-8-4l-v10', 'eng-racing-7-2l-v8', 'eng-8-9l-v8-dsc'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '7.4L V8',
@@ -939,6 +1066,13 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1969-dodge-charger-daytona-hemi',
+    availableEngineSwapIds: [
+      'eng-6-7l-v8t-diesel',
+      'eng-8-4l-v10',
+      'eng-6-2l-v8-dsc-707-hp',
+      'eng-7-7l-v12',
+      'eng-8-9l-v8-dsc',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       "6.2L V8 (Camaro '16)",
@@ -955,6 +1089,13 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1969-dodge-charger-r-t',
+    availableEngineSwapIds: [
+      'eng-6-7l-v8t-diesel',
+      'eng-8-4l-v10',
+      'eng-6-2l-v8-dsc-707-hp',
+      'eng-7-7l-v12',
+      'eng-8-9l-v8-dsc',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       "6.2L V8 (Camaro '16)",
@@ -977,6 +1118,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1982-delorean-dmc-12',
+    availableEngineSwapIds: ['eng-4-0l-v8', 'eng-3-0l-v8-racing', 'eng-5-0l-v10'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['4.0L V8', "6.2L V8 (Camaro '16)", '3.0L V8 - Racing', '5.0L V10'],
     aspirationOptions: ['Twin Turbo', 'Centrifugal Supercharger'],
@@ -986,6 +1128,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1967-chevy-corvette-stingray-427',
+    availableEngineSwapIds: ['eng-8-4l-v10'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '7.4L V8',
@@ -1012,6 +1155,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1995-chevy-corvette-zr-1',
+    availableEngineSwapIds: ['eng-8-4l-v10'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '7.4L V8',
@@ -1052,6 +1196,13 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1970-dodge-challenger-r-t',
+    availableEngineSwapIds: [
+      'eng-6-7l-v8t-diesel',
+      'eng-8-4l-v10',
+      'eng-6-2l-v8-dsc-707-hp',
+      'eng-7-7l-v12',
+      'eng-8-9l-v8-dsc',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       "6.2L V8 (Camaro '16)",
@@ -1098,6 +1249,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2018-dodge-challenger-srt-demon',
+    availableEngineSwapIds: ['eng-7-0l-v8-h', 'eng-8-4l-v10', 'eng-7-7l-v12', 'eng-8-9l-v8-dsc'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['7.0L V8 - H', '8.4L V10', '7.7L V12', '8.9L V8 DSC'],
     source: 'fandom-fh6-cars',
@@ -1106,6 +1258,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2006-dodge-ram-srt-10',
+    availableEngineSwapIds: ['eng-8-4l-v10', 'eng-racing-7-2l-v8', 'eng-8-9l-v8-dsc'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['8.4L V10', '6.2L V8-PDSC (755 hp)', 'Racing 7.2L V8', '8.9L V8 DSC'],
     aspirationOptions: [
@@ -1119,6 +1272,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2018-deberti-jeep-jeep-wrangler-unlimited',
+    availableEngineSwapIds: ['eng-7-7l-v12', 'eng-racing-7-2l-v8'],
     engineSwapOptions: ['7.7L V12', 'Racing 7.2L V8'],
     source: 'fandom-fh6-cars',
     confidence: 'medium',
@@ -1126,6 +1280,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2020-chevy-corvette-stingray-coupe',
+    availableEngineSwapIds: ['eng-8-4l-v10', 'eng-racing-v12', 'eng-racing-7-2l-v8'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '6.2L V8 - DSC (638 hp)',
@@ -1160,6 +1315,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2024-chevrolet-corvette-e-ray',
+    availableEngineSwapIds: ['eng-8-4l-v10', 'eng-racing-v12', 'eng-racing-7-2l-v8'],
     engineSwapOptions: [
       "6.2L V8 (Camaro '16)",
       '6.2L V8 - DSC (638 hp)',
@@ -1188,6 +1344,13 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2021-dodge-durango-srt-hellcat',
+    availableEngineSwapIds: [
+      'eng-7-0l-v8-h',
+      'eng-8-4l-v10',
+      'eng-7-7l-v12',
+      'eng-8-9l-v8-dsc',
+      'eng-7-4l-v8tt',
+    ],
     engineSwapOptions: ['7.0L V8 - H', '8.4L V10', '7.7L V12', '8.9L V8 DSC', '7.4L V8TT'],
     source: 'fandom-fh6-cars',
     confidence: 'medium',
@@ -1195,6 +1358,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2022-dodge-challenger-srt-super-stock',
+    availableEngineSwapIds: ['eng-7-0l-v8-h', 'eng-8-4l-v10', 'eng-7-7l-v12', 'eng-8-9l-v8-dsc'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '7.0L V8 - H',
@@ -1210,6 +1374,13 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1984-de-tomaso-pantera-gt5',
+    availableEngineSwapIds: [
+      'eng-4-5l-v8',
+      'eng-5-2l-v10-602-hp',
+      'eng-3-5l-v6tt-630-hp',
+      'eng-6-5l-v12-700-hp',
+      'eng-racing-v12',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       "6.2L V8 (Camaro '16)",
@@ -1247,6 +1418,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1995-ferrari-f50',
+    availableEngineSwapIds: ['eng-4-5l-v8', 'eng-6-0l-v12-650-hp', 'eng-racing-v12'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['4.5L V8', '6.0L V12 (650 hp)', 'Racing V12'],
     aspirationOptions: ['Twin Turbo'],
@@ -1256,6 +1428,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2009-ferrari-458-italia',
+    availableEngineSwapIds: ['eng-5-2l-v10-602-hp', 'eng-6-0l-v12-650-hp', 'eng-racing-v12'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '5.2L V10 (602 hp)',
@@ -1307,6 +1480,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2010-ferrari-599xx',
+    availableEngineSwapIds: ['eng-racing-v12', 'eng-6-3l-v12-hybrid'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['Racing V12', '6.3L V12 Hybrid'],
     aspirationOptions: ['Twin Turbo'],
@@ -1316,6 +1490,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2008-dodge-viper-srt-10-acr',
+    availableEngineSwapIds: ['eng-6-5l-v12-700-hp', 'eng-racing-v12', 'eng-7-7l-v12'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['6.5L V12 (700 hp)', 'Racing V12', '7.7L V12'],
     aspirationOptions: ['Twin Turbo', 'Centrifugal Supercharger'],
@@ -1358,6 +1533,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2014-ford-f-150-trophy-truck',
+    availableEngineSwapIds: ['eng-7-7l-v12', 'eng-7-4l-v8tt'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['7.7L V12', '7.4L V8TT'],
     source: 'fandom-fh6-cars',
@@ -1384,6 +1560,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1962-ferrari-250-gt-berlinetta-lusso',
+    availableEngineSwapIds: ['eng-1-6l-i4-turbo-rally-300-hp', 'eng-4-5l-v8'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['1.6L I4 - Turbo Rally (300 hp)', '4.5L V8'],
     aspirationOptions: ['Twin Turbo', 'Centrifugal Supercharger'],
@@ -1393,6 +1570,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2007-ferrari-430-scuderia',
+    availableEngineSwapIds: ['eng-5-2l-v10-602-hp', 'eng-6-0l-v12-650-hp', 'eng-racing-v12'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '5.2L V10 (602 hp)',
@@ -1414,6 +1592,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1969-ferrari-dino-246-gt',
+    availableEngineSwapIds: ['eng-3-2l-i6-321-hp', 'eng-4-5l-v8'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['1.6L I4 - Turbo Rally', '3.2L I6 (321 hp)', '4.5L V8'],
     aspirationOptions: ['Twin Turbo'],
@@ -1449,6 +1628,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2017-ford-14-rahal-letterman-lanigan-racing-grc-fiesta',
+    availableEngineSwapIds: ['eng-1-6l-i4-turbo-rally-300-hp'],
     engineSwapOptions: ['1.6L I4 - Turbo Rally (300 hp)'],
     source: 'fandom-fh6-cars',
     confidence: 'medium',
@@ -1468,6 +1648,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2018-ferrari-portofino',
+    availableEngineSwapIds: ['eng-racing-v12', 'eng-6-3l-v12-hybrid'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['Racing V12', '6.3L V12 Hybrid'],
     source: 'fandom-fh6-cars',
@@ -1476,6 +1657,11 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1977-ford-5-escort-rs1800-mkii',
+    availableEngineSwapIds: [
+      'eng-2-0l-i4-turbo-224-hp',
+      'eng-1-6l-i4-turbo-rally-300-hp',
+      'eng-3-2l-i6-321-hp',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '2.0L I4 - Turbo (224 hp)',
@@ -1515,6 +1701,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2019-ferrari-f8-tributo',
+    availableEngineSwapIds: ['eng-racing-v12', 'eng-6-3l-v12-hybrid'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       'Racing V12',
@@ -1534,6 +1721,13 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2020-ford-2069-ford-performance-bronco-r',
+    availableEngineSwapIds: [
+      'eng-8-4l-v10',
+      'eng-5-8l-v8-dsc',
+      'eng-6-5l-v12-700-hp',
+      'eng-racing-7-2l-v8',
+      'eng-7-4l-v8tt',
+    ],
     engineSwapOptions: [
       "6.2L V8 (Camaro '16)",
       '8.4L V10',
@@ -1548,6 +1742,12 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2020-ferrari-roma',
+    availableEngineSwapIds: [
+      'eng-4-5l-v8',
+      'eng-5-2l-v10-602-hp',
+      'eng-6-0l-v12-650-hp',
+      'eng-racing-v12',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '4.5L V8',
@@ -1563,6 +1763,12 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2022-ferrari-296-gtb',
+    availableEngineSwapIds: [
+      'eng-4-5l-v8',
+      'eng-3-9l-v8-tt',
+      'eng-racing-v12',
+      'eng-6-3l-v12-hybrid',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '4.5L V8',
@@ -1583,6 +1789,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2001-ford-4-ford-focus-rs',
+    availableEngineSwapIds: ['eng-2-1l-i4t'],
     engineSwapOptions: ['2.1L I4T'],
     source: 'fandom-fh6-cars',
     confidence: 'medium',
@@ -1590,6 +1797,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1999-dodge-viper-gts-acr-forza-edition',
+    availableEngineSwapIds: ['eng-7-7l-v12', 'eng-racing-7-2l-v8'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['7.7L V12', 'Racing 7.2L V8'],
     source: 'fandom-fh6-cars',
@@ -1606,6 +1814,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2017-ferrari-j50-preorder-car',
+    availableEngineSwapIds: ['eng-racing-v12', 'eng-6-3l-v12-hybrid'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['Racing V12', '6.3L V12 Hybrid'],
     source: 'fandom-fh6-cars',
@@ -1614,6 +1823,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2025-ferrari-f80',
+    availableEngineSwapIds: ['eng-racing-v12'],
     engineSwapOptions: ['Racing V12', '3.0L V6-TT (818 hp)', '6.3L V12', '4.0L V8-TT (986 hp)'],
     source: 'fandom-fh6-cars',
     confidence: 'medium',
@@ -1621,6 +1831,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1967-ferrari-275-gtb4-spider',
+    availableEngineSwapIds: ['eng-3-5l-v8', 'eng-4-5l-v8'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['3.5L V8', '4.0L V12', '4.5L V8', '3.0L V6-TT (818 hp)'],
     aspirationOptions: ['Twin Turbo', 'Positive-Displacement Supercharger'],
@@ -1630,6 +1841,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2005-ford-gt',
+    availableEngineSwapIds: ['eng-3-5l-v6tt-630-hp', 'eng-8-4l-v10', 'eng-racing-v12'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['3.5L V6TT (630 hp)', '8.4L V10', 'Racing V12'],
     aspirationOptions: ['twin Turbo'],
@@ -1639,6 +1851,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2017-ford-gt',
+    availableEngineSwapIds: ['eng-racing-v12'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['Racing V12'],
     source: 'fandom-fh6-cars',
@@ -1647,6 +1860,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2013-ford-mustang-shelby-gt500',
+    availableEngineSwapIds: ['eng-7-7l-v12'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['7.7L V12'],
     aspirationOptions: ['Twin Turbo'],
@@ -1669,6 +1883,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1992-ford-escort-rs-cosworth',
+    availableEngineSwapIds: ['eng-1-6l-i4-turbo-rally-300-hp'],
     engineSwapOptions: ['1.6L I4 - Turbo Rally (300 hp)', "6.2L V8 (Camaro '16)"],
     source: 'fandom-fh6-cars',
     confidence: 'medium',
@@ -1700,6 +1915,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2000-ford-mustang-svt-cobra-r',
+    availableEngineSwapIds: ['eng-6-7l-v8t-diesel', 'eng-8-4l-v10', 'eng-7-7l-v12'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ["6.2L V8 (Camaro '16)", '6.7L V8T Diesel', '8.4L V10', '7.7L V12'],
     aspirationOptions: [
@@ -1714,6 +1930,14 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2014-ford-ranger-t6-rally-raid',
+    availableEngineSwapIds: [
+      'eng-6-7l-v8t-diesel',
+      'eng-8-4l-v10',
+      'eng-5-8l-v8-dsc',
+      'eng-6-5l-v12-700-hp',
+      'eng-racing-7-2l-v8',
+      'eng-7-4l-v8tt',
+    ],
     engineSwapOptions: [
       "6.2L V8 (Camaro '16)",
       '6.7L V8T Diesel',
@@ -1730,6 +1954,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1985-ford-rs200-evolution',
+    availableEngineSwapIds: ['eng-racing-7-2l-v8'],
     engineSwapOptions: ['Racing 7.2L V8'],
     source: 'fandom-fh6-cars',
     confidence: 'medium',
@@ -1737,6 +1962,11 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1987-ford-sierra-cosworth-rs500',
+    availableEngineSwapIds: [
+      'eng-1-6l-i4-turbo-rally-300-hp',
+      'eng-3-2l-i6-321-hp',
+      'eng-5-8l-v8-dsc',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '1.6L I4 - Turbo Rally (300 hp)',
@@ -1849,6 +2079,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2020-ford-mustang-shelby-gt500',
+    availableEngineSwapIds: ['eng-racing-v12', 'eng-7-7l-v12'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['Racing V12', '7.7L V12'],
     aspirationOptions: ['Twin Turbo'],
@@ -1876,6 +2107,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2019-fd-toyota-411-toyota-corolla-hatchback',
+    availableEngineSwapIds: ['eng-racing-3-0l-i6t'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['Racing 3.0L I6T'],
     source: 'fandom-fh6-cars',
@@ -1890,6 +2122,13 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1986-ford-f-150-xlt-lariat',
+    availableEngineSwapIds: [
+      'eng-3-5l-v6tt-450-hp',
+      'eng-6-7l-v8t-diesel',
+      'eng-5-8l-v8-dsc',
+      'eng-racing-7-2l-v8',
+      'eng-7-4l-v8tt',
+    ],
     engineSwapOptions: [
       '3.5L V6TT (450 hp)',
       '6.7L V8T Diesel',
@@ -1904,6 +2143,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2003-ford-f-150-svt-lightning',
+    availableEngineSwapIds: ['eng-6-7l-v8t-diesel', 'eng-racing-7-2l-v8', 'eng-7-4l-v8tt'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '2.6L I6-TT (281 hp)',
@@ -1925,6 +2165,13 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2024-ford-mustang-gt',
+    availableEngineSwapIds: [
+      'eng-6-7l-v8t-diesel',
+      'eng-5-2l-v8',
+      'eng-8-4l-v10',
+      'eng-7-7l-v12',
+      'eng-7-2l-v8',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['6.7L V8T Diesel', '5.2L V8', '8.4L V10', '7.7L V12', '7.2L V8'],
     aspirationOptions: [
@@ -1944,6 +2191,13 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2024-ford-mustang-dark-horse',
+    availableEngineSwapIds: [
+      'eng-6-7l-v8t-diesel',
+      'eng-5-2l-v8',
+      'eng-8-4l-v10',
+      'eng-7-7l-v12',
+      'eng-7-2l-v8',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['6.7L V8T Diesel', '5.2L V8', '8.4L V10', '7.7L V12', '7.2L V8'],
     aspirationOptions: ['Twin Turbo', 'Positive-Displacement Supercharger'],
@@ -1953,6 +2207,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2022-ford-focus-st',
+    availableEngineSwapIds: ['eng-1-6l-i4-turbo-rally-300-hp'],
     availableDrivetrainSwapIds: ['dt-swap-rwd', 'dt-swap-awd'],
     engineSwapOptions: ['1.6L I4 - Turbo Rally (300 hp)'],
     source: 'fandom-fh6-cars',
@@ -1967,6 +2222,15 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2020-ford-super-duty-f-450-drw-platinum-forza-edition',
+    availableEngineSwapIds: [
+      'eng-5-0l-v8t-diesel',
+      'eng-8-4l-v10',
+      'eng-6-5l-v12-700-hp',
+      'eng-racing-v12',
+      'eng-7-7l-v12',
+      'eng-racing-7-2l-v8',
+      'eng-7-4l-v8tt',
+    ],
     engineSwapOptions: [
       '5.0L V8T Diesel',
       "6.2L V8 (Camaro '16)",
@@ -1983,6 +2247,13 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1968-ford-mustang-gt-2-2-fastback-forza-edition',
+    availableEngineSwapIds: [
+      'eng-6-7l-v8t-diesel',
+      'eng-5-2l-v8',
+      'eng-8-4l-v10',
+      'eng-7-7l-v12',
+      'eng-8-9l-v8-dsc',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['6.7L V8T Diesel', '5.2L V8', '8.4L V10', '7.7L V12', '8.9L V8 DSC'],
     source: 'fandom-fh6-cars',
@@ -1991,6 +2262,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2023-ford-f-150-raptor-r-welcome-pack',
+    availableEngineSwapIds: ['eng-racing-7-2l-v8', 'eng-7-4l-v8tt'],
     engineSwapOptions: ['Racing 7.2L V8', '7.4L V8TT'],
     source: 'fandom-fh6-cars',
     confidence: 'medium',
@@ -2004,6 +2276,11 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2003-honda-s2000',
+    availableEngineSwapIds: [
+      'eng-1-6l-i4-turbo-rally-300-hp',
+      'eng-3-2l-i6-321-hp',
+      'eng-racing-3-0l-i6t',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '1.6L I3-T',
@@ -2024,6 +2301,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1997-honda-civic-type-r',
+    availableEngineSwapIds: ['eng-2-0l-i4-vvt', 'eng-1-6l-i4-turbo-rally-300-hp'],
     availableDrivetrainSwapIds: ['dt-swap-rwd', 'dt-swap-awd'],
     engineSwapOptions: [
       '2.0L I4 - VVT',
@@ -2038,6 +2316,11 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1970-honda-s800',
+    availableEngineSwapIds: [
+      'eng-1-4l-i4-motorbike-engine',
+      'eng-2-0l-i4-vvt',
+      'eng-1-6l-i4-turbo-rally-300-hp',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '1.2L I3 - Motorbike Engine',
@@ -2062,6 +2345,12 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1977-holden-torana-a9x',
+    availableEngineSwapIds: [
+      'eng-6-7l-v8t-diesel',
+      'eng-8-4l-v10',
+      'eng-racing-3-0l-i6t',
+      'eng-8-9l-v8-dsc',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       "6.2L V8 (Camaro '16)",
@@ -2081,6 +2370,11 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1991-honda-cr-x-sir',
+    availableEngineSwapIds: [
+      'eng-1-6l-i4-vvt',
+      'eng-2-0l-i4-vvt',
+      'eng-1-6l-i4-turbo-rally-300-hp',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-rwd', 'dt-swap-awd'],
     engineSwapOptions: [
       '1.6L I4 - VVT',
@@ -2100,6 +2394,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2004-honda-civic-type-r',
+    availableEngineSwapIds: ['eng-1-6l-i4-turbo-rally-300-hp'],
     availableDrivetrainSwapIds: ['dt-swap-rwd', 'dt-swap-awd'],
     engineSwapOptions: ['1.6L I3-T', '1.6L I4 - Turbo Rally (300 hp)', '2.0L I4-T (315 hp)'],
     aspirationOptions: ['Single Turbo', 'Centrifugal Supercharger'],
@@ -2115,6 +2410,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2005-honda-nsx-r',
+    availableEngineSwapIds: ['eng-3-2l-i6-321-hp'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['2.0L I4-T (315 hp)', '3.2L I6 (321 hp)', "6.2L V8 (Camaro '16)"],
     aspirationOptions: [
@@ -2129,6 +2425,11 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1984-honda-civic-crx-mugen',
+    availableEngineSwapIds: [
+      'eng-1-6l-i4-vvt',
+      'eng-2-0l-i4-vvt',
+      'eng-1-6l-i4-turbo-rally-300-hp',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-rwd', 'dt-swap-awd'],
     engineSwapOptions: [
       '1.6L I4 - VVT',
@@ -2150,6 +2451,13 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2005-honda-nsx-r-gt',
+    availableEngineSwapIds: [
+      'eng-1-6l-i4-turbo-rally-300-hp',
+      'eng-3-2l-i6-321-hp',
+      'eng-3-0l-v8-racing',
+      'eng-3-5l-tt-hybrid',
+      'eng-racing-7-2l-v8',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '1.6L I4 - Turbo Rally (300 hp)',
@@ -2172,6 +2480,12 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1991-gmc-syclone',
+    availableEngineSwapIds: [
+      'eng-6-7l-v8t-diesel',
+      'eng-8-4l-v10',
+      'eng-racing-7-2l-v8',
+      'eng-7-4l-v8tt',
+    ],
     engineSwapOptions: [
       "6.2L V8 (Camaro '16)",
       '6.7L V8T Diesel',
@@ -2186,6 +2500,13 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2014-hsv-limited-edition-gen-f-gts-maloo',
+    availableEngineSwapIds: [
+      'eng-6-7l-v8t-diesel',
+      'eng-8-4l-v10',
+      'eng-6-5l-v12-700-hp',
+      'eng-racing-3-0l-i6t',
+      'eng-7-4l-v8tt',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '6.7L V8T Diesel',
@@ -2213,6 +2534,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2007-honda-civic-type-r',
+    availableEngineSwapIds: ['eng-1-6l-i4-turbo-rally-300-hp'],
     availableDrivetrainSwapIds: ['dt-swap-rwd', 'dt-swap-awd'],
     engineSwapOptions: ['1.6L I3-T', '1.6L I4 - Turbo Rally (300 hp)', '2.0L I4-T (315 hp)'],
     aspirationOptions: ['Single Turbo', 'Positive-Displacement Supercharger'],
@@ -2222,6 +2544,11 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1974-honda-civic-rs',
+    availableEngineSwapIds: [
+      'eng-1-6l-i4-vvt',
+      'eng-2-0l-i4-vvt',
+      'eng-1-6l-i4-turbo-rally-300-hp',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-rwd', 'dt-swap-awd'],
     engineSwapOptions: [
       '1.6L I4 - VVT',
@@ -2243,6 +2570,11 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1986-honda-civic-si',
+    availableEngineSwapIds: [
+      'eng-1-6l-i4-vvt',
+      'eng-2-0l-i4-vvt',
+      'eng-1-6l-i4-turbo-rally-300-hp',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-rwd', 'dt-swap-awd'],
     engineSwapOptions: [
       '1.6L I4 - VVT',
@@ -2258,6 +2590,11 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1994-honda-prelude-si',
+    availableEngineSwapIds: [
+      'eng-2-0l-i4-vvt',
+      'eng-1-6l-i4-turbo-rally-300-hp',
+      'eng-3-2l-i6-321-hp',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-rwd', 'dt-swap-awd'],
     engineSwapOptions: [
       '2.0L I4 - VVT',
@@ -2286,6 +2623,12 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1970-gmc-jimmy',
+    availableEngineSwapIds: [
+      'eng-6-7l-v8t-diesel',
+      'eng-7-7l-v12',
+      'eng-racing-7-2l-v8',
+      'eng-7-4l-v8tt',
+    ],
     engineSwapOptions: [
       "6.2L V8 (Camaro '16)",
       '6.7L V8T Diesel',
@@ -2326,6 +2669,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2025-gr-gr-gt-prototype',
+    availableEngineSwapIds: ['eng-4-8l-v10'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['4.8L V10'],
     source: 'fandom-fh6-cars',
@@ -2342,6 +2686,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2023-honda-civic-type-r',
+    availableEngineSwapIds: ['eng-1-6l-i4-turbo-rally-300-hp', 'eng-2-0l-f4-turbo-rally'],
     availableDrivetrainSwapIds: ['dt-swap-rwd', 'dt-swap-awd'],
     engineSwapOptions: ['1.6L I3-T', '1.6L I4 - Turbo Rally (300 hp)', '2.0L F4 - Turbo Rally'],
     source: 'fandom-fh6-cars',
@@ -2350,6 +2695,12 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1991-honda-beat',
+    availableEngineSwapIds: [
+      'eng-1-6l-i4-vvt',
+      'eng-1-4l-i4-motorbike-engine',
+      'eng-1-6l-i4-turbo-rally-300-hp',
+      'eng-racing-3-0l-i6t',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '1.2L I3 - Motorbike Engine',
@@ -2375,6 +2726,12 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1994-honda-acty',
+    availableEngineSwapIds: [
+      'eng-1-6l-i4-vvt',
+      'eng-1-4l-i4-motorbike-engine',
+      'eng-2-0l-i4-vvt',
+      'eng-1-6l-i4-turbo-rally-300-hp',
+    ],
     engineSwapOptions: [
       '1.2L I3 - Motorbike Engine',
       '1.6L I4 - VVT',
@@ -2392,6 +2749,12 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1984-honda-city-e-ii',
+    availableEngineSwapIds: [
+      'eng-1-6l-i4-vvt',
+      'eng-1-4l-i4-motorbike-engine',
+      'eng-1-6l-i4-turbo-rally-300-hp',
+      'eng-2-0l-f4-turbo-rally',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-rwd', 'dt-swap-awd'],
     engineSwapOptions: [
       '1.6L I4 - VVT',
@@ -2412,6 +2775,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2008-honda-civic-type-r',
+    availableEngineSwapIds: ['eng-1-6l-i4-turbo-rally-300-hp'],
     availableDrivetrainSwapIds: ['dt-swap-rwd', 'dt-swap-awd'],
     engineSwapOptions: ['1.6L I3-T', '1.6L I4 - Turbo Rally (300 hp)', '2.0L I4-T (315 hp)'],
     aspirationOptions: ['Single Turbo', 'Positive-Displacement Supercharger'],
@@ -2490,6 +2854,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2016-jeep-trailcat',
+    availableEngineSwapIds: ['eng-7-7l-v12', 'eng-racing-7-2l-v8', 'eng-7-4l-v8tt'],
     engineSwapOptions: ['7.7L V12', 'Racing 7.2L V8', '7.4L V8TT'],
     source: 'fandom-fh6-cars',
     confidence: 'medium',
@@ -2503,6 +2868,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1988-lamborghini-countach-lp5000-qv',
+    availableEngineSwapIds: ['eng-5-2l-v10-602-hp', 'eng-6-5l-v12-700-hp', 'eng-racing-v12'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '5.2L V10 (602 hp)',
@@ -2535,6 +2901,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2018-jeep-grand-cherokee-trackhawk',
+    availableEngineSwapIds: ['eng-7-7l-v12', 'eng-7-4l-v8tt'],
     engineSwapOptions: ['7.7L V12', '7.4L V8TT'],
     source: 'fandom-fh6-cars',
     confidence: 'medium',
@@ -2554,6 +2921,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1999-lamborghini-diablo-gtr',
+    availableEngineSwapIds: ['eng-5-2l-v10-602-hp', 'eng-6-5l-v12-700-hp', 'eng-racing-v12'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '5.2L V10 (602 hp)',
@@ -2639,6 +3007,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2020-lamborghini-huracan-evo',
+    availableEngineSwapIds: ['eng-6-5l-v12-700-hp', 'eng-racing-v12'],
     engineSwapOptions: ['6.5L V12 (700 hp)', 'Racing V12', '6.5L V12 (1001 hp)'],
     aspirationOptions: ['Twin Turbo', 'Centrifugal Supercharger'],
     source: 'fandom-fh6-cars',
@@ -2677,6 +3046,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2022-lamborghini-huracan-tecnica',
+    availableEngineSwapIds: ['eng-6-5l-v12-700-hp', 'eng-racing-v12'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['6.5L V12 (700 hp)', 'Racing V12', '6.5L V12 (1001 hp)'],
     aspirationOptions: ['Twin Turbo', 'Positive-Displacement Supercharger'],
@@ -2740,6 +3110,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2024-koenigsegg-gemera',
+    availableEngineSwapIds: ['eng-5-1l-v8-tt'],
     engineSwapOptions: ['5.0L V8 (610 hp)', '5.0 V8-TT', '5.1L V8 TT'],
     source: 'fandom-fh6-cars',
     confidence: 'medium',
@@ -2777,6 +3148,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2004-maserati-mc12',
+    availableEngineSwapIds: ['eng-racing-v12', 'eng-6-0l-v12-756-hp'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['3.0L V6-TT (621 hp)', 'Racing V12', '6.0L V12 (756 hp)'],
     aspirationOptions: ['Twin Turbo'],
@@ -2962,6 +3334,15 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2023-lotus-emira',
+    availableEngineSwapIds: [
+      'eng-2-0l-i4t-355-hp',
+      'eng-racing-v6',
+      'eng-3-0l-v8-racing',
+      'eng-6-2l-v8-510-hp',
+      'eng-5-2l-v10-602-hp',
+      'eng-racing-v12',
+      'eng-racing-7-2l-v8',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '1.6L I3-T',
@@ -2998,6 +3379,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2018-lotus-exige-cup-430',
+    availableEngineSwapIds: ['eng-3-0l-v8-racing', 'eng-5-2l-v10-602-hp'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['1.6L I3-T', '3.5L V6-PDSC', '3.0L V8 - Racing', '5.2L V10 (602 hp)'],
     aspirationOptions: ['Twin Turbo'],
@@ -3007,6 +3389,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2022-maserati-mc20',
+    availableEngineSwapIds: ['eng-4-5l-v8', 'eng-racing-v12', 'eng-6-0l-v12-756-hp'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['4.5L V8', 'Racing V12', '6.0L V12 (756 hp)'],
     source: 'fandom-fh6-cars',
@@ -3016,6 +3399,12 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   {
     carId: '1973-mazda-rx-3-forza-edition',
     engineType: 'rotary',
+    availableEngineSwapIds: [
+      'eng-1-6l-i4-turbo-rally-300-hp',
+      'eng-2-0l-r3',
+      'eng-2-6l-4-rotor-racing',
+      'eng-2-0l-r3-t',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '1.6L I4 - Turbo Rally (300 hp)',
@@ -3030,6 +3419,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1994-mazda-mx-5-miata-forza-edition',
+    availableEngineSwapIds: ['eng-5-0l-v10', 'eng-5-2l-v10-602-hp', 'eng-8-4l-v10'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['5.0L V10', '5.2L V10 (602 hp)', '8.4L V10'],
     source: 'fandom-fh6-cars',
@@ -3039,6 +3429,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   {
     carId: '1974-mazda-123-mad-mike-808-wagon-fursty',
     engineType: 'rotary',
+    availableEngineSwapIds: ['eng-2-0l-r3-t'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['2.0L R3-T'],
     source: 'fandom-fh6-cars',
@@ -3060,6 +3451,13 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   {
     carId: '1992-mazda-rx-7-type-r',
     engineType: 'rotary',
+    availableEngineSwapIds: [
+      'eng-1-3l-2-rotor',
+      'eng-1-6l-i4-turbo-rally-300-hp',
+      'eng-2-0l-r3',
+      'eng-2-6l-4-rotor-racing',
+      'eng-2-0l-r3-t',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '1.3L 2 Rotor',
@@ -3077,6 +3475,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2013-mclaren-p1',
+    availableEngineSwapIds: ['eng-6-1l-v12', 'eng-4-0l-v8tt'],
     engineSwapOptions: ['6.1L V12', '4.0L V8TT'],
     source: 'fandom-fh6-cars',
     confidence: 'medium',
@@ -3084,6 +3483,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2017-amg-gt-r',
+    availableEngineSwapIds: ['eng-6-2l-v8-510-hp', 'eng-5-2l-v10-602-hp', 'eng-6-0l-v12-racing'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '6.2L V8 (510 hp)',
@@ -3200,6 +3600,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2004-mitsubishi-lancer-evolution-viii-mr',
+    availableEngineSwapIds: ['eng-2-0l-f4-turbo-rally'],
     engineSwapOptions: [
       '2.6L I6-TT (281 hp)',
       '2.0L F4 - Turbo Rally',
@@ -3212,6 +3613,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2006-mitsubishi-lancer-evolution-ix-mr',
+    availableEngineSwapIds: ['eng-2-0l-f4-turbo-rally'],
     engineSwapOptions: [
       '2.6L I6-TT (281 hp)',
       '2.0L F4 - Turbo Rally',
@@ -3278,6 +3680,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1987-mercedes-amg-hammer-coupe',
+    availableEngineSwapIds: ['eng-5-2l-v10-602-hp', 'eng-6-9l-v12', 'eng-racing-7-2l-v8'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['5.2L V10 (602 hp)', '6.9L V12', 'Racing 7.2L V8'],
     aspirationOptions: ['Twin Turbo', 'Positive-Displacement Supercharger'],
@@ -3294,6 +3697,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2021-mini-john-cooper-works-gp',
+    availableEngineSwapIds: ['eng-1-6l-i4-turbo-rally-300-hp'],
     availableDrivetrainSwapIds: ['dt-swap-rwd', 'dt-swap-awd'],
     engineSwapOptions: ['1.6L I4 - Turbo Rally (300 hp)'],
     source: 'fandom-fh6-cars',
@@ -3314,6 +3718,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2021-mclaren-sabre',
+    availableEngineSwapIds: ['eng-6-1l-v12'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['6.1L V12', '4.0L V8-TT (755 hp)'],
     source: 'fandom-fh6-cars',
@@ -3340,6 +3745,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2020-amg-slc-43-final-edition',
+    availableEngineSwapIds: ['eng-6-2l-v8-510-hp', 'eng-5-2l-v10-602-hp', 'eng-6-0l-v12-racing'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '6.2L V8 (510 hp)',
@@ -3353,6 +3759,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1990-mitsubishi-269-attacking-the-clock-racing-minicab-time-attack',
+    availableEngineSwapIds: ['eng-1-4l-i4-motorbike-engine'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '1.2L I3 - Motorbike Engine',
@@ -3373,6 +3780,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2020-amg-gt-black-series-welcome-pack',
+    availableEngineSwapIds: ['eng-racing-v12'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['Racing V12', '1.6L V6-T'],
     source: 'fandom-fh6-cars',
@@ -3381,6 +3789,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2004-mitsubishi-lancer-evolution-viii-mr-welcome-pack',
+    availableEngineSwapIds: ['eng-2-0l-f4-turbo-rally'],
     engineSwapOptions: ['2.0L F4 - Turbo Rally', "6.2L V8 (Camaro '16)", '2.2L I4-T'],
     source: 'fandom-fh6-cars',
     confidence: 'medium',
@@ -3394,6 +3803,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2001-mitsubishi-lancer-evolution-vi-gsr-tm-edition',
+    availableEngineSwapIds: ['eng-2-0l-f4-turbo-rally'],
     engineSwapOptions: [
       '2.6L I6-TT (281 hp)',
       '2.0L F4 - Turbo Rally',
@@ -3478,6 +3888,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1997-nissan-skyline-gt-r-v-spec',
+    availableEngineSwapIds: ['eng-3-5l-v8tt', 'eng-4-8l-v10'],
     engineSwapOptions: ['3.5L V8TT', '4.8L V10', '3.8L V6-TT (600 hp)', '4.0L V8-TT (700 hp)'],
     source: 'fandom-fh6-cars',
     confidence: 'medium',
@@ -3575,6 +3986,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2021-pagani-huayra-r',
+    availableEngineSwapIds: ['eng-6-0l-v12-racing', 'eng-racing-v12'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['6.0L V12 Racing', 'Racing V12'],
     aspirationOptions: ['Twin Turbo'],
@@ -3620,6 +4032,11 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1987-nissan-be-1',
+    availableEngineSwapIds: [
+      'eng-1-4l-i4-motorbike-engine',
+      'eng-2-0l-i4-vvt',
+      'eng-2-6l-4-rotor-racing',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-rwd', 'dt-swap-awd'],
     engineSwapOptions: [
       '1.2L I3 - Motorbike Engine',
@@ -3668,6 +4085,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1990-nissan-12-skyline-gt-r-bnr32-gr-a-jtc',
+    availableEngineSwapIds: ['eng-4-8l-v10'],
     engineSwapOptions: [
       '2.6L I6-TT (281 hp)',
       '4.8L V10',
@@ -3693,6 +4111,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1998-nissan-skyline-gt-r-40th-anniversary',
+    availableEngineSwapIds: ['eng-3-5l-v8tt', 'eng-4-8l-v10'],
     engineSwapOptions: ['3.5L V8TT', '4.8L V10', '3.8L V6-TT (600 hp)', '4.0L V8-TT (700 hp)'],
     source: 'fandom-fh6-cars',
     confidence: 'medium',
@@ -3712,6 +4131,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1989-nissan-silvia-k-s',
+    availableEngineSwapIds: ['eng-3-2l-i6-321-hp', 'eng-2-6l-4-rotor-racing'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       "2.0L I4-T (Spec R '02)",
@@ -3834,6 +4254,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1993-porsche-911-turbo-s-leichtbau',
+    availableEngineSwapIds: ['eng-5-2l-v10-602-hp', 'eng-3-8-f6tt-691-hp'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '3.0L I4-T',
@@ -3861,6 +4282,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1984-peugeot-205-turbo-16',
+    availableEngineSwapIds: ['eng-1-6l-i4-turbo-rally-300-hp', 'eng-2-0l-f4-turbo-rally'],
     engineSwapOptions: ['1.6L I4 - Turbo Rally (300 hp)', '2.0L F4 - Turbo Rally'],
     source: 'fandom-fh6-cars',
     confidence: 'medium',
@@ -3988,6 +4410,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2024-ram-1500-trx',
+    availableEngineSwapIds: ['eng-racing-7-2l-v8', 'eng-7-4l-v8tt'],
     engineSwapOptions: ['Racing 7.2L V8', '7.4L V8TT'],
     source: 'fandom-fh6-cars',
     confidence: 'medium',
@@ -3995,6 +4418,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1962-peel-p50-trolli-edition',
+    availableEngineSwapIds: ['eng-1-4l-i4-motorbike-engine'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '1.2L I3 - Motorbike Engine',
@@ -4158,6 +4582,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2008-renault-megane-r26-r',
+    availableEngineSwapIds: ['eng-2-0l-i4-vvt'],
     availableDrivetrainSwapIds: ['dt-swap-rwd', 'dt-swap-awd'],
     engineSwapOptions: ['2.0L I4 - VVT', '2.0L I4-T (315 hp)'],
     source: 'fandom-fh6-cars',
@@ -4166,6 +4591,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2019-subaru-sti-209',
+    availableEngineSwapIds: ['eng-2-0l-f4-turbo-rally'],
     engineSwapOptions: [
       '2.4L F4',
       '2.0L F4 - Turbo Rally',
@@ -4178,6 +4604,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1967-renault-8-gordini',
+    availableEngineSwapIds: ['eng-1-4l-i4-motorbike-engine', 'eng-3-2l-i6-321-hp'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '1.2L I3 - Motorbike Engine',
@@ -4199,6 +4626,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1993-schuppan-962cr',
+    availableEngineSwapIds: ['eng-3-2l-f6tt', 'eng-4-6l-v8-hybrid'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ["4.0L F6 (911 '23)", '3.2L F6TT', '3.8 F6TT', '4.6L V8 Hybrid'],
     source: 'fandom-fh6-cars',
@@ -4219,6 +4647,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2017-saleen-s7-lm',
+    availableEngineSwapIds: ['eng-8-4l-v10', 'eng-racing-v12'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['8.4L V10', 'Racing V12'],
     source: 'fandom-fh6-cars',
@@ -4269,6 +4698,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2022-subaru-brz-forza-edition',
+    availableEngineSwapIds: ['eng-7-7l-v12', 'eng-racing-7-2l-v8', 'eng-7-4l-v8tt'],
     engineSwapOptions: ['7.7L V12', 'Racing 7.2L V8', '7.4L V8TT'],
     source: 'fandom-fh6-cars',
     confidence: 'medium',
@@ -4276,6 +4706,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1999-toyota-altezza-rs200-z-edition',
+    availableEngineSwapIds: ['eng-4-8l-v10'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '2.5L I6-T',
@@ -4291,6 +4722,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1994-subaru-vivio-rx-r',
+    availableEngineSwapIds: ['eng-1-4l-i4-motorbike-engine', 'eng-2-0l-i4-vvt', 'eng-racing-v6'],
     engineSwapOptions: [
       '1.2L I3 - Motorbike Engine',
       '1.4L I4 - Motorbike Engine',
@@ -4305,6 +4737,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1997-toyota-chaser-2-5-tourer-v',
+    availableEngineSwapIds: ['eng-4-8l-v10', 'eng-racing-v12'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '3.0L I6 - TT',
@@ -4361,6 +4794,13 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2016-toyota-land-cruiser-arctic-trucks-at37',
+    availableEngineSwapIds: [
+      'eng-3-0l-i6-tt-320-hp',
+      'eng-6-7l-v8t-diesel',
+      'eng-4-8l-v10',
+      'eng-racing-7-2l-v8',
+      'eng-7-4l-v8tt',
+    ],
     engineSwapOptions: [
       '3.0L I6 - TT (320 hp)',
       "6.2L V8 (Camaro '16)",
@@ -4388,6 +4828,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1974-toyota-corolla-sr5',
+    availableEngineSwapIds: ['eng-racing-3-0l-i6t'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '1.6L I4',
@@ -4445,6 +4886,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1998-tvr-cerbera-speed-12',
+    availableEngineSwapIds: ['eng-8-4l-v10', 'eng-racing-v12', 'eng-racing-7-2l-v8'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: ['4.0L I6', '5.0L V8 (480 hp)', '8.4L V10', 'Racing V12', 'Racing 7.2L V8'],
     aspirationOptions: ['Twin Turbo'],
@@ -4472,6 +4914,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1989-toyota-mr2-sc',
+    availableEngineSwapIds: ['eng-2-0l-i4-vvt', 'eng-racing-v6', 'eng-3-0l-v8-racing'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '2.0L I4 - VVT',
@@ -4531,6 +4974,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2022-toyota-gr86',
+    availableEngineSwapIds: ['eng-2-0l-f4-turbo', 'eng-2-0l-f4-turbo-rally'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '2.0L F4 - Turbo',
@@ -4573,6 +5017,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1965-toyota-sports-800-fanta-edition',
+    availableEngineSwapIds: ['eng-1-4l-i4-motorbike-engine'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
     engineSwapOptions: [
       '1.2L I3 - Motorbike Engine',
@@ -4606,6 +5051,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2019-toyota-tacoma-trd-pro-forza-edition',
+    availableEngineSwapIds: ['eng-8-4l-v10', 'eng-racing-7-2l-v8'],
     engineSwapOptions: ['8.4L V10', 'Racing 7.2L V8'],
     source: 'fandom-fh6-cars',
     confidence: 'medium',
@@ -4620,6 +5066,11 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1989-volkswagen-rallye-golf',
+    availableEngineSwapIds: [
+      'eng-2-0l-i4-vvt',
+      'eng-1-6l-i4-turbo-rally-300-hp',
+      'eng-3-2l-i6-321-hp',
+    ],
     engineSwapOptions: [
       '2.0L I4 - VVT',
       '1.6L I4 - Turbo Rally (300 hp)',
@@ -4634,6 +5085,7 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1996-toyota-starlet-glanza-v',
+    availableEngineSwapIds: ['eng-2-0l-i4-vvt', 'eng-1-6l-i4-turbo-rally-300-hp'],
     availableDrivetrainSwapIds: ['dt-swap-rwd', 'dt-swap-awd'],
     engineSwapOptions: [
       '1.2L I3 - Motorbike Engine',
@@ -4657,6 +5109,11 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '2023-toyota-gr-corolla',
+    availableEngineSwapIds: [
+      'eng-1-6l-i4-turbo-rally-300-hp',
+      'eng-racing-v6',
+      'eng-racing-3-0l-i6t',
+    ],
     engineSwapOptions: [
       '2.6L I6-TT (281 hp)',
       '1.6L I4 - Turbo Rally (300 hp)',

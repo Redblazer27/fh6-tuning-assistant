@@ -143,18 +143,28 @@ export function createDataStore(dataset: Dataset): DataStore {
   );
   const profilesByCar = new Map(dataset.carUpgradeProfiles.map((p) => [p.carId, p]));
 
+  // Concrete swap engines (id prefix `eng-`) are opt-in: a car only gets them
+  // when its profile explicitly allowlists them, never by default. This keeps a
+  // car with no documented swaps from being offered all ~130 real engines.
+  const isRealEngine = (p: Part) => p.category === 'engine_swap' && p.id.startsWith('eng-');
+
   const getAvailablePartsByCategory = (carId: string, category: UpgradeCategory): Part[] => {
     const all = partsByCategory.get(category) ?? [];
     const profile = profilesByCar.get(carId);
-    if (!profile) return all;
+    if (!profile) return all.filter((p) => !isRealEngine(p));
 
     if (profile.lockedCategories.includes(category)) {
       return all.filter((p) => p.tierRank === 0);
     }
     let list = all;
-    if (category === 'engine_swap' && profile.availableEngineSwapIds !== undefined) {
-      const allow = new Set(profile.availableEngineSwapIds);
-      list = list.filter((p) => p.tierRank === 0 || allow.has(p.id));
+    if (category === 'engine_swap') {
+      if (profile.availableEngineSwapIds !== undefined) {
+        const allow = new Set(profile.availableEngineSwapIds);
+        list = list.filter((p) => p.tierRank === 0 || allow.has(p.id));
+      } else {
+        // No allowlist → keep generic swaps only, not the concrete real engines.
+        list = list.filter((p) => !isRealEngine(p));
+      }
     }
     if (category === 'drivetrain_swap' && profile.availableDrivetrainSwapIds !== undefined) {
       const allow = new Set(profile.availableDrivetrainSwapIds);
