@@ -176,6 +176,14 @@ export const carUpgradeProfileSchema = provenanceSchema.extend({
   lockedCategories: z.array(upgradeCategorySchema).default([]),
   /** Specific part ids this car cannot use (blocklist; stock is always allowed). */
   restrictedPartIds: z.array(z.string().min(1)).default([]),
+  /**
+   * Real FH6 conversion options for this car, by display name (from the community
+   * wiki). Descriptive: they record what the game actually offers so the app can
+   * show a car's true engine-swap / forced-induction choices, even where the
+   * optimizer still models a swap generically.
+   */
+  engineSwapOptions: z.array(z.string().min(1)).default([]),
+  aspirationOptions: z.array(z.string().min(1)).default([]),
 });
 
 // --- Tunable ranges -----------------------------------------------------------

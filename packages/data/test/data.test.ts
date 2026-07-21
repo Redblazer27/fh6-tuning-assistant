@@ -15,14 +15,23 @@ describe('seed dataset', () => {
     expect(defaultDataset.cars.length).toBeGreaterThanOrEqual(600);
   });
 
-  it('includes official-roster cars (identity-only, physics absent)', () => {
+  it('includes the official roster, most cars enriched with real physics', () => {
     const roster = defaultDataset.cars.filter((c) => c.source === 'forza-official-cars');
     expect(roster.length).toBeGreaterThanOrEqual(500);
-    // Roster cars carry authoritative identity/class/PI but no physics.
-    const sample = roster[0]!;
-    expect(sample.stockPI).toBeGreaterThan(0);
-    expect(sample.drivetrain).toBeUndefined();
-    expect(sample.massKg).toBeUndefined();
+    // Most roster cars are enriched from the community wiki (real physics, medium).
+    const enriched = roster.filter((c) => c.drivetrain && c.massKg && c.powerHp);
+    expect(enriched.length).toBeGreaterThanOrEqual(400);
+    expect(enriched[0]!.confidence).toBe('medium');
+  });
+
+  it('has per-car FH6 upgrade profiles (engine swaps, drivetrain, rotary)', () => {
+    const profiles = defaultDataset.carUpgradeProfiles.filter(
+      (p) => p.source === 'fandom-fh6-cars',
+    );
+    expect(profiles.length).toBeGreaterThanOrEqual(300);
+    expect(profiles.some((p) => p.engineSwapOptions.length > 0)).toBe(true);
+    expect(profiles.some((p) => (p.availableDrivetrainSwapIds?.length ?? 0) > 0)).toBe(true);
+    expect(profiles.some((p) => p.engineType === 'rotary')).toBe(true);
   });
 
   it('every car stockPI matches its stockClass', () => {
