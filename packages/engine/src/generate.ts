@@ -122,7 +122,15 @@ export function generateBuild(
   const strategies: BuildStrategy[] = [];
 
   for (const kind of STRATEGY_KINDS) {
-    const { strategy, notes } = makeStrategy(store, car, request, piCap, budget, kind, options.locks);
+    const { strategy, notes } = makeStrategy(
+      store,
+      car,
+      request,
+      piCap,
+      budget,
+      kind,
+      options.locks,
+    );
     for (const n of notes) if (!warnings.includes(n)) warnings.push(n);
     const sig = signature(strategy.selection, store.categories);
     if (seen.has(sig)) continue;

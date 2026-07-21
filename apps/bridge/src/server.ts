@@ -1,5 +1,9 @@
 import dgram from 'node:dgram';
-import { createServer as createHttpServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import {
+  createServer as createHttpServer,
+  type IncomingMessage,
+  type ServerResponse,
+} from 'node:http';
 import { createWriteStream, existsSync, type WriteStream } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -119,7 +123,9 @@ export function createBridge(opts: BridgeOptions): Bridge {
           opts.log(`listening for FH6 Data Out on udp://${opts.udpHost}:${opts.udpPort}`);
         });
         http.listen(opts.port, opts.host, () => {
-          opts.log(`app + telemetry on http://${opts.host}:${opts.port}  (ws://${opts.host}:${opts.port})`);
+          opts.log(
+            `app + telemetry on http://${opts.host}:${opts.port}  (ws://${opts.host}:${opts.port})`,
+          );
           resolve();
         });
       });

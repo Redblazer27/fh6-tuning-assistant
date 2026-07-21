@@ -10,13 +10,22 @@ interface Journey {
 }
 
 const journeys: Journey[] = [
-  { name: 'MX-5 · road · B (grip)', req: { carId: 'mazda-mx5-nd-2019', discipline: 'road', targetClass: 'B' } },
+  {
+    name: 'MX-5 · road · B (grip)',
+    req: { carId: 'mazda-mx5-nd-2019', discipline: 'road', targetClass: 'B' },
+  },
   {
     name: 'WRX · rally · A (AWD)',
     req: { carId: 'subaru-wrx-sti-2019', discipline: 'rally', targetClass: 'A' },
   },
-  { name: 'Mustang · drag · S2', req: { carId: 'ford-mustang-gt-2018', discipline: 'drag', targetClass: 'S2' } },
-  { name: 'Silvia · drift · A', req: { carId: 'nissan-silvia-s15-1999', discipline: 'drift', targetClass: 'A' } },
+  {
+    name: 'Mustang · drag · S2',
+    req: { carId: 'ford-mustang-gt-2018', discipline: 'drag', targetClass: 'S2' },
+  },
+  {
+    name: 'Silvia · drift · A',
+    req: { carId: 'nissan-silvia-s15-1999', discipline: 'drift', targetClass: 'A' },
+  },
   {
     name: '911 GT3 · road · S2 · no aero',
     req: {
@@ -37,7 +46,12 @@ const journeys: Journey[] = [
   },
   {
     name: 'Jesko · top speed · open PI',
-    req: { carId: 'koenigsegg-jesko-2020', discipline: 'top_speed', targetClass: null, targetPI: null },
+    req: {
+      carId: 'koenigsegg-jesko-2020',
+      discipline: 'top_speed',
+      targetClass: null,
+      targetPI: null,
+    },
   },
   {
     name: 'F-150 Raptor · cross country · C',
@@ -79,7 +93,9 @@ describe('representative user journeys', () => {
     );
     const top = result.strategies[0]!;
     expect(top.tune.tune.aero).toBeNull();
-    expect(top.parts.filter((p) => p.isUpgrade).every((p) => !p.category.includes('aero'))).toBe(true);
+    expect(top.parts.filter((p) => p.isUpgrade).every((p) => !p.category.includes('aero'))).toBe(
+      true,
+    );
   });
 
   it('capped journeys land at or below the PI cap', () => {

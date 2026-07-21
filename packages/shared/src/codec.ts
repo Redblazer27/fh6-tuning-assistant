@@ -1,9 +1,4 @@
-import {
-  BUILD_SCHEMA_VERSION,
-  EXPORT_MAGIC,
-  type BuildExport,
-  type SavedBuild,
-} from './build.ts';
+import { BUILD_SCHEMA_VERSION, EXPORT_MAGIC, type BuildExport, type SavedBuild } from './build.ts';
 
 /**
  * Isomorphic build-state codec.

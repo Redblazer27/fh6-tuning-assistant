@@ -4,7 +4,6 @@ import {
   clamp,
   nPerMmToKgfPerMm,
   nPerMmToLbfPerIn,
-  round,
   snapToStep,
   type BuildRequest,
   type Discipline,
@@ -60,7 +59,16 @@ export function computeTune(
   const tires = computeTirePressure(ranges, surface, discipline, wd, wdRear, rationale);
   const gearing = computeGearing(car, spec, ranges, discipline, rationale);
   const alignment = computeAlignment(ranges, surface, discipline, spec, request.input, rationale);
-  const antiRollBars = computeArbs(ranges, surface, discipline, spec, request, wd, wdRear, rationale);
+  const antiRollBars = computeArbs(
+    ranges,
+    surface,
+    discipline,
+    spec,
+    request,
+    wd,
+    wdRear,
+    rationale,
+  );
   const springs = computeSprings(spec, ranges, surface, discipline, wd, wdRear, rationale);
   const damping = computeDamping(ranges, surface, rationale);
   const aero = computeAero(spec, ranges, discipline, request, wd, rationale);
@@ -412,7 +420,8 @@ function computeDifferential(
   rationale: TuneResult['rationale'],
 ): TuneSpec['differential'] {
   const dt: Drivetrain = spec.drivetrain;
-  const styleAccel = request.drivingStyle === 'aggressive' ? 5 : request.drivingStyle === 'smooth' ? -5 : 0;
+  const styleAccel =
+    request.drivingStyle === 'aggressive' ? 5 : request.drivingStyle === 'smooth' ? -5 : 0;
   const p = (v: number) => snapRange(ranges.differentialPct, v);
 
   const rearAccelBase: Record<Discipline, number> = {
@@ -435,7 +444,12 @@ function computeDifferential(
     'braking. Higher accel for loose surfaces and drift; lower on FWD to cut understeer.';
 
   if (dt === 'FWD') {
-    const accel = discipline === 'drift' ? 60 : ['dirt', 'rally', 'cross_country'].includes(discipline) ? 45 : 30;
+    const accel =
+      discipline === 'drift'
+        ? 60
+        : ['dirt', 'rally', 'cross_country'].includes(discipline)
+          ? 45
+          : 30;
     return {
       drivetrain: dt,
       accelFrontPct: p(accel + styleAccel),

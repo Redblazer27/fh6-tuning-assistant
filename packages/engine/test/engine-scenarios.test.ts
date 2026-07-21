@@ -3,8 +3,10 @@ import { TUNING_CATEGORIES } from '@fh6/shared';
 import { CONDITION_MODIFIERS, SYMPTOMS, generateBuild } from '../src/index.ts';
 import { makeRequest, store } from './helpers.ts';
 
-const topOf = (req: Parameters<typeof generateBuild>[1], opts?: Parameters<typeof generateBuild>[2]) =>
-  generateBuild(store, req, opts).strategies[0]!;
+const topOf = (
+  req: Parameters<typeof generateBuild>[1],
+  opts?: Parameters<typeof generateBuild>[2],
+) => generateBuild(store, req, opts).strategies[0]!;
 
 describe('PI cap boundary', () => {
   it('lands at or below the requested PI and is legal', () => {
@@ -100,11 +102,9 @@ describe('constraints', () => {
   });
 
   it('keeps user-locked parts across optimization', () => {
-    const result = generateBuild(
-      store,
-      makeRequest({ discipline: 'road', targetClass: 'S1' }),
-      { locks: { tire_compound: 'tire-street' } },
-    );
+    const result = generateBuild(store, makeRequest({ discipline: 'road', targetClass: 'S1' }), {
+      locks: { tire_compound: 'tire-street' },
+    });
     for (const s of result.strategies) expect(s.selection.tire_compound).toBe('tire-street');
   });
 });

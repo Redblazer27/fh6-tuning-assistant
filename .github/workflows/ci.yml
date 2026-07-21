@@ -20,13 +20,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-      - name: Format check (non-blocking until a lockfile/format pass is committed)
+      - name: Format check
         run: npm run format:check
-        continue-on-error: true
 
       - name: Lint
         run: npm run lint

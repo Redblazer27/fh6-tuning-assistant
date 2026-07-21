@@ -1,4 +1,10 @@
-import type { BuildRequest, LockedSelections, StrategyKind, Surface, UpgradeCategory } from '@fh6/shared';
+import type {
+  BuildRequest,
+  LockedSelections,
+  StrategyKind,
+  Surface,
+  UpgradeCategory,
+} from '@fh6/shared';
 import type { Car, DataStore, Part } from '@fh6/data';
 import { buildSpec } from './buildSpec.ts';
 import { estimatePI } from './pi.ts';
@@ -39,7 +45,9 @@ function candidatesFor(
 
   const catBlocked =
     (c.disallowedCategories?.includes(category) ?? false) ||
-    (c.allowedCategories && c.allowedCategories.length > 0 && !c.allowedCategories.includes(category));
+    (c.allowedCategories &&
+      c.allowedCategories.length > 0 &&
+      !c.allowedCategories.includes(category));
   if (catBlocked) list = list.filter((p) => p.tierRank === 0);
 
   if (c.noSwaps && (category === 'engine_swap' || category === 'drivetrain_swap')) {

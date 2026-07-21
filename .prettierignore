@@ -7,3 +7,8 @@ out/
 *.tsbuildinfo
 apps/web/dev-dist/
 package-lock.json
+
+# Local distribution artifacts (untracked copies, not source)
+web/
+context/
+RUN.txt

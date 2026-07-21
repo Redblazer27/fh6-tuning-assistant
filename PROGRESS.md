@@ -32,19 +32,30 @@ Last updated: 2026-07-21
   (win/mac/linux) bundled with the web app.
 - **Docs:** data-policy, competitor-research, product-spec, tuning-engine-design.
 
-## Verified (via GitHub Actions CI — green)
+## Verified
 
 - Repo pushed to **github.com/Redblazer27/fh6-tuning-assistant** (private, `main`).
 - CI run passes: **lint ✓, typecheck ✓, all 54 tests ✓, web build ✓** (`.github/workflows/ci.yml`).
-  This machine has no Node.js, so CI is the source of truth for build/test.
-- `format:check` is currently **non-blocking** (no local Prettier pass yet). Run `npm run format` in a
-  Codespace/with Node, commit, then flip the CI step back to blocking (remove `continue-on-error`).
+- **Local (Node 24 now installed on this machine):** `npm install` + full `npm run check`
+  (format ✓, lint ✓, typecheck ✓, 54 tests ✓) pass; `npm run build` (web PWA) and the bridge esbuild
+  bundle both build. A real Prettier pass was applied and committed.
+- `format:check` is now **blocking** in CI (`continue-on-error` removed). Distribution artifacts
+  (`web/`, `context/`, `RUN.txt`) are excluded via `.prettierignore` + eslint `ignores`.
+- **Bridge runtime verified end-to-end:** ran the bundle and the standalone exe; HTTP serves the app
+  (`/`, assets, SPA fallback, `/health`); a synthetic FH6 UDP packet flows UDP → parser → WebSocket to
+  a client with all fields correct (`frames` 0→1). See scratchpad `e2e-telemetry.mjs`.
+- **Release packaging verified locally & fixed:** `@yao-pkg/pkg-fetch` (v3.6+) dropped Node 20 prebuilt
+  bases, so the old `node20-*` pkg targets 404 and fall back to an impossible cross-platform source
+  build — this would have broken `release.yml`. Switched targets to **`node22-*`**; pkg now fetches
+  prebuilt bases and produces working **win / linux / macos** executables (win exe run & re-passed the
+  e2e telemetry test). The `zip` step remains CI-only (present on GitHub's ubuntu runners).
 
 ## Not yet verified
 
-- The **release packaging** (`scripts/package-release.mjs` → standalone executables via pkg) is
-  CI-targeted and unproven until a version tag (`v*`) is pushed to trigger `release.yml`.
+- The **release packaging** now works locally (see Verified), but a full `release.yml` run — including
+  the `zip` step and GitHub Release upload — is unproven until a version tag (`v*`) is pushed.
 - GitHub Pages deploy is manual-only and needs Pages enabled (private-repo constraint).
+- No committed `package-lock.json` yet, so CI still uses `npm install` (not `npm ci`) and no npm cache.
 
 ## Assumed / needs real-world validation
 
@@ -58,10 +69,13 @@ Last updated: 2026-07-21
 
 ## Next steps
 
-1. Run `npm install && npm run check` (or let CI do it); fix any compile/test failures.
-2. Confirm the GitHub repo name, push, verify CI green, and cut a `v0.1.0` release to test packaging.
+1. ~~Run `npm install && npm run check`~~ — done locally, green. Commit the fixes (prettier pass,
+   eslint/prettier ignores, `node22` pkg targets, blocking `format:check`) and push.
+2. Cut a `v0.1.0` tag to trigger `release.yml` and confirm the full CI packaging + Release upload
+   (the `zip` + GitHub Release steps are the only unproven part now).
 3. Capture a real FH6 Data Out packet to confirm telemetry offsets; correct if needed.
 4. Expand the roster and add per-car tune-range overrides via Admin/Import.
+5. (Optional) Commit `package-lock.json` and switch CI to `npm ci` + npm cache for reproducible builds.
 
 ## Known constraints / risks
 
