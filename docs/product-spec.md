@@ -21,22 +21,22 @@ the repo [README](../README.md).
 
 ## Feature requirements → where they live
 
-| Requirement | Implementation |
-| --- | --- |
-| Car picker (year/make/model, DLC, class, drivetrain, stats) | `apps/web` car picker over `@fh6/data` |
-| Goal wizard (10 disciplines, target class/PI, controller/wheel, constraints) | `apps/web` wizard → `BuildRequest` |
-| Constraints: no swaps, preferred engine/drivetrain, budget, stock-looking, no aero, allow/deny parts | `BuildConstraints` → optimizer + rules engine |
-| Exact parts to buy across all categories | `partLines()` per strategy |
-| Legal build at/under PI cap | optimizer + `checkLegality` + estimated PI |
-| Full tune in FH6 menu order, copyable/checklist | `computeTune` → tune panel |
-| Multiple ranked strategies, transparent scoring | `generateBuild` (grip/balanced/speed) + `ScoreBreakdown` |
-| Lock choices & re-optimize | `locks` argument to `generateBuild` |
-| Symptom-based adjustments (smallest safe first) | `SYMPTOMS` + condition modifiers |
-| Feedback: lap times, event/route, symptoms, telemetry — refine without changing baseline | feedback panel + `Feedback` schema; suggestions only |
-| Save/share (permanent URL) + JSON export | `codec.ts` (URL) + `BuildExport` |
-| Confidence, assumptions, game/data version, disclaimer | `GenerateResult` trust surface on every result |
-| Admin/import to expand & correct data | `loadDataset` + import UI (validated by Zod) |
-| Live FH6 telemetry | `apps/bridge` UDP→WS + in-app visualization |
+| Requirement                                                                                          | Implementation                                           |
+| ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| Car picker (year/make/model, DLC, class, drivetrain, stats)                                          | `apps/web` car picker over `@fh6/data`                   |
+| Goal wizard (10 disciplines, target class/PI, controller/wheel, constraints)                         | `apps/web` wizard → `BuildRequest`                       |
+| Constraints: no swaps, preferred engine/drivetrain, budget, stock-looking, no aero, allow/deny parts | `BuildConstraints` → optimizer + rules engine            |
+| Exact parts to buy across all categories                                                             | `partLines()` per strategy                               |
+| Legal build at/under PI cap                                                                          | optimizer + `checkLegality` + estimated PI               |
+| Full tune in FH6 menu order, copyable/checklist                                                      | `computeTune` → tune panel                               |
+| Multiple ranked strategies, transparent scoring                                                      | `generateBuild` (grip/balanced/speed) + `ScoreBreakdown` |
+| Lock choices & re-optimize                                                                           | `locks` argument to `generateBuild`                      |
+| Symptom-based adjustments (smallest safe first)                                                      | `SYMPTOMS` + condition modifiers                         |
+| Feedback: lap times, event/route, symptoms, telemetry — refine without changing baseline             | feedback panel + `Feedback` schema; suggestions only     |
+| Save/share (permanent URL) + JSON export                                                             | `codec.ts` (URL) + `BuildExport`                         |
+| Confidence, assumptions, game/data version, disclaimer                                               | `GenerateResult` trust surface on every result           |
+| Admin/import to expand & correct data                                                                | `loadDataset` + import UI (validated by Zod)             |
+| Live FH6 telemetry                                                                                   | `apps/bridge` UDP→WS + in-app visualization              |
 
 ## Data model (versioned; per-record `source` + `confidence` + `dataVersion`)
 
@@ -52,14 +52,14 @@ validated `Dataset`. See [`packages/data/src/schemas.ts`](../packages/data/src/s
 - `apps/web` — React + Vite PWA (UI only; all math delegated to the engine).
 - `apps/bridge` — Node UDP→WebSocket telemetry companion + local static server.
 
-The **engine is fully separated from the UI** and has no framework imports. AI may *explain* results in
+The **engine is fully separated from the UI** and has no framework imports. AI may _explain_ results in
 the UI, but never produces the numbers.
 
 ## UX flow
 
 1. Pick a car. 2. Goal wizard (discipline → target class/PI → input → constraints). 3. Review ranked
-strategies (parts + PI + score + cost). 4. Open a strategy: parts checklist + tune in FH6 order (copyable).
-5. Adjust via symptoms. 6. Save/share/export. 7. Optionally connect telemetry / log feedback.
+   strategies (parts + PI + score + cost). 4. Open a strategy: parts checklist + tune in FH6 order (copyable).
+2. Adjust via symptoms. 6. Save/share/export. 7. Optionally connect telemetry / log feedback.
 
 ## Non-goals (MVP)
 

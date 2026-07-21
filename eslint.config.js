@@ -15,6 +15,9 @@ export default tseslint.config(
       '**/coverage/**',
       '**/dev-dist/**',
       '**/*.tsbuildinfo',
+      // Local distribution artifacts (untracked copies, not source)
+      'web/**',
+      'context/**',
     ],
   },
   js.configs.recommended,

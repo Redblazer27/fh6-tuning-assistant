@@ -27,6 +27,7 @@ common (balanced) score so the comparison is fair.
 ## BuiltSpec — deriving the built car (`buildSpec.ts`)
 
 From a car + a part selection:
+
 - **Power** = `stockHp × Π(powerMultiplier) + Σ(powerHpDelta)`.
 - **Mass** = `stockKg × Π(massMultiplier) + Σ(massKgDelta)`.
 - **Power-to-weight** = `hp / (kg/1000)`.
@@ -51,7 +52,7 @@ PI  = clamp(round(stockPI + Δpi), 100, 999)
 
 Coefficients (`PI_COEFF`): `pw 0.85, grip 320, aeroPerKgf 0.05, braking 90, launch 40`. Uncertainty band
 grows with the size of the change: `±clamp(6 + 0.12·|Δpi|, 6, 60)`. **Expected effect:** stock → exactly
-stockPI; slicks add ~90; full engine work adds tens–hundreds; off-road tires *lower* PI (worse on tarmac).
+stockPI; slicks add ~90; full engine work adds tens–hundreds; off-road tires _lower_ PI (worse on tarmac).
 
 ## Build optimizer (`optimizer.ts`)
 
@@ -72,22 +73,23 @@ ranking is never a black box.
 
 Every value is clamped/snapped to the car's legal `TuneRanges`, so output is always in-game-valid.
 
-| Section | Heuristic | Expected effect |
-| --- | --- | --- |
-| **Tire pressure** | Warm-target base per surface (tarmac 29 psi, dirt 26, snow 25); ± small bias to the heavier axle; drag lowers front/raises rear; drift raises rear; top-speed raises both. | Grip near target temp; compliance on loose surfaces; launch/stability tilt per discipline. |
-| **Gearing** | Final drive set so redline in top gear reaches a discipline top-speed target (`vmax = stockTop·∛(power/stockPower)`); gears spaced **geometrically** from a discipline 1st gear to an overdrive top gear. | Shifts land near peak power; short for dirt/technical, tall for top-speed. Requires race transmission to tune. |
-| **Alignment** | Camber negative by surface (less for drag/top-speed, more for slicks); small front toe-out for turn-in, rear toe-in for stability; caster ~5.5° (higher for drift, +0.3 on controller). | Cornering contact & responsive but stable steering. |
-| **Anti-roll bars** | Base stiffness fraction per surface, scaled to axle weight, then biased for balance (FWD stiffen rear, RWD stiffen front, style shifts rotation); drift = soft front / very stiff rear. | Primary handling-balance tool; stiffer rear = more rotation. |
-| **Springs + ride height** | Rate from **ride frequency**: `k = (2πf)²·m_cornerSprung` (tarmac ~2.2/2.35 Hz F/R, dirt ~1.5, drift stiffer front); ride height low for grip/aero, high for dirt, slight rake. | Balanced body control tuned to each corner's sprung mass. |
-| **Damping** | From a target **damping ratio** as a fraction of the slider range (tarmac rebound 0.6, dirt 0.42); bump = 0.7×rebound; rear ~5% firmer. | Controlled, planted body motion; softer on loose surfaces. |
-| **Aero** | Downforce level per discipline (road high, drag/top-speed zero); front balanced to weight distribution, slightly less to avoid understeer; clamped to the installed wing's capability. | More grip vs. more drag trade-off; `null` when no aero. |
-| **Brakes** | Balance ~50% ± weight-distribution bias; pressure 100% (−4 on controller, −2 smooth). | Stable braking, fewer lock-ups on a pad. |
-| **Differential** | Per drivetrain: RWD accel 40 (road)→95 (drift), decel 15–40; FWD low accel to cut understeer; AWD center 20–40% front + per-axle accel/decel; style shifts accel ±5. | Corner-exit traction & braking stability tuned to the goal. |
+| Section                   | Heuristic                                                                                                                                                                                                 | Expected effect                                                                                                |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| **Tire pressure**         | Warm-target base per surface (tarmac 29 psi, dirt 26, snow 25); ± small bias to the heavier axle; drag lowers front/raises rear; drift raises rear; top-speed raises both.                                | Grip near target temp; compliance on loose surfaces; launch/stability tilt per discipline.                     |
+| **Gearing**               | Final drive set so redline in top gear reaches a discipline top-speed target (`vmax = stockTop·∛(power/stockPower)`); gears spaced **geometrically** from a discipline 1st gear to an overdrive top gear. | Shifts land near peak power; short for dirt/technical, tall for top-speed. Requires race transmission to tune. |
+| **Alignment**             | Camber negative by surface (less for drag/top-speed, more for slicks); small front toe-out for turn-in, rear toe-in for stability; caster ~5.5° (higher for drift, +0.3 on controller).                   | Cornering contact & responsive but stable steering.                                                            |
+| **Anti-roll bars**        | Base stiffness fraction per surface, scaled to axle weight, then biased for balance (FWD stiffen rear, RWD stiffen front, style shifts rotation); drift = soft front / very stiff rear.                   | Primary handling-balance tool; stiffer rear = more rotation.                                                   |
+| **Springs + ride height** | Rate from **ride frequency**: `k = (2πf)²·m_cornerSprung` (tarmac ~2.2/2.35 Hz F/R, dirt ~1.5, drift stiffer front); ride height low for grip/aero, high for dirt, slight rake.                           | Balanced body control tuned to each corner's sprung mass.                                                      |
+| **Damping**               | From a target **damping ratio** as a fraction of the slider range (tarmac rebound 0.6, dirt 0.42); bump = 0.7×rebound; rear ~5% firmer.                                                                   | Controlled, planted body motion; softer on loose surfaces.                                                     |
+| **Aero**                  | Downforce level per discipline (road high, drag/top-speed zero); front balanced to weight distribution, slightly less to avoid understeer; clamped to the installed wing's capability.                    | More grip vs. more drag trade-off; `null` when no aero.                                                        |
+| **Brakes**                | Balance ~50% ± weight-distribution bias; pressure 100% (−4 on controller, −2 smooth).                                                                                                                     | Stable braking, fewer lock-ups on a pad.                                                                       |
+| **Differential**          | Per drivetrain: RWD accel 40 (road)→95 (drift), decel 15–40; FWD low accel to cut understeer; AWD center 20–40% front + per-axle accel/decel; style shifts accel ±5.                                      | Corner-exit traction & braking stability tuned to the goal.                                                    |
 
 ### Simplifications (documented, for honesty)
+
 - Tuning-category unlocks are coarse (e.g., any race transmission unlocks full gearing; sport-vs-race
   final-drive-only granularity is not modelled).
-- Different race/rally/drift differentials are treated equivalently for the *tune*; the discipline drives
+- Different race/rally/drift differentials are treated equivalently for the _tune_; the discipline drives
   the diff values, not which diff part.
 - Tire radius uses a default (0.33 m) unless a car provides more detail; gearing is the least precise
   area and a prime candidate for feedback-driven refinement.

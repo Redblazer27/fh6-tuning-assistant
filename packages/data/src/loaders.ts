@@ -17,7 +17,8 @@ export function loadDataset(raw: unknown): Dataset {
   for (const car of dataset.cars) {
     if (carIds.has(car.id)) problems.push(`Duplicate car id: ${car.id}`);
     carIds.add(car.id);
-    if (!sourceIds.has(car.source)) problems.push(`Car ${car.id} cites unknown source ${car.source}`);
+    if (!sourceIds.has(car.source))
+      problems.push(`Car ${car.id} cites unknown source ${car.source}`);
     if (piToClass(car.stockPI) !== car.stockClass) {
       problems.push(
         `Car ${car.id}: stockPI ${car.stockPI} maps to ${piToClass(car.stockPI)}, not ${car.stockClass}`,
@@ -41,7 +42,8 @@ export function loadDataset(raw: unknown): Dataset {
   }
 
   const hasDefaultRanges = dataset.tuneRanges.some((tr) => tr.appliesToCarId === null);
-  if (!hasDefaultRanges) problems.push('No default tune-ranges template (appliesToCarId === null).');
+  if (!hasDefaultRanges)
+    problems.push('No default tune-ranges template (appliesToCarId === null).');
 
   if (problems.length > 0) {
     throw new Error(`Dataset integrity check failed:\n - ${problems.join('\n - ')}`);
@@ -95,8 +97,7 @@ export function createDataStore(dataset: Dataset): DataStore {
     getSource: (id) => sourcesById.get(id),
     getPart: (id) => partsById.get(id),
     getPartsByCategory: (category) => partsByCategory.get(category) ?? [],
-    getStockPart: (category) =>
-      (partsByCategory.get(category) ?? []).find((p) => p.tierRank === 0),
+    getStockPart: (category) => (partsByCategory.get(category) ?? []).find((p) => p.tierRank === 0),
     getTuneRanges: (carId) => rangesByCar.get(carId) ?? defaultRanges,
   };
 }

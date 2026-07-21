@@ -26,15 +26,18 @@ An optional **local telemetry bridge** ingests FH6's "Data Out" UDP feed.
 ## Three ways to use it
 
 ### 1. Download a release (no install, no Node required) — recommended for players
+
 Grab the latest build from the repository's **Releases** page, unzip the file for your OS, and run the
 `fh6-bridge` executable. It starts a small local server (and the FH6 telemetry listener) and prints a
 `http://localhost:...` URL — open it in your browser for the full app **plus live telemetry**.
 
 ### 2. Open the hosted web build (zero download) — browser only
+
 The app is also published to **GitHub Pages** (see the repo's Pages URL). This gives you the full tuning
 assistant in the browser; live telemetry is only available with the downloadable bridge (option 1).
 
 ### 3. Develop it — Codespaces or local
+
 - **GitHub Codespaces:** open the repo in a Codespace (Node is preinstalled). Run `npm run dev`.
 - **Local:** install **Node.js 20 LTS** (<https://nodejs.org>), then:
   ```bash
@@ -77,17 +80,17 @@ is used as a numerical authority.
 
 ## Scripts
 
-| Command | What it does |
-| --- | --- |
-| `npm run dev` | Start the web app (Vite dev server) |
-| `npm run build` | Build the web PWA to `apps/web/dist` |
-| `npm run bridge` | Run the telemetry bridge + local app server |
-| `npm test` | Run the full Vitest suite |
-| `npm run coverage` | Tests with coverage |
-| `npm run lint` | ESLint |
-| `npm run typecheck` | TypeScript type check (no emit) |
-| `npm run format` | Prettier write |
-| `npm run check` | format check + lint + typecheck + test |
+| Command                   | What it does                                                         |
+| ------------------------- | -------------------------------------------------------------------- |
+| `npm run dev`             | Start the web app (Vite dev server)                                  |
+| `npm run build`           | Build the web PWA to `apps/web/dist`                                 |
+| `npm run bridge`          | Run the telemetry bridge + local app server                          |
+| `npm test`                | Run the full Vitest suite                                            |
+| `npm run coverage`        | Tests with coverage                                                  |
+| `npm run lint`            | ESLint                                                               |
+| `npm run typecheck`       | TypeScript type check (no emit)                                      |
+| `npm run format`          | Prettier write                                                       |
+| `npm run check`           | format check + lint + typecheck + test                               |
 | `npm run package:release` | Build downloadable standalone bundles (used by the release workflow) |
 
 ## Data & accuracy
@@ -101,7 +104,7 @@ use the in-app **Admin / Import** tools to expand and correct it. See
 ## Reporting in-game results
 
 Use the **Feedback** panel to log lap times, event/route, surface, handling symptoms, and telemetry
-observations against a saved build. Feedback is used to *suggest* refinements — it never silently changes
+observations against a saved build. Feedback is used to _suggest_ refinements — it never silently changes
 your baseline tune. Exports are portable JSON.
 
 ## License

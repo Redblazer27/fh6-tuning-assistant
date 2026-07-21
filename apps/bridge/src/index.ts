@@ -55,7 +55,9 @@ const bridge = createBridge({
 });
 
 void bridge.start().then(() => {
-  console.log('[fh6-bridge] ready. In FH6: Settings → HUD and Gameplay → Data Out = On, 127.0.0.1:20440');
+  console.log(
+    '[fh6-bridge] ready. In FH6: Settings → HUD and Gameplay → Data Out = On, 127.0.0.1:20440',
+  );
   console.log('[fh6-bridge] Press Ctrl+C to stop.');
 });
 

@@ -21,7 +21,12 @@ describe('PI estimate (stock-anchored)', () => {
 
   it('adding grip + power raises PI above stock', () => {
     const car = store.getCar('mazda-mx5-nd-2019')!;
-    const spec = buildSpec(store, car, { tire_compound: 'tire-slick', intake: 'intake-race' }, 'tarmac');
+    const spec = buildSpec(
+      store,
+      car,
+      { tire_compound: 'tire-slick', intake: 'intake-race' },
+      'tarmac',
+    );
     const pi = estimatePI(car, spec);
     expect(pi.pi).toBeGreaterThan(car.stockPI);
     expect(pi.uncertainty).toBeGreaterThan(0);
@@ -42,7 +47,12 @@ describe('tuning output legality', () => {
   it('produces gears in strictly descending order', () => {
     const car = store.getCar('bmw-m3-e46-2005')!;
     const spec = buildSpec(store, car, { transmission: 'trans-race' }, DISCIPLINE_SURFACE.road);
-    const tune = computeTune(car, spec, store.getTuneRanges(car.id), makeRequest({ carId: car.id }));
+    const tune = computeTune(
+      car,
+      spec,
+      store.getTuneRanges(car.id),
+      makeRequest({ carId: car.id }),
+    );
     const g = tune.tune.gearing.gears;
     for (let i = 1; i < g.length; i += 1) expect(g[i]!).toBeLessThanOrEqual(g[i - 1]!);
   });
@@ -50,7 +60,11 @@ describe('tuning output legality', () => {
 
 describe('determinism', () => {
   it('produces identical output for identical input', () => {
-    const req = makeRequest({ carId: 'subaru-wrx-sti-2019', discipline: 'rally', targetClass: 'A' });
+    const req = makeRequest({
+      carId: 'subaru-wrx-sti-2019',
+      discipline: 'rally',
+      targetClass: 'A',
+    });
     const a = generateBuild(store, req);
     const b = generateBuild(store, req);
     expect(JSON.stringify(serialize(a))).toBe(JSON.stringify(serialize(b)));

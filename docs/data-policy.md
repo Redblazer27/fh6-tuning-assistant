@@ -19,13 +19,13 @@ we never present uncertain data as exact, and so any value can be traced, questi
 
 ## Confidence levels
 
-| Level | Meaning | Typical source |
-| --- | --- | --- |
-| `high` | Official, authoritative | forza.net car list, Forza Support Data Out docs |
-| `medium` | Reputable community, cross-checkable | Forza Wiki (Fandom), established tuning guides |
-| `low` | Inferred / modelled by this app | our physics & PI model, generic part-effect estimates |
+| Level    | Meaning                              | Typical source                                        |
+| -------- | ------------------------------------ | ----------------------------------------------------- |
+| `high`   | Official, authoritative              | forza.net car list, Forza Support Data Out docs       |
+| `medium` | Reputable community, cross-checkable | Forza Wiki (Fandom), established tuning guides        |
+| `low`    | Inferred / modelled by this app      | our physics & PI model, generic part-effect estimates |
 
-**Overall confidence** shown to the user is the *lowest* confidence among the inputs that produced a
+**Overall confidence** shown to the user is the _lowest_ confidence among the inputs that produced a
 result (a build using `low`-confidence part estimates is reported as `low`, even if the car is `medium`).
 
 ## Sources (seed)
@@ -52,7 +52,7 @@ See [`packages/data/src/seed/sources.ts`](../packages/data/src/seed/sources.ts).
 ## The estimated-PI stance
 
 FH6's exact PI formula is proprietary. We do **not** guess an absolute PI. Instead we **anchor to the
-car's known stock PI** (a data fact) and model only the *delta* from the parts you add. A stock build
+car's known stock PI** (a data fact) and model only the _delta_ from the parts you add. A stock build
 therefore estimates exactly the stock PI; an upgraded build estimates `stockPI + Δ`, always shown with a
 `±` band and a confidence label. This is honest, testable, and easy to correct as real data arrives.
 
