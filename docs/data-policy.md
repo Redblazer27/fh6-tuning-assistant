@@ -65,10 +65,13 @@ therefore estimates exactly the stock PI; an upgraded build estimates `stockPI +
   aspiration/engine) and carry medium confidence; the ~90 unmatched cars have physics filled with
   class-based defaults at build time (low). **Per-car upgrade profiles** (engine-swap options,
   drivetrain swaps, aspiration, rotary/electric engine type) come from the wiki's `CarConversions`
-  data for ~600 cars. **Swap engines** are modelled as `engine_swap` parts from the wiki's
-  `EngineSwapInfobox` (base power, aspiration) — ~65 engines with real specs, opt-in per car via the
-  profile's `availableEngineSwapIds` so builds simulate the swap's real power. Cars whose swap engines
-  aren't yet spec'd keep the option name (descriptive) + a generic swap. Enrich/correct via Admin/Import.
+  data. Where the wiki hasn't filled the FH6 line yet, the importer falls back to the most recent
+  prior Horizon title (FH5→…) as a **proxy**, marked `low` confidence with a note — this lifts
+  engine-swap coverage to ~515 cars and drivetrain to ~410. **Swap engines** are modelled as
+  `engine_swap` parts from the wiki's `EngineSwapInfobox` (base power, aspiration) — ~130 engines with
+  real specs (some pages are red links, so power is read from the engine name, e.g. "… (315 hp)"),
+  opt-in per car via the profile's `availableEngineSwapIds` so builds simulate the swap's real power.
+  ~110 cars have no `CarConversions` entry at all (locked upgrade paths). Enrich/correct via Admin/Import.
 - Stock stats / PI for seed cars are **estimates** (medium/low). Cross-check against official data and
   correct.
 - Part effect magnitudes are generic estimates (`medium`/`low`), not per-car measured values.

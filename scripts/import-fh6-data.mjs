@@ -198,15 +198,39 @@ const aspMap = (a) => {
   if (a === 'na' || a.includes('natural')) return 'NA';
   return undefined;
 };
+// Aspiration inferred from an engine's name (for engines with no wiki page).
+const aspFromName = (n) => {
+  if (/-TT|twin[\s-]?turbo/i.test(n)) return 'twin_turbo';
+  if (/-T\b|(?<![a-z])turbo/i.test(n)) return 'turbo';
+  if (/supercharg/i.test(n)) return 'supercharged';
+  return undefined;
+};
 
 function parseCar(title, wt) {
   const info = extractTemplate(wt, 'CarInfobox')
     ? parseParams(extractTemplate(wt, 'CarInfobox'))
     : {};
+  // Conversions: prefer the FH6 line; if the wiki hasn't filled it in yet, fall back
+  // to the most recent prior Horizon title as a (labelled) proxy.
   const conv = {};
+  let convProxy = false;
+  const FH_ORDER = ['fh6', 'fh5', 'fh4', 'fh3', 'fh2'];
   for (const kind of ['eng', 'drive', 'asp']) {
     const b = extractTemplate(wt, `CarConversions|${kind}`);
-    conv[kind] = b ? (parseParams(b).fh6 ?? null) : null;
+    if (!b) {
+      conv[kind] = null;
+      continue;
+    }
+    const params = parseParams(b);
+    let val = null;
+    for (const g of FH_ORDER) {
+      if (params[g]) {
+        val = params[g];
+        if (g !== 'fh6') convProxy = true;
+        break;
+      }
+    }
+    conv[kind] = val;
   }
   const wLbs = info.weight ? Number(String(info.weight).replace(/[^0-9.]/g, '')) : undefined;
   const num = (v) => (v ? Number(String(v).replace(/[^0-9.]/g, '')) : undefined);
@@ -220,6 +244,7 @@ function parseCar(title, wt) {
   return {
     title,
     pi,
+    convProxy,
     make: info.manufacturer,
     model: info.model,
     year: info.year ? Number(info.year) : undefined,
@@ -277,22 +302,27 @@ async function fetchWikitext(titles, parse, label) {
   const out = [];
   for (let i = 0; i < titles.length; i += 50) {
     const chunk = titles.slice(i, i + 50);
-    const url = `${api}?action=query&prop=revisions&rvslots=main&rvprop=content&format=json&formatversion=2&titles=${encodeURIComponent(chunk.join('|'))}`;
+    const url = `${api}?action=query&prop=revisions&rvslots=main&rvprop=content&redirects=1&format=json&formatversion=2&titles=${encodeURIComponent(chunk.join('|'))}`;
     for (let a = 0; a < 3; a++) {
       try {
         const r = await fetch(url, { headers: { 'User-Agent': UA } });
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         const j = await r.json();
-        // Map redirects back to the requested title so link targets resolve.
-        const redir = new Map((j.query.redirects ?? []).map((x) => [x.to, x.from]));
+        // Map each resolved page back to every alias (redirect/normalized) that
+        // requested it, so a link target like "2.0L I4" resolves to its real page.
+        const aliases = new Map(); // resolved title -> [requested names]
+        for (const x of [...(j.query.redirects ?? []), ...(j.query.normalized ?? [])]) {
+          if (!aliases.has(x.to)) aliases.set(x.to, []);
+          aliases.get(x.to).push(x.from);
+        }
         for (const page of j.query.pages) {
           const wt = page.revisions?.[0]?.slots?.main?.content;
           if (wt) {
             const v = parse(page.title, wt);
             if (v) {
               out.push(v);
-              const from = redir.get(page.title);
-              if (from && from !== page.title) out.push({ ...v, title: from });
+              for (const from of aliases.get(page.title) ?? [])
+                if (from !== page.title) out.push({ ...v, title: from });
             }
           }
         }
@@ -437,6 +467,7 @@ async function main() {
         dtIds,
         eng: f.engineSwaps,
         asp: f.aspirationSwaps,
+        proxy: f.convProxy,
       });
     }
   }
@@ -449,11 +480,22 @@ async function main() {
   const engines = await fetchWikitext(engineNames, parseEngine, 'engines');
   const engById = new Map();
   for (const e of engines) if (e.power > 0 && !engById.has(e.title)) engById.set(e.title, e);
+  // Fallback: engines with no wiki page but whose name encodes the power, e.g.
+  // "2.0L I4-T (315 hp)". Aspiration inferred from the name.
+  let fromName = 0;
+  for (const name of engineNames) {
+    if (engById.has(name)) continue;
+    const hp = name.match(/\((\d{2,4})\s*hp\)/i);
+    if (hp) {
+      engById.set(name, { title: name, power: Number(hp[1]), aspiration: aspFromName(name) });
+      fromName++;
+    }
+  }
   const engIdOf = (name) => `eng-${slug(name)}`;
   for (const p of profiles)
     p.engIds = [...new Set(p.eng.filter((n) => engById.has(n)).map(engIdOf))];
   console.log(
-    `  ${engById.size} engines with specs; wired to ${profiles.filter((p) => p.engIds.length).length} cars.`,
+    `  ${engById.size} engines with specs (${fromName} from name); wired to ${profiles.filter((p) => p.engIds.length).length} cars.`,
   );
 
   const carLit = (c) => {
@@ -512,9 +554,13 @@ ${cars.map(carLit).join(',\n')},
     if (p.asp.length) L.push(`    aspirationOptions: ${arr(p.asp)},`);
     L.push(
       `    source: 'fandom-fh6-cars',`,
-      `    confidence: 'medium',`,
+      `    confidence: ${p.proxy ? "'low'" : "'medium'"},`,
       `    dataVersion: DATA_VERSION,`,
     );
+    if (p.proxy)
+      L.push(
+        `    notes: 'Conversions from a prior Forza Horizon title; the FH6 line is not yet on the wiki.',`,
+      );
     return `  {\n${L.join('\n')}\n  }`;
   };
   writeFileSync(
