@@ -13,9 +13,17 @@ Last updated: 2026-07-21
   GitHub Actions (CI, Pages deploy, downloadable Release), README, `.gitignore`, git initialized.
 - **`packages/shared`:** enums/units, tune & build types, transparent scoring types, isomorphic
   share/export codec, telemetry frame + session summary. Tests: codec round-trip, class mapping, units.
-- **`packages/data`:** Zod schemas for the full versioned model; curated seed (17 cars, part catalog,
-  tune-range template, sources, game version) with per-record source + confidence; loader with schema +
+- **`packages/data`:** Zod schemas for the full versioned model; loader with schema +
   referential-integrity validation; indexed store. Tests: seed loads, integrity failures, store indexing.
+  - **Roster:** the **full official FH6 car list (~620 cars)** imported deterministically from
+    forza.net/fh6cars (`scripts/import-forza-roster.mjs`, `seed/roster-cars.ts`) plus ~17 hand-curated
+    cars with real physics. Roster cars carry official identity/class/PI/DLC only.
+  - **Per-car upgrade profiles** (`carUpgradeProfileSchema`): engine type, engine/drivetrain swap
+    allowlists, locked categories, restricted parts — so rotary/hypercar/limited-swap cars differ from
+    the global catalog. The optimizer draws candidates from the car-aware catalog.
+  - **Optional physics:** cars may omit mass/power/drivetrain/aspiration; the engine's
+    `resolveEffectiveCar` fills class-based defaults at build time and labels those builds low
+    confidence. FH6 class bands corrected to D..R (were FH5-era D..X).
 - **`packages/engine` (pure, deterministic):** buildSpec, stock-anchored estimated PI, constraints/rules
   engine, coordinate-ascent build optimizer, full vehicle-dynamics tuning engine, symptom rules,
   transparent scoring, `generateBuild` orchestration. Tests: PI anchoring, range-legality, determinism,
@@ -81,4 +89,7 @@ Last updated: 2026-07-21
 
 - Browsers can't read UDP → live telemetry requires the local bridge companion (shipped).
 - Exact FH6 PI formula & some tune units are not public → modelled transparently with confidence labels.
-- Seed is a curated starter set, not the full 550+ roster.
+- Roster is complete (~637 cars) but **physics for the ~620 official cars is estimated** (class-based
+  defaults, low confidence) — real mass/power/drivetrain/aspiration and per-car upgrade/swap data are
+  not bulk-available (Fandom blocks scraping; community DBs are JS-rendered). Enrich via Admin/Import,
+  community sources, or in-game capture. A few official cars may near-duplicate curated ones.
