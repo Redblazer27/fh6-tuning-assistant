@@ -1,0 +1,40 @@
+name: Release (downloadable bundles)
+
+# Produces the "download the latest release, run it locally, no Node required" artifacts.
+# Triggered by pushing a version tag, e.g.:  git tag v0.1.0 && git push origin v0.1.0
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Build web PWA
+        run: npm run build
+
+      - name: Package standalone bundles (win/mac/linux, no Node required)
+        run: npm run package:release
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*.zip
+          generate_release_notes: true
+          fail_on_unmatched_files: true

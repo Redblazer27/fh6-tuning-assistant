@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "@fh6/shared": ["../../packages/shared/src/index.ts"],
+      "@fh6/data": ["../../packages/data/src/index.ts"],
+      "@fh6/engine": ["../../packages/engine/src/index.ts"]
+    }
+  },
+  "include": ["src", "vite.config.ts"]
+}

@@ -1,0 +1,24 @@
+{
+  "name": "@fh6/bridge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "fh6-bridge": "./dist/fh6-bridge.cjs"
+  },
+  "scripts": {
+    "start": "tsx src/index.ts",
+    "bundle": "esbuild src/index.ts --bundle --platform=node --target=node20 --format=cjs --outfile=dist/fh6-bridge.cjs",
+    "build": "npm run bundle",
+    "typecheck": "tsc --noEmit -p ../../tsconfig.json"
+  },
+  "dependencies": {
+    "@fh6/shared": "*",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.5.12",
+    "esbuild": "^0.24.0",
+    "tsx": "^4.19.1"
+  }
+}

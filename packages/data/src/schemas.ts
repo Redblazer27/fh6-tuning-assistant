@@ -1,0 +1,198 @@
+import { z } from 'zod';
+import {
+  ASPIRATIONS,
+  CLASS_LETTERS,
+  CONFIDENCE_LEVELS,
+  DRIVETRAINS,
+  SOURCE_TYPES,
+  TIRE_COMPOUNDS,
+  TUNING_CATEGORIES,
+  UPGRADE_CATEGORIES,
+} from '@fh6/shared';
+
+/**
+ * Runtime schemas for all versioned data records. These are the single validation
+ * authority: seed data, admin imports, and community imports all pass through here.
+ * Types are inferred from the schemas (see types.ts) so the code and validation
+ * can never drift apart.
+ */
+
+/** Build a Zod enum from a shared readonly const array while preserving its union type. */
+const enumOf = <T extends readonly [string, ...string[]]>(values: T) =>
+  z.enum(values as unknown as [T[number], ...T[number][]]);
+
+export const drivetrainSchema = enumOf(DRIVETRAINS);
+export const aspirationSchema = enumOf(ASPIRATIONS);
+export const tireCompoundSchema = enumOf(TIRE_COMPOUNDS);
+export const classLetterSchema = enumOf(CLASS_LETTERS);
+export const confidenceSchema = enumOf(CONFIDENCE_LEVELS);
+export const sourceTypeSchema = enumOf(SOURCE_TYPES);
+export const upgradeCategorySchema = enumOf(UPGRADE_CATEGORIES);
+export const tuningCategorySchema = enumOf(TUNING_CATEGORIES);
+
+// --- Provenance shared by most records ---------------------------------------
+export const provenanceSchema = z.object({
+  /** Source record id (see sources.ts). */
+  source: z.string().min(1),
+  confidence: confidenceSchema,
+  /** Data version this record was authored/verified against. */
+  dataVersion: z.string().min(1),
+  notes: z.string().optional(),
+});
+
+// --- Game / data version ------------------------------------------------------
+export const gameVersionSchema = z.object({
+  gameVersion: z.string().min(1),
+  patch: z.string().optional(),
+  dataVersion: z.string().min(1),
+  releaseDate: z.string().min(1),
+  notes: z.string().optional(),
+});
+
+// --- Sources ------------------------------------------------------------------
+export const sourceSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  url: z.string().url().optional(),
+  type: sourceTypeSchema,
+  /** Default confidence for records that cite this source without their own. */
+  defaultConfidence: confidenceSchema,
+  notes: z.string().optional(),
+});
+
+// --- Cars ---------------------------------------------------------------------
+export const carStatsSchema = z.object({
+  /** FH-style 0..10 star ratings (as shown on the stock car card). */
+  speed: z.number().min(0).max(10),
+  handling: z.number().min(0).max(10),
+  acceleration: z.number().min(0).max(10),
+  launch: z.number().min(0).max(10),
+  braking: z.number().min(0).max(10),
+});
+
+export const carSchema = provenanceSchema.extend({
+  id: z.string().min(1),
+  year: z.number().int().min(1900).max(2100),
+  make: z.string().min(1),
+  model: z.string().min(1),
+  /** Full display name, e.g. "1998 Toyota Supra RZ". */
+  name: z.string().min(1),
+  /** How the player obtains it: base game, or a DLC/car-pack name. */
+  ownership: z.string().min(1),
+  isBaseGame: z.boolean(),
+  stockClass: classLetterSchema,
+  stockPI: z.number().int().min(100).max(999),
+  drivetrain: drivetrainSchema,
+  massKg: z.number().positive(),
+  /** Static front weight distribution, percent (e.g. 53 = 53% front). */
+  weightDistFrontPct: z.number().min(20).max(80),
+  powerHp: z.number().positive(),
+  torqueNm: z.number().positive().optional(),
+  aspiration: aspirationSchema,
+  engineName: z.string().optional(),
+  displacementL: z.number().positive().optional(),
+  cylinders: z.number().int().positive().optional(),
+  stockTireCompound: tireCompoundSchema,
+  stats: carStatsSchema,
+  /** Optional physical hints; sensible defaults are used when absent. */
+  wheelbaseMm: z.number().positive().optional(),
+  redlineRpm: z.number().positive().optional(),
+  powerPeakRpm: z.number().positive().optional(),
+  stockTopSpeedKmh: z.number().positive().optional(),
+});
+
+// --- Parts (upgrades you buy) -------------------------------------------------
+export const aeroCapabilitySchema = z.object({
+  /** Downforce capability the installed aero part provides, in kgf. */
+  minKgf: z.number().min(0),
+  maxKgf: z.number().min(0),
+});
+
+export const partEffectsSchema = z.object({
+  powerMultiplier: z.number().positive().optional(),
+  powerHpDelta: z.number().optional(),
+  massKgDelta: z.number().optional(),
+  massMultiplier: z.number().positive().optional(),
+  /** Mechanical grip multiplier (tires, width, compound). */
+  gripMultiplier: z.number().positive().optional(),
+  brakingMultiplier: z.number().positive().optional(),
+  launchMultiplier: z.number().positive().optional(),
+  /** Adjustable aero capability unlocked by this part. */
+  aeroFront: aeroCapabilitySchema.optional(),
+  aeroRear: aeroCapabilitySchema.optional(),
+});
+
+export const partSchema = provenanceSchema.extend({
+  id: z.string().min(1),
+  category: upgradeCategorySchema,
+  name: z.string().min(1),
+  /** Progression rank within a category (0 = stock). Higher = more upgraded. */
+  tierRank: z.number().int().min(0),
+  /** Short tier label, e.g. 'stock' | 'street' | 'sport' | 'race' | 'rally' | 'drift'. */
+  tier: z.string().min(1),
+  effects: partEffectsSchema.default({}),
+  /** Tuning menu sections this part unlocks. */
+  unlocks: z.array(tuningCategorySchema).default([]),
+  /** Conversion outcomes. */
+  setsDrivetrain: drivetrainSchema.optional(),
+  setsAspiration: aspirationSchema.optional(),
+  setsTireCompound: tireCompoundSchema.optional(),
+  /** Estimated credit cost. */
+  cost: z.number().min(0).default(0),
+  /** Whether this is a visible/body change (affects the "stock-looking" constraint). */
+  cosmeticVisible: z.boolean().default(false),
+  /** If true, this part is a wing/splitter subject to the "no aero" constraint. */
+  isAeroPart: z.boolean().default(false),
+});
+
+// --- Tunable ranges -----------------------------------------------------------
+const rangeSchema = z.object({
+  min: z.number(),
+  max: z.number(),
+  step: z.number().positive(),
+});
+
+export const tuneRangesSchema = provenanceSchema.extend({
+  /** null id = the default template; otherwise a car id override. */
+  id: z.string().min(1),
+  appliesToCarId: z.string().nullable().default(null),
+  tirePressurePsi: rangeSchema,
+  finalDrive: rangeSchema,
+  gearRatio: rangeSchema,
+  camberDeg: rangeSchema,
+  toeDeg: rangeSchema,
+  casterDeg: rangeSchema,
+  arb: rangeSchema,
+  springRate: rangeSchema.extend({ unit: z.enum(['kgf/mm', 'lbf/in', 'N/mm']) }),
+  rideHeight: rangeSchema.extend({ unit: z.enum(['cm', 'in']) }),
+  damping: rangeSchema,
+  aero: rangeSchema.extend({ unit: z.enum(['kgf', 'lbf']) }),
+  brakeBalancePct: rangeSchema,
+  brakePressurePct: rangeSchema,
+  differentialPct: rangeSchema,
+});
+
+// --- Feedback (user-reported results; stored client-side) ---------------------
+export const feedbackSymptomSchema = z.string().min(1);
+
+export const feedbackSchema = z.object({
+  buildId: z.string().min(1),
+  createdAt: z.string().min(1),
+  lapTimeSec: z.number().positive().optional(),
+  event: z.string().optional(),
+  route: z.string().optional(),
+  surface: z.string().optional(),
+  symptoms: z.array(feedbackSymptomSchema).default([]),
+  notes: z.string().optional(),
+  /** Optional summarized telemetry signals (from the bridge / CSV import). */
+  telemetrySummary: z.record(z.string(), z.number()).optional(),
+});
+
+// --- The complete versioned dataset ------------------------------------------
+export const datasetSchema = z.object({
+  version: gameVersionSchema,
+  sources: z.array(sourceSchema).min(1),
+  cars: z.array(carSchema).min(1),
+  parts: z.array(partSchema).min(1),
+  tuneRanges: z.array(tuneRangesSchema).min(1),
+});

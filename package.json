@@ -1,0 +1,47 @@
+{
+  "name": "fh6-tuning-assistant",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A real optimization and tuning assistant for Forza Horizon 6: build optimizer, PI/rules engine, deterministic vehicle-dynamics tuning engine, versioned data, and live telemetry.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @fh6/web",
+    "build": "npm run build -w @fh6/web",
+    "build:bridge": "npm run build -w @fh6/bridge",
+    "bridge": "npm run start -w @fh6/bridge",
+    "package:release": "node scripts/package-release.mjs",
+    "preview": "npm run preview -w @fh6/web",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm run test"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.11.0",
+    "@types/node": "^20.14.0",
+    "@typescript-eslint/eslint-plugin": "^8.8.0",
+    "@typescript-eslint/parser": "^8.8.0",
+    "@vitest/coverage-v8": "^2.1.2",
+    "eslint": "^9.11.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "eslint-plugin-react-refresh": "^0.4.12",
+    "globals": "^15.10.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.2",
+    "typescript-eslint": "^8.8.0",
+    "vitest": "^2.1.2"
+  }
+}

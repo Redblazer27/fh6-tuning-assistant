@@ -1,0 +1,27 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@fh6/shared": ["packages/shared/src/index.ts"],
+      "@fh6/shared/*": ["packages/shared/src/*"],
+      "@fh6/data": ["packages/data/src/index.ts"],
+      "@fh6/data/*": ["packages/data/src/*"],
+      "@fh6/engine": ["packages/engine/src/index.ts"],
+      "@fh6/engine/*": ["packages/engine/src/*"]
+    }
+  },
+  "include": [
+    "packages/*/src/**/*.ts",
+    "packages/*/src/**/*.tsx",
+    "packages/*/test/**/*.ts",
+    "apps/*/src/**/*.ts",
+    "apps/*/src/**/*.tsx",
+    "apps/*/test/**/*.ts",
+    "vitest.config.ts",
+    "eslint.config.js"
+  ],
+  "exclude": ["node_modules", "**/dist/**", "**/build/**", "**/release/**"]
+}
