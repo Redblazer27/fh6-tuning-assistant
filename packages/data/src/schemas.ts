@@ -74,7 +74,9 @@ export const carStatsSchema = z.object({
 
 export const carSchema = provenanceSchema.extend({
   id: z.string().min(1),
-  year: z.number().int().min(1900).max(2100),
+  // Upper bound is generous: FH6 includes fictional/future vehicles (e.g. the
+  // Halo "Warthog", model year 2554).
+  year: z.number().int().min(1900).max(3000),
   make: z.string().min(1),
   model: z.string().min(1),
   /** Full display name, e.g. "1998 Toyota Supra RZ". */

@@ -11,7 +11,18 @@ import {
 describe('seed dataset', () => {
   it('loads and passes integrity checks', () => {
     expect(() => loadDataset(rawSeed)).not.toThrow();
-    expect(defaultDataset.cars.length).toBeGreaterThanOrEqual(15);
+    // Curated set + the full official roster.
+    expect(defaultDataset.cars.length).toBeGreaterThanOrEqual(600);
+  });
+
+  it('includes official-roster cars (identity-only, physics absent)', () => {
+    const roster = defaultDataset.cars.filter((c) => c.source === 'forza-official-cars');
+    expect(roster.length).toBeGreaterThanOrEqual(500);
+    // Roster cars carry authoritative identity/class/PI but no physics.
+    const sample = roster[0]!;
+    expect(sample.stockPI).toBeGreaterThan(0);
+    expect(sample.drivetrain).toBeUndefined();
+    expect(sample.massKg).toBeUndefined();
   });
 
   it('every car stockPI matches its stockClass', () => {

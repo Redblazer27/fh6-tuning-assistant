@@ -58,7 +58,11 @@ therefore estimates exactly the stock PI; an upgraded build estimates `stockPI +
 
 ## Seed-data limitations (current)
 
-- The seed roster is ~17 curated cars, not the full 550+. Expand via Admin/Import.
+- The roster is the **full official FH6 car list** (~620 cars, imported deterministically from
+  forza.net/fh6cars by `scripts/import-forza-roster.mjs`) plus ~17 hand-curated cars with real
+  physics. Roster cars carry authoritative identity/class/PI/DLC (high) but **no physics** — mass,
+  power, drivetrain, and aspiration are filled with generic class-based defaults at build time, so
+  their builds are labelled **low confidence** until real specs are imported. Enrich via Admin/Import.
 - Stock stats / PI for seed cars are **estimates** (medium/low). Cross-check against official data and
   correct.
 - Part effect magnitudes are generic estimates (`medium`/`low`), not per-car measured values.
