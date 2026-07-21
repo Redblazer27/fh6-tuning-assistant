@@ -69,7 +69,6 @@ const slug = (s) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 const key = (mk, md, yr) => `${norm(mk)}|${norm(md)}|${yr}`;
-const keyNY = (mk, md) => `${norm(mk)}|${norm(md)}`;
 const stripTags = (s) =>
   s
     .replace(/<[^>]+>/g, '')
