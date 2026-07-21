@@ -1,6 +1,7 @@
 import type { Drivetrain, Surface, TuningCategory } from '@fh6/shared';
-import type { Car, DataStore, Part } from '@fh6/data';
+import type { DataStore, Part } from '@fh6/data';
 import { tireGrip } from './constants.ts';
+import type { ResolvedCar } from './effectiveCar.ts';
 import type { AeroCapability, BuiltSpec, PartSelection } from './types.ts';
 
 export const LAUNCH_BASE: Record<Drivetrain, number> = { AWD: 1.2, RWD: 1.0, FWD: 0.85 };
@@ -29,7 +30,7 @@ export function resolvePart(
  */
 export function buildSpec(
   store: DataStore,
-  car: Car,
+  car: ResolvedCar,
   selection: PartSelection,
   surface: Surface,
 ): BuiltSpec {

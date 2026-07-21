@@ -14,7 +14,7 @@ export function CarPicker({ cars, selectedId, onSelect }: Props) {
     const needle = q.trim().toLowerCase();
     if (!needle) return cars;
     return cars.filter((c) =>
-      `${c.year} ${c.make} ${c.model} ${c.name} ${c.drivetrain} ${c.stockClass}`
+      `${c.year} ${c.make} ${c.model} ${c.name} ${c.drivetrain ?? ''} ${c.stockClass}`
         .toLowerCase()
         .includes(needle),
     );
@@ -43,7 +43,14 @@ export function CarPicker({ cars, selectedId, onSelect }: Props) {
             <div>
               <div>{c.name}</div>
               <div className="meta">
-                {c.drivetrain} · {c.powerHp} hp · {Math.round(c.massKg)} kg · {c.ownership}
+                {[
+                  c.drivetrain,
+                  typeof c.powerHp === 'number' ? `${c.powerHp} hp` : null,
+                  typeof c.massKg === 'number' ? `${Math.round(c.massKg)} kg` : null,
+                  c.ownership,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
               </div>
             </div>
             <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>

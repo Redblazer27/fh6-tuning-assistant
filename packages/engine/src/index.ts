@@ -1,6 +1,7 @@
 export * from './types.ts';
 export { DISCLAIMER, SCORE_WEIGHTS, STRATEGY_TILT, tireGrip } from './constants.ts';
 export { buildSpec, resolvePart, LAUNCH_BASE } from './buildSpec.ts';
+export { resolveEffectiveCar, type ResolvedCar, type EffectiveCar } from './effectiveCar.ts';
 export { estimatePI } from './pi.ts';
 export { checkLegality, resolvePiCap } from './rules.ts';
 export { normalizeMetrics, disciplineWeights, scoreSpec } from './scoring.ts';

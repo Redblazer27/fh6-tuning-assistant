@@ -12,7 +12,8 @@ import {
   type TuneSpec,
   type TuningCategory,
 } from '@fh6/shared';
-import type { Car, TuneRanges } from '@fh6/data';
+import type { TuneRanges } from '@fh6/data';
+import type { ResolvedCar } from './effectiveCar.ts';
 import {
   ARB_BASE_STIFFNESS,
   BUMP_TO_REBOUND_RATIO,
@@ -44,7 +45,7 @@ const fracToRange = (range: Range, frac: number): number =>
  * car's legal range, so output is always in-game-valid. Deterministic.
  */
 export function computeTune(
-  car: Car,
+  car: ResolvedCar,
   spec: BuiltSpec,
   ranges: TuneRanges,
   request: BuildRequest,
@@ -133,7 +134,7 @@ function computeTirePressure(
 
 // --- Gearing ------------------------------------------------------------------
 function computeGearing(
-  car: Car,
+  car: ResolvedCar,
   spec: BuiltSpec,
   ranges: TuneRanges,
   discipline: Discipline,

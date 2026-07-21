@@ -1,6 +1,6 @@
 import { clamp, piToClass, round, type Confidence } from '@fh6/shared';
-import type { Car } from '@fh6/data';
 import { LAUNCH_BASE } from './buildSpec.ts';
+import type { ResolvedCar } from './effectiveCar.ts';
 import {
   PI_COEFF,
   PI_UNCERTAINTY_BASE,
@@ -19,7 +19,7 @@ import type { BuiltSpec, PiComponent, PiEstimate } from './types.ts';
  * presented with an uncertainty band and a confidence label — never as exact.
  * See docs/tuning-engine-design.md for the coefficients and their rationale.
  */
-export function estimatePI(car: Car, spec: BuiltSpec): PiEstimate {
+export function estimatePI(car: ResolvedCar, spec: BuiltSpec): PiEstimate {
   // Stock reference metrics (surface-neutral / tarmac).
   const pwStock = car.powerHp / (car.massKg / 1000);
   const gripStock = tireGrip(car.stockTireCompound, 'tarmac');

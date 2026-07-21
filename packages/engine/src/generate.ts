@@ -13,6 +13,7 @@ import {
 import type { Car, DataStore } from '@fh6/data';
 import { buildSpec } from './buildSpec.ts';
 import { DISCLAIMER } from './constants.ts';
+import { resolveEffectiveCar, type ResolvedCar } from './effectiveCar.ts';
 import { estimatePI } from './pi.ts';
 import { checkLegality, resolvePiCap } from './rules.ts';
 import { disciplineWeights, scoreSpec } from './scoring.ts';
@@ -52,15 +53,16 @@ export function computeTuneForSelection(
   request: BuildRequest,
   selection: PartSelection,
 ) {
+  const { car: ecar } = resolveEffectiveCar(car);
   const surface = DISCIPLINE_SURFACE[request.discipline];
-  const spec = buildSpec(store, car, selection, surface);
-  const ranges = store.getTuneRanges(car.id);
-  return computeTune(car, spec, ranges, request);
+  const spec = buildSpec(store, ecar, selection, surface);
+  const ranges = store.getTuneRanges(ecar.id);
+  return computeTune(ecar, spec, ranges, request);
 }
 
 function makeStrategy(
   store: DataStore,
-  car: Car,
+  car: ResolvedCar,
   request: BuildRequest,
   piCap: number | null,
   budget: number | null,
@@ -110,6 +112,8 @@ export function generateBuild(
 ): GenerateResult {
   const car = store.getCar(request.carId);
   if (!car) throw new Error(`Unknown car: ${request.carId}`);
+  const { car: ecar, estimatedFields } = resolveEffectiveCar(car);
+  const physicsEstimated = estimatedFields.length > 0;
 
   const piCap = resolvePiCap(request);
   const budget =
@@ -124,7 +128,7 @@ export function generateBuild(
   for (const kind of STRATEGY_KINDS) {
     const { strategy, notes } = makeStrategy(
       store,
-      car,
+      ecar,
       request,
       piCap,
       budget,
@@ -149,7 +153,7 @@ export function generateBuild(
 
   const overallConfidence = strategies.reduce<Confidence>(
     (acc, s) => lowerConfidence(acc, s.pi.confidence),
-    lowerConfidence('high', car.confidence),
+    lowerConfidence(physicsEstimated ? 'low' : 'high', car.confidence),
   );
 
   const assumptions = [
@@ -158,6 +162,12 @@ export function generateBuild(
     `Stock data for ${car.name} is ${car.confidence} confidence (source: ${car.source}).`,
     `Data version: ${store.dataset.version.dataVersion} (${store.dataset.version.gameVersion}).`,
   ];
+  if (physicsEstimated) {
+    assumptions.push(
+      `Physics not in the data for this car (${estimatedFields.join(', ')}) were filled with generic ` +
+        `class-based defaults — this build is low confidence until real specs are imported.`,
+    );
+  }
 
   return {
     car,

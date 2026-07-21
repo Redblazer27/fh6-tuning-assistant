@@ -1,5 +1,6 @@
 import { classMaxPi, type BuildRequest, type UpgradeCategory } from '@fh6/shared';
-import type { Car, DataStore } from '@fh6/data';
+import type { DataStore } from '@fh6/data';
+import type { ResolvedCar } from './effectiveCar.ts';
 import type { BuiltSpec, LegalityResult, PiEstimate } from './types.ts';
 
 /** Resolve the effective upper PI cap from the request (min of explicit PI and class cap). */
@@ -19,7 +20,7 @@ const SWAP_CATEGORIES: UpgradeCategory[] = ['engine_swap', 'drivetrain_swap'];
  */
 export function checkLegality(
   store: DataStore,
-  car: Car,
+  car: ResolvedCar,
   request: BuildRequest,
   spec: BuiltSpec,
   pi: PiEstimate,

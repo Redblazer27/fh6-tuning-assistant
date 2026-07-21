@@ -1,8 +1,14 @@
 import { expect } from 'vitest';
 import type { BuildRequest, Discipline, TuneSpec } from '@fh6/shared';
 import { defaultStore, type TuneRanges } from '@fh6/data';
+import { resolveEffectiveCar } from '../src/index.ts';
 
 export const store = defaultStore;
+
+/** A seed car resolved to full physics — for tests that call engine fns directly. */
+export const rcar = (id: string) => resolveEffectiveCar(store.getCar(id)!).car;
+/** All seed cars, resolved. */
+export const resolvedCars = () => store.cars.map((c) => resolveEffectiveCar(c).car);
 
 export function makeRequest(overrides: Partial<BuildRequest> = {}): BuildRequest {
   return {

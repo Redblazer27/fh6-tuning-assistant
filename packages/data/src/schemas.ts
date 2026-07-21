@@ -84,18 +84,23 @@ export const carSchema = provenanceSchema.extend({
   isBaseGame: z.boolean(),
   stockClass: classLetterSchema,
   stockPI: z.number().int().min(100).max(999),
-  drivetrain: drivetrainSchema,
-  massKg: z.number().positive(),
+  // Physics fields are OPTIONAL: the official roster provides authoritative
+  // identity/class/PI/DLC but not mass/power/drivetrain/aspiration. When absent,
+  // the engine fills transparent class-based defaults and labels the build's
+  // confidence accordingly (see resolveEffectiveCar). Never fabricate: leave
+  // genuinely-unknown physics undefined rather than storing a guessed number.
+  drivetrain: drivetrainSchema.optional(),
+  massKg: z.number().positive().optional(),
   /** Static front weight distribution, percent (e.g. 53 = 53% front). */
-  weightDistFrontPct: z.number().min(20).max(80),
-  powerHp: z.number().positive(),
+  weightDistFrontPct: z.number().min(20).max(80).optional(),
+  powerHp: z.number().positive().optional(),
   torqueNm: z.number().positive().optional(),
-  aspiration: aspirationSchema,
+  aspiration: aspirationSchema.optional(),
   engineName: z.string().optional(),
   displacementL: z.number().positive().optional(),
   cylinders: z.number().int().positive().optional(),
-  stockTireCompound: tireCompoundSchema,
-  stats: carStatsSchema,
+  stockTireCompound: tireCompoundSchema.optional(),
+  stats: carStatsSchema.optional(),
   /** Optional physical hints; sensible defaults are used when absent. */
   wheelbaseMm: z.number().positive().optional(),
   redlineRpm: z.number().positive().optional(),

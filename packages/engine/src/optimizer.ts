@@ -5,8 +5,9 @@ import type {
   Surface,
   UpgradeCategory,
 } from '@fh6/shared';
-import type { Car, DataStore, Part } from '@fh6/data';
+import type { DataStore, Part } from '@fh6/data';
 import { buildSpec } from './buildSpec.ts';
+import type { ResolvedCar } from './effectiveCar.ts';
 import { estimatePI } from './pi.ts';
 import { disciplineWeights, scoreSpec } from './scoring.ts';
 import type { PartSelection } from './types.ts';
@@ -24,7 +25,7 @@ export interface OptimizeOutput {
 /** Candidate parts for a category after applying locks and constraints. */
 function candidatesFor(
   store: DataStore,
-  car: Car,
+  car: ResolvedCar,
   request: BuildRequest,
   category: UpgradeCategory,
   locks: LockedSelections | undefined,
@@ -106,7 +107,7 @@ function candidatesFor(
  */
 export function optimizeSelection(
   store: DataStore,
-  car: Car,
+  car: ResolvedCar,
   request: BuildRequest,
   surface: Surface,
   piCap: number | null,

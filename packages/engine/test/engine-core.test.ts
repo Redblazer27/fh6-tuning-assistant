@@ -1,26 +1,28 @@
 import { describe, expect, it } from 'vitest';
 import { DISCIPLINE_SURFACE } from '@fh6/shared';
+import { createDataStore, type Car } from '@fh6/data';
 import {
   buildSpec,
   computeTune,
   estimatePI,
   generateBuild,
   normalizeMetrics,
+  resolveEffectiveCar,
   scoreSpec,
   disciplineWeights,
 } from '../src/index.ts';
-import { assertTuneWithinRanges, makeRequest, store } from './helpers.ts';
+import { assertTuneWithinRanges, makeRequest, rcar, resolvedCars, store } from './helpers.ts';
 
 describe('PI estimate (stock-anchored)', () => {
   it('a stock build estimates exactly the car stock PI', () => {
-    for (const car of store.cars) {
+    for (const car of resolvedCars()) {
       const spec = buildSpec(store, car, {}, 'tarmac');
       expect(estimatePI(car, spec).pi).toBe(car.stockPI);
     }
   });
 
   it('adding grip + power raises PI above stock', () => {
-    const car = store.getCar('mazda-mx5-nd-2019')!;
+    const car = rcar('mazda-mx5-nd-2019');
     const spec = buildSpec(
       store,
       car,
@@ -45,7 +47,7 @@ describe('tuning output legality', () => {
   });
 
   it('produces gears in strictly descending order', () => {
-    const car = store.getCar('bmw-m3-e46-2005')!;
+    const car = rcar('bmw-m3-e46-2005');
     const spec = buildSpec(store, car, { transmission: 'trans-race' }, DISCIPLINE_SURFACE.road);
     const tune = computeTune(
       car,
@@ -77,7 +79,7 @@ describe('scoring transparency', () => {
     const sum = w.accel + w.grip + w.braking + w.launch + w.topSpeed;
     expect(sum).toBeCloseTo(1, 5);
 
-    const car = store.getCar('porsche-911-gt3-991-2018')!;
+    const car = rcar('porsche-911-gt3-991-2018');
     const spec = buildSpec(store, car, {}, 'tarmac');
     const breakdown = scoreSpec(spec, w);
     const added = breakdown.components.reduce((s, c) => s + c.contribution, 0);
@@ -85,13 +87,60 @@ describe('scoring transparency', () => {
   });
 
   it('normalized metrics stay within 0..1', () => {
-    const car = store.getCar('koenigsegg-jesko-2020')!;
+    const car = rcar('koenigsegg-jesko-2020');
     const spec = buildSpec(store, car, {}, 'tarmac');
     const m = normalizeMetrics(spec);
     for (const v of [m.accel, m.grip, m.braking, m.launch, m.topSpeed]) {
       expect(v).toBeGreaterThanOrEqual(0);
       expect(v).toBeLessThanOrEqual(1);
     }
+  });
+});
+
+describe('effective car (physics fallback)', () => {
+  const bare: Car = {
+    id: 'roster-test',
+    year: 2020,
+    make: 'Test',
+    model: 'T',
+    name: '2020 Test T',
+    ownership: 'Base game',
+    isBaseGame: true,
+    stockClass: 'A',
+    stockPI: 650,
+    source: 'forza-official-cars',
+    confidence: 'low',
+    dataVersion: 'test',
+  };
+
+  it('fills class-based defaults for a car with no physics and flags them', () => {
+    const { car, estimatedFields } = resolveEffectiveCar(bare);
+    expect(car.drivetrain).toBe('RWD');
+    expect(car.aspiration).toBe('NA');
+    expect(car.massKg).toBeGreaterThan(0);
+    expect(car.powerHp).toBeGreaterThan(0);
+    expect(estimatedFields).toContain('drivetrain');
+    expect(estimatedFields).toContain('powerHp');
+    expect(estimatedFields).toHaveLength(6);
+  });
+
+  it('passes a fully-specified car through unchanged', () => {
+    const { car, estimatedFields } = resolveEffectiveCar(store.getCar('mazda-mx5-nd-2019')!);
+    expect(estimatedFields).toHaveLength(0);
+    expect(car.massKg).toBe(1058);
+  });
+
+  it('builds for a physics-less car and marks it low confidence with disclosure', () => {
+    const dataset = structuredClone(store.dataset);
+    dataset.cars.push(bare);
+    const testStore = createDataStore(dataset);
+    const result = generateBuild(
+      testStore,
+      makeRequest({ carId: 'roster-test', targetClass: 'S1' }),
+    );
+    expect(result.strategies.length).toBeGreaterThan(0);
+    expect(result.overallConfidence).toBe('low');
+    expect(result.assumptions.some((a) => /generic class-based defaults/i.test(a))).toBe(true);
   });
 });
 
