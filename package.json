@@ -1,6 +1,6 @@
 {
   "name": "fh6-tuning-assistant",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "A real optimization and tuning assistant for Forza Horizon 6: build optimizer, PI/rules engine, deterministic vehicle-dynamics tuning engine, versioned data, and live telemetry.",
   "type": "module",
