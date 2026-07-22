@@ -122,6 +122,8 @@ export const partEffectsSchema = z.object({
   powerHpDelta: z.number().optional(),
   /** Absolute base power (hp) an engine swap installs, replacing the stock engine's. */
   setsPowerHp: z.number().positive().optional(),
+  /** Fully-upgraded power (hp) of an engine swap; build power interpolates stock→max. */
+  setsMaxPowerHp: z.number().positive().optional(),
   massKgDelta: z.number().optional(),
   massMultiplier: z.number().positive().optional(),
   /** Mechanical grip multiplier (tires, width, compound). */

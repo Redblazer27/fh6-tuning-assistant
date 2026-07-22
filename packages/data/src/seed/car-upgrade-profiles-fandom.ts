@@ -4130,13 +4130,22 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1993-jaguar-xj220',
-    availableEngineSwapIds: ['eng-racing-v12'],
+    availableEngineSwapIds: [
+      'eng-6-0l-v12-450-hp',
+      'eng-3-5l-v6-tt-680-hp',
+      'eng-racing-v12',
+      'eng-1-6l-i4-t-890-hp',
+    ],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
-    engineSwapOptions: ['Racing V12'],
+    engineSwapOptions: [
+      '6.0L V12 (450 hp)',
+      '3.5L V6-TT (680 hp)',
+      'Racing V12',
+      '1.6L I4-T (890 hp)',
+    ],
     source: 'fandom-fh6-cars',
-    confidence: 'low',
+    confidence: 'medium',
     dataVersion: DATA_VERSION,
-    notes: 'Conversions from a prior Forza Horizon title; the FH6 line is not yet on the wiki.',
   },
   {
     carId: '1988-lamborghini-countach-lp5000-qv',

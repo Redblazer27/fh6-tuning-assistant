@@ -97,6 +97,37 @@ describe('scoring transparency', () => {
   });
 });
 
+describe('swap-engine power interpolation', () => {
+  it('goes from the engine stock power to its real max as power parts are added', () => {
+    const engine = store.getPartsByCategory('engine_swap').find((p) => p.effects.setsMaxPowerHp)!;
+    expect(engine).toBeDefined();
+    const car = rcar('bmw-m3-e46-2005');
+
+    // Swap only (no engine upgrades) → the engine's stock power.
+    const stock = buildSpec(store, car, { engine_swap: engine.id }, 'tarmac');
+    expect(stock.powerHp).toBeCloseTo(engine.effects.setsPowerHp!, 0);
+
+    // Every top-power part in every category → the engine's real max power.
+    const sel: Record<string, string> = { engine_swap: engine.id };
+    for (const cat of store.categories) {
+      if (cat === 'engine_swap') continue;
+      let best: string | undefined;
+      let bestMult = 1;
+      for (const p of store.getPartsByCategory(cat)) {
+        const m = p.effects.powerMultiplier ?? 1;
+        if (m > bestMult) {
+          bestMult = m;
+          best = p.id;
+        }
+      }
+      if (best) sel[cat] = best;
+    }
+    const maxed = buildSpec(store, car, sel, 'tarmac');
+    expect(maxed.powerHp).toBeGreaterThan(stock.powerHp);
+    expect(maxed.powerHp).toBeCloseTo(engine.effects.setsMaxPowerHp!, -1); // within ~5 hp
+  });
+});
+
 describe('effective car (physics fallback)', () => {
   const bare: Car = {
     id: 'roster-test',

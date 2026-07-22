@@ -37,6 +37,7 @@ export function buildSpec(
   let powerMult = 1;
   let powerDelta = 0;
   let basePowerHp = car.powerHp; // replaced wholesale by an engine swap's setsPowerHp
+  let maxPowerHp: number | null = null; // a swap engine's fully-upgraded power, if known
   let massMult = 1;
   let massDelta = 0;
   let gripMult = 1;
@@ -60,6 +61,7 @@ export function buildSpec(
 
     const e = part.effects;
     if (e.setsPowerHp) basePowerHp = e.setsPowerHp;
+    if (e.setsMaxPowerHp) maxPowerHp = e.setsMaxPowerHp;
     if (e.powerMultiplier) powerMult *= e.powerMultiplier;
     if (e.powerHpDelta) powerDelta += e.powerHpDelta;
     if (e.massMultiplier) massMult *= e.massMultiplier;
@@ -78,7 +80,25 @@ export function buildSpec(
     totalCost += part.cost;
   }
 
-  const powerHp = basePowerHp * powerMult + powerDelta;
+  // A swap engine with a known max power interpolates stock→max by how far the
+  // engine-power upgrades have progressed (0 = stock, 1 = every power part maxed),
+  // so a fully-built swap lands on its real max. Otherwise, the multiplier model.
+  let powerHp: number;
+  if (maxPowerHp !== null && maxPowerHp > basePowerHp) {
+    let maxMult = 1;
+    for (const category of store.categories) {
+      // The swap itself sets base power (not a multiplier), so exclude its category.
+      if (category === 'engine_swap') continue;
+      const best = store
+        .getPartsByCategory(category)
+        .reduce((m, p) => Math.max(m, p.effects.powerMultiplier ?? 1), 1);
+      maxMult *= best;
+    }
+    const progress = maxMult > 1 ? Math.min(Math.max((powerMult - 1) / (maxMult - 1), 0), 1) : 0;
+    powerHp = basePowerHp + (maxPowerHp - basePowerHp) * progress + powerDelta;
+  } else {
+    powerHp = basePowerHp * powerMult + powerDelta;
+  }
   const massKg = car.massKg * massMult + massDelta;
   const powerToWeight = powerHp / (massKg / 1000);
 

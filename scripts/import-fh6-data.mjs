@@ -651,7 +651,9 @@ ${profiles.map(profLit).join(',\n')},
       `    name: ${q(e.title)},`,
       `    tierRank: 1,`,
       `    tier: 'swap',`,
-      `    effects: { setsPowerHp: ${e.power} },`,
+      e.maxPower > e.power
+        ? `    effects: { setsPowerHp: ${e.power}, setsMaxPowerHp: ${e.maxPower} },`
+        : `    effects: { setsPowerHp: ${e.power} },`,
     ];
     if (e.aspiration) L.push(`    setsAspiration: ${q(e.aspiration)},`);
     L.push(
