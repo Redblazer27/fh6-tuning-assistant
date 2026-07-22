@@ -74,4 +74,6 @@ export const CATEGORY_PHYSICS: Record<UpgradeCategory, string> = {
     'An adjustable front splitter adds front downforce, pressing the front tires down for sharper high-speed turn-in — at the cost of a little drag. Unlocks aero tuning.',
   rear_aero:
     'An adjustable rear wing adds rear downforce for high-speed stability and cornering grip, at the cost of some top speed. Unlocks aero tuning.',
+  body_kit:
+    'A widebody kit widens the track and allows wider tires, adding mechanical grip (and a little weight) — only offered on cars the game has a kit for. Mostly cosmetic otherwise.',
 };

@@ -46,6 +46,12 @@ export function StrategyDetail({ car, strategy, store, locks, onSetLock, onRemov
                 const locked = category in locks;
                 const part = selectedId ? store.getPart(selectedId) : undefined;
                 const isUpgrade = (part?.tierRank ?? 0) > 0;
+                // The real body-kit names this car offers (we model them as one
+                // generic Widebody part, but show the actual kits from the wiki).
+                const bodyKits =
+                  category === 'body_kit'
+                    ? (store.getUpgradeProfile(car.id)?.bodyKitOptions ?? [])
+                    : [];
                 return (
                   <tr key={category} style={{ opacity: isUpgrade || locked ? 1 : 0.6 }}>
                     <td>
@@ -79,6 +85,14 @@ export function StrategyDetail({ car, strategy, store, locks, onSetLock, onRemov
                           style={{ display: 'block', fontSize: '0.74rem', marginTop: 2 }}
                         >
                           {part.rationale}
+                        </span>
+                      )}
+                      {bodyKits.length > 0 && (
+                        <span
+                          className="dim"
+                          style={{ display: 'block', fontSize: '0.72rem', marginTop: 2 }}
+                        >
+                          Kits: {bodyKits.join(', ')}
                         </span>
                       )}
                     </td>

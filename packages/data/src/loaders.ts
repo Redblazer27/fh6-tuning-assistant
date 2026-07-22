@@ -155,6 +155,15 @@ export function createDataStore(dataset: Dataset): DataStore {
   const getAvailablePartsByCategory = (carId: string, category: UpgradeCategory): Part[] => {
     const all = partsByCategory.get(category) ?? [];
     const profile = profilesByCar.get(carId);
+
+    // Body kits are per-car: only a car with a documented kit (bodyKitOptions)
+    // can fit one — everyone else gets stock only, regardless of profile.
+    if (category === 'body_kit') {
+      const locked = profile?.lockedCategories.includes('body_kit') ?? false;
+      const hasKit = (profile?.bodyKitOptions.length ?? 0) > 0;
+      return hasKit && !locked ? all : all.filter((p) => p.tierRank === 0);
+    }
+
     if (!profile) return all.filter((p) => !isRealEngine(p));
 
     if (profile.lockedCategories.includes(category)) {

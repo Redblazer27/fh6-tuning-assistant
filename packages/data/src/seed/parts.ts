@@ -866,4 +866,20 @@ export const parts: PartInput[] = [
     cosmeticVisible: true,
     cost: 20000,
   }),
+
+  // ---- Body kits ------------------------------------------------------------
+  // Widebody is the one body kit with a real performance effect (wider track +
+  // tires → grip). It is offered only to cars whose profile lists real
+  // bodyKitOptions (see getAvailablePartsByCategory); other cars get stock only.
+  stock('body_kit', 'Stock Body'),
+  P({
+    id: 'body-widebody',
+    category: 'body_kit',
+    name: 'Widebody Kit',
+    tierRank: 1,
+    tier: 'widebody',
+    effects: { gripMultiplier: 1.02, massKgDelta: 6 },
+    cosmeticVisible: true,
+    cost: 22000,
+  }),
 ];

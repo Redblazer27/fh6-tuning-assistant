@@ -149,6 +149,24 @@ describe('per-car upgrade profiles', () => {
     expect(profiles.some((p) => p.bodyKitOptions.length > 0)).toBe(true);
   });
 
+  it('offers a widebody kit only to cars that actually have one', () => {
+    // A car whose profile lists body kits can fit the widebody part…
+    const withKit = withProfile('ford-mustang-gt-2018', {
+      bodyKitOptions: ['Liberty Walk - Widebody Kit'],
+    });
+    const kitParts = withKit.getAvailablePartsByCategory('ford-mustang-gt-2018', 'body_kit');
+    expect(kitParts.some((p) => p.id === 'body-widebody')).toBe(true);
+
+    // …a car with no body-kit data gets stock body only.
+    const noKit = withProfile('ford-mustang-gt-2018', { bodyKitOptions: [] });
+    const noKitParts = noKit.getAvailablePartsByCategory('ford-mustang-gt-2018', 'body_kit');
+    expect(noKitParts.every((p) => p.tierRank === 0)).toBe(true);
+
+    // A car with no profile at all also gets stock only (no kit data).
+    const bare = defaultStore.getAvailablePartsByCategory('ford-mustang-gt-2018', 'body_kit');
+    expect(bare.every((p) => p.tierRank === 0)).toBe(true);
+  });
+
   it('restricts swaps to an allowlist, blocklists parts, and locks categories', () => {
     const store = withProfile(NO_PROFILE, {
       availableEngineSwapIds: ['engine-swap-highperf'],

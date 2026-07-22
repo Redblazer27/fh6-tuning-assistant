@@ -180,6 +180,7 @@ export const UPGRADE_CATEGORIES = [
   // Aero & appearance
   'front_aero',
   'rear_aero',
+  'body_kit',
 ] as const;
 export type UpgradeCategory = (typeof UPGRADE_CATEGORIES)[number];
 

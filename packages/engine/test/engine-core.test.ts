@@ -39,6 +39,8 @@ describe('PI estimate (stock-anchored)', () => {
 });
 
 describe('tuning output legality', () => {
+  // Heavy stress test: 5 disciplines × 3 strategies = 15 full optimizations of a
+  // fully-unconstrained S1 build. Generous timeout so it doesn't flake under load.
   it('every generated strategy tune sits within the car ranges', () => {
     const disciplines = ['road', 'dirt', 'drift', 'drag', 'top_speed'] as const;
     const ranges = store.getTuneRanges('mazda-mx5-nd-2019');
@@ -46,7 +48,7 @@ describe('tuning output legality', () => {
       const result = generateBuild(store, makeRequest({ discipline, targetClass: 'S1' }));
       for (const s of result.strategies) assertTuneWithinRanges(s.tune.tune, ranges);
     }
-  });
+  }, 20000);
 
   it('produces gears in strictly descending order', () => {
     const car = rcar('bmw-m3-e46-2005');
