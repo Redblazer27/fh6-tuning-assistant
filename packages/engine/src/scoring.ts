@@ -1,5 +1,5 @@
 import { clamp, round, type Discipline, type ScoreBreakdown } from '@fh6/shared';
-import { SCORE_WEIGHTS, STRATEGY_TILT, type MetricWeights } from './constants.ts';
+import { DRIVETRAIN_FIT, SCORE_WEIGHTS, STRATEGY_TILT, type MetricWeights } from './constants.ts';
 import type { BuiltSpec } from './types.ts';
 
 /**
@@ -18,28 +18,47 @@ interface NormalizedMetrics {
   braking: number;
   launch: number;
   topSpeed: number;
-  raw: { accel: number; grip: number; braking: number; launch: number; topSpeed: number };
+  balance: number;
+  raw: {
+    accel: number;
+    grip: number;
+    braking: number;
+    launch: number;
+    topSpeed: number;
+    balance: number;
+  };
 }
 
-export function normalizeMetrics(spec: BuiltSpec): NormalizedMetrics {
+/**
+ * Normalize a spec's metrics to 0..1. All are discipline-agnostic except
+ * `balance` (drivetrain fit), which depends on the goal — pass `discipline` to
+ * score it; without one it falls back to the neutral `custom` profile.
+ */
+export function normalizeMetrics(
+  spec: BuiltSpec,
+  discipline: Discipline = 'custom',
+): NormalizedMetrics {
   const aeroN = clamp(aeroPotential(spec) / 600, 0, 1);
   const accel = clamp((spec.powerToWeight - 80) / 420, 0, 1);
   const grip = clamp(clamp((spec.gripFactor - 0.5) / 1.0, 0, 1) + aeroN * 0.15, 0, 1);
   const braking = clamp(clamp((spec.brakingFactor - 1.0) / 0.15, 0, 1) * 0.85 + aeroN * 0.15, 0, 1);
   const launch = clamp((spec.launchFactor - 0.8) / 0.6, 0, 1);
   const topSpeed = clamp((spec.powerHp - 150) / 1250, 0, 1);
+  const balance = DRIVETRAIN_FIT[discipline][spec.drivetrain];
   return {
     accel,
     grip,
     braking,
     launch,
     topSpeed,
+    balance,
     raw: {
       accel: spec.powerToWeight,
       grip: spec.gripFactor,
       braking: spec.brakingFactor,
       launch: spec.launchFactor,
       topSpeed: spec.powerHp,
+      balance,
     },
   };
 }
@@ -57,14 +76,16 @@ export function disciplineWeights(
     braking: Math.max(0, base.braking + (t.braking ?? 0)),
     launch: Math.max(0, base.launch + (t.launch ?? 0)),
     topSpeed: Math.max(0, base.topSpeed + (t.topSpeed ?? 0)),
+    balance: Math.max(0, base.balance + (t.balance ?? 0)),
   };
-  const sum = raw.accel + raw.grip + raw.braking + raw.launch + raw.topSpeed || 1;
+  const sum = raw.accel + raw.grip + raw.braking + raw.launch + raw.topSpeed + raw.balance || 1;
   return {
     accel: raw.accel / sum,
     grip: raw.grip / sum,
     braking: raw.braking / sum,
     launch: raw.launch / sum,
     topSpeed: raw.topSpeed / sum,
+    balance: raw.balance / sum,
   };
 }
 
@@ -74,17 +95,27 @@ const METRIC_LABELS: Record<keyof MetricWeights, string> = {
   braking: 'Braking',
   launch: 'Launch / traction',
   topSpeed: 'Top-end speed',
+  balance: 'Drivetrain fit for the goal',
 };
 
-/** Score a built spec under a set of weights, returning a full breakdown. */
-export function scoreSpec(spec: BuiltSpec, weights: MetricWeights): ScoreBreakdown {
-  const m = normalizeMetrics(spec);
+/**
+ * Score a built spec under a set of weights, returning a full breakdown. Pass the
+ * `discipline` so the drivetrain-fit (`balance`) metric is scored for the goal;
+ * omitting it uses the neutral profile (fine for discipline-agnostic ranking).
+ */
+export function scoreSpec(
+  spec: BuiltSpec,
+  weights: MetricWeights,
+  discipline?: Discipline,
+): ScoreBreakdown {
+  const m = normalizeMetrics(spec, discipline);
   const norm: Record<keyof MetricWeights, number> = {
     accel: m.accel,
     grip: m.grip,
     braking: m.braking,
     launch: m.launch,
     topSpeed: m.topSpeed,
+    balance: m.balance,
   };
   const rawByKey: Record<keyof MetricWeights, number> = {
     accel: m.raw.accel,
@@ -92,6 +123,7 @@ export function scoreSpec(spec: BuiltSpec, weights: MetricWeights): ScoreBreakdo
     braking: m.raw.braking,
     launch: m.raw.launch,
     topSpeed: m.raw.topSpeed,
+    balance: m.raw.balance,
   };
 
   const components = (Object.keys(weights) as (keyof MetricWeights)[]).map((key) => {

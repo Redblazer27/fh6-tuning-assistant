@@ -80,7 +80,11 @@ function makeStrategy(
   const tune = computeTune(car, spec, ranges, request);
   const legality = checkLegality(store, car, request, spec, pi, piCap);
   // Score all strategies with a common (balanced) lens so ranking is fair.
-  const score = scoreSpec(spec, disciplineWeights(request.discipline, 'balanced'));
+  const score = scoreSpec(
+    spec,
+    disciplineWeights(request.discipline, 'balanced'),
+    request.discipline,
+  );
 
   return {
     strategy: {

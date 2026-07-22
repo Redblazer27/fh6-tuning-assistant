@@ -307,7 +307,11 @@ export function optimizeSelection(
       if (part) applyPart(store, agg, part, maxEngineMult);
     }
     const spec = deriveFromAgg(car, agg, surface);
-    return { pi: estimatePI(car, spec).pi, score: scoreSpec(spec, weights).total, cost: agg.cost };
+    return {
+      pi: estimatePI(car, spec).pi,
+      score: scoreSpec(spec, weights, request.discipline).total,
+      cost: agg.cost,
+    };
   };
 
   const feasible = (e: Eval): boolean =>
@@ -521,7 +525,11 @@ export function bruteForceOptimize(
       if (p) applyPart(store, agg, p, maxEngineMult);
     }
     const spec = deriveFromAgg(car, agg, surface);
-    return { pi: estimatePI(car, spec).pi, score: scoreSpec(spec, weights).total, cost: agg.cost };
+    return {
+      pi: estimatePI(car, spec).pi,
+      score: scoreSpec(spec, weights, request.discipline).total,
+      cost: agg.cost,
+    };
   };
 
   let best: { e: Eval; sel: PartSelection } | null = null;

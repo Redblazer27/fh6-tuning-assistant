@@ -1,4 +1,4 @@
-import type { Discipline, Surface, TireCompound } from '@fh6/shared';
+import type { Discipline, Drivetrain, Surface, TireCompound } from '@fh6/shared';
 
 /**
  * Model constants for the tuning + PI engines.
@@ -127,19 +127,60 @@ export interface MetricWeights {
   braking: number;
   launch: number;
   topSpeed: number;
+  /** How well the build's drivetrain suits the discipline (see DRIVETRAIN_FIT). */
+  balance: number;
 }
 
+// Each row sums to ~1. `balance` scores the drivetrain's fit for the goal — a
+// first-order build decision the raw performance metrics miss (drift needs RWD,
+// loose-surface and drag reward AWD traction). `launch` is kept low where AWD
+// should not be rewarded just for launching (notably drift), so `balance` — not
+// launch — drives the drivetrain choice.
 export const SCORE_WEIGHTS: Record<Discipline, MetricWeights> = {
-  road: { accel: 0.25, grip: 0.35, braking: 0.15, launch: 0.05, topSpeed: 0.2 },
-  street: { accel: 0.28, grip: 0.3, braking: 0.12, launch: 0.08, topSpeed: 0.22 },
-  dirt: { accel: 0.25, grip: 0.4, braking: 0.1, launch: 0.15, topSpeed: 0.1 },
-  rally: { accel: 0.25, grip: 0.38, braking: 0.1, launch: 0.17, topSpeed: 0.1 },
-  cross_country: { accel: 0.22, grip: 0.42, braking: 0.1, launch: 0.16, topSpeed: 0.1 },
-  drag: { accel: 0.4, grip: 0.08, braking: 0.02, launch: 0.35, topSpeed: 0.15 },
-  drift: { accel: 0.35, grip: 0.3, braking: 0.05, launch: 0.05, topSpeed: 0.25 },
-  top_speed: { accel: 0.2, grip: 0.05, braking: 0.0, launch: 0.05, topSpeed: 0.7 },
-  pr_stunts: { accel: 0.3, grip: 0.25, braking: 0.05, launch: 0.15, topSpeed: 0.25 },
-  custom: { accel: 0.25, grip: 0.33, braking: 0.14, launch: 0.08, topSpeed: 0.2 },
+  road: { accel: 0.24, grip: 0.33, braking: 0.15, launch: 0.03, topSpeed: 0.18, balance: 0.07 },
+  street: { accel: 0.27, grip: 0.29, braking: 0.12, launch: 0.05, topSpeed: 0.2, balance: 0.07 },
+  dirt: { accel: 0.23, grip: 0.37, braking: 0.08, launch: 0.13, topSpeed: 0.07, balance: 0.12 },
+  rally: { accel: 0.23, grip: 0.35, braking: 0.08, launch: 0.14, topSpeed: 0.08, balance: 0.12 },
+  cross_country: {
+    accel: 0.2,
+    grip: 0.38,
+    braking: 0.08,
+    launch: 0.14,
+    topSpeed: 0.08,
+    balance: 0.12,
+  },
+  drag: { accel: 0.38, grip: 0.05, braking: 0.02, launch: 0.33, topSpeed: 0.12, balance: 0.1 },
+  drift: { accel: 0.34, grip: 0.24, braking: 0.04, launch: 0.02, topSpeed: 0.14, balance: 0.22 },
+  top_speed: { accel: 0.18, grip: 0.05, braking: 0.0, launch: 0.03, topSpeed: 0.7, balance: 0.04 },
+  pr_stunts: {
+    accel: 0.28,
+    grip: 0.24,
+    braking: 0.05,
+    launch: 0.13,
+    topSpeed: 0.22,
+    balance: 0.08,
+  },
+  custom: { accel: 0.24, grip: 0.31, braking: 0.13, launch: 0.07, topSpeed: 0.18, balance: 0.07 },
+};
+
+/**
+ * Discipline suitability of each drivetrain (0..1), from FH community consensus.
+ * Captures the single biggest build decision the performance metrics can't see:
+ * drift strongly wants RWD, loose surfaces and drag reward AWD traction, circuit
+ * and top-speed are near-neutral. Feeds the `balance` metric so the optimizer
+ * accepts a drivetrain swap only when it fits the goal.
+ */
+export const DRIVETRAIN_FIT: Record<Discipline, Record<Drivetrain, number>> = {
+  road: { AWD: 0.85, RWD: 0.95, FWD: 0.7 },
+  street: { AWD: 0.85, RWD: 0.95, FWD: 0.72 },
+  dirt: { AWD: 1.0, RWD: 0.6, FWD: 0.55 },
+  rally: { AWD: 1.0, RWD: 0.6, FWD: 0.55 },
+  cross_country: { AWD: 1.0, RWD: 0.55, FWD: 0.5 },
+  drag: { AWD: 1.0, RWD: 0.72, FWD: 0.45 },
+  drift: { AWD: 0.4, RWD: 1.0, FWD: 0.1 },
+  top_speed: { AWD: 0.9, RWD: 1.0, FWD: 0.85 },
+  pr_stunts: { AWD: 1.0, RWD: 0.8, FWD: 0.7 },
+  custom: { AWD: 0.9, RWD: 0.9, FWD: 0.8 },
 };
 
 /** Strategy tilt applied on top of the discipline weights, then re-normalized. */

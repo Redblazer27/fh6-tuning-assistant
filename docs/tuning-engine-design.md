@@ -64,9 +64,13 @@ up front (locks, no-swaps, no-aero, stock-looking, budget, preferred drivetrain/
 
 ## Scoring (`scoring.ts`)
 
-Five metrics normalized 0..1 (accel = pw; grip = mechanical grip + aero bonus; braking; launch;
-top-speed = power), weighted per discipline (`SCORE_WEIGHTS`) and tilted per strategy (`STRATEGY_TILT`),
-re-normalized to sum 1. Total is `Σ normalized·weight·100`. The full breakdown is returned and shown, so
+Six metrics normalized 0..1 (accel = pw; grip = mechanical grip + aero bonus; braking; launch;
+top-speed = power; **balance** = the drivetrain's fit for the goal, `DRIVETRAIN_FIT[discipline][drivetrain]`),
+weighted per discipline (`SCORE_WEIGHTS`) and tilted per strategy (`STRATEGY_TILT`), re-normalized to
+sum 1. Total is `Σ normalized·weight·100`. The `balance` metric encodes the biggest decision the raw
+performance numbers miss — drift wants RWD, loose surfaces and drag reward AWD traction — so the optimizer
+only takes a drivetrain swap when it suits the goal (and `launch` is kept low where AWD should not be
+rewarded just for launching). The full breakdown is returned and shown, so
 ranking is never a black box.
 
 ## Tuning heuristics (`tuning.ts`)

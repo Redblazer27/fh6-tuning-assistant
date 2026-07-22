@@ -104,7 +104,7 @@ describe('optimizer optimality', () => {
       const opts = { strategy: 'balanced' as const };
       const weights = disciplineWeights(tc.discipline, 'balanced');
       const scoreOf = (sel: Record<string, string>) =>
-        scoreSpec(buildSpec(store, car, sel, surface), weights).total;
+        scoreSpec(buildSpec(store, car, sel, surface), weights, tc.discipline).total;
 
       const heuristic = optimizeSelection(store, car, req, surface, cap, null, opts);
       const exhaustive = bruteForceOptimize(store, car, req, surface, cap, null, opts);
@@ -134,7 +134,7 @@ describe('determinism', () => {
 describe('scoring transparency', () => {
   it('weights sum to ~1 and contributions add up to the total', () => {
     const w = disciplineWeights('road', 'balanced');
-    const sum = w.accel + w.grip + w.braking + w.launch + w.topSpeed;
+    const sum = w.accel + w.grip + w.braking + w.launch + w.topSpeed + w.balance;
     expect(sum).toBeCloseTo(1, 5);
 
     const car = rcar('porsche-911-gt3-991-2018');
@@ -147,11 +147,31 @@ describe('scoring transparency', () => {
   it('normalized metrics stay within 0..1', () => {
     const car = rcar('koenigsegg-jesko-2020');
     const spec = buildSpec(store, car, {}, 'tarmac');
-    const m = normalizeMetrics(spec);
-    for (const v of [m.accel, m.grip, m.braking, m.launch, m.topSpeed]) {
+    const m = normalizeMetrics(spec, 'drift');
+    for (const v of [m.accel, m.grip, m.braking, m.launch, m.topSpeed, m.balance]) {
       expect(v).toBeGreaterThanOrEqual(0);
       expect(v).toBeLessThanOrEqual(1);
     }
+  });
+});
+
+describe('drivetrain fit steers the goal', () => {
+  // Same build, only the drivetrain differs. The drivetrain-fit metric must flip
+  // the ranking by discipline: drift wants RWD, rally wants AWD — even though AWD
+  // always has the higher raw launch factor.
+  const car = rcar('bmw-m3-e46-2005');
+  const base = buildSpec(store, car, {}, 'tarmac');
+  const asRWD = { ...base, drivetrain: 'RWD' as const, launchFactor: 1.0 };
+  const asAWD = { ...base, drivetrain: 'AWD' as const, launchFactor: 1.2 };
+  const scoreFor = (spec: typeof base, d: Discipline) =>
+    scoreSpec(spec, disciplineWeights(d, 'balanced'), d).total;
+
+  it('prefers RWD for drift', () => {
+    expect(scoreFor(asRWD, 'drift')).toBeGreaterThan(scoreFor(asAWD, 'drift'));
+  });
+
+  it('prefers AWD for rally', () => {
+    expect(scoreFor(asAWD, 'rally')).toBeGreaterThan(scoreFor(asRWD, 'rally'));
   });
 });
 
