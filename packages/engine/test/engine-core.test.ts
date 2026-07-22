@@ -134,7 +134,7 @@ describe('determinism', () => {
 describe('scoring transparency', () => {
   it('weights sum to ~1 and contributions add up to the total', () => {
     const w = disciplineWeights('road', 'balanced');
-    const sum = w.accel + w.grip + w.braking + w.launch + w.topSpeed + w.balance;
+    const sum = w.accel + w.grip + w.braking + w.launch + w.topSpeed + w.balance + w.tireFit;
     expect(sum).toBeCloseTo(1, 5);
 
     const car = rcar('porsche-911-gt3-991-2018');
@@ -148,7 +148,7 @@ describe('scoring transparency', () => {
     const car = rcar('koenigsegg-jesko-2020');
     const spec = buildSpec(store, car, {}, 'tarmac');
     const m = normalizeMetrics(spec, 'drift');
-    for (const v of [m.accel, m.grip, m.braking, m.launch, m.topSpeed, m.balance]) {
+    for (const v of [m.accel, m.grip, m.braking, m.launch, m.topSpeed, m.balance, m.tireFit]) {
       expect(v).toBeGreaterThanOrEqual(0);
       expect(v).toBeLessThanOrEqual(1);
     }
@@ -172,6 +172,33 @@ describe('drivetrain fit steers the goal', () => {
 
   it('prefers AWD for rally', () => {
     expect(scoreFor(asAWD, 'rally')).toBeGreaterThan(scoreFor(asRWD, 'rally'));
+  });
+});
+
+describe('tire choice fits the goal', () => {
+  // Drift tires grip less than slicks in raw terms, so a grip-only model would
+  // always pick slicks. The tire-fit metric must flip a drift build to drift
+  // tires — while a road build must still prefer slicks.
+  const car = rcar('mazda-mx5-nd-2019');
+
+  it('drift prefers drift tires over slicks', () => {
+    const surface = DISCIPLINE_SURFACE.drift;
+    const onSlicks = buildSpec(store, car, { tire_compound: 'tire-slick' }, surface);
+    const onDrift = buildSpec(store, car, { tire_compound: 'tire-drift' }, surface);
+    const w = disciplineWeights('drift', 'balanced');
+    expect(scoreSpec(onDrift, w, 'drift').total).toBeGreaterThan(
+      scoreSpec(onSlicks, w, 'drift').total,
+    );
+  });
+
+  it('road still prefers slicks over drift tires', () => {
+    const surface = DISCIPLINE_SURFACE.road;
+    const onSlicks = buildSpec(store, car, { tire_compound: 'tire-slick' }, surface);
+    const onDrift = buildSpec(store, car, { tire_compound: 'tire-drift' }, surface);
+    const w = disciplineWeights('road', 'balanced');
+    expect(scoreSpec(onSlicks, w, 'road').total).toBeGreaterThan(
+      scoreSpec(onDrift, w, 'road').total,
+    );
   });
 });
 

@@ -129,38 +129,28 @@ export interface MetricWeights {
   topSpeed: number;
   /** How well the build's drivetrain suits the discipline (see DRIVETRAIN_FIT). */
   balance: number;
+  /** How well the tire compound suits the discipline (see TIRE_FIT). */
+  tireFit: number;
 }
 
-// Each row sums to ~1. `balance` scores the drivetrain's fit for the goal — a
-// first-order build decision the raw performance metrics miss (drift needs RWD,
-// loose-surface and drag reward AWD traction). `launch` is kept low where AWD
-// should not be rewarded just for launching (notably drift), so `balance` — not
-// launch — drives the drivetrain choice.
+// Each row sums to ~1. `balance` scores the drivetrain's fit for the goal and
+// `tireFit` the tire compound's — first-order build decisions the raw metrics
+// miss or get wrong (drift needs RWD + drift tires despite their lower raw grip;
+// loose surfaces and drag reward AWD traction). `launch` is kept low where AWD
+// should not be rewarded just for launching (notably drift), and drift's `grip`
+// is trimmed so `tireFit` can pull the compound off slicks — the fit metrics,
+// not raw grip, drive those choices.
 export const SCORE_WEIGHTS: Record<Discipline, MetricWeights> = {
-  road: { accel: 0.24, grip: 0.33, braking: 0.15, launch: 0.03, topSpeed: 0.18, balance: 0.07 },
-  street: { accel: 0.27, grip: 0.29, braking: 0.12, launch: 0.05, topSpeed: 0.2, balance: 0.07 },
-  dirt: { accel: 0.23, grip: 0.37, braking: 0.08, launch: 0.13, topSpeed: 0.07, balance: 0.12 },
-  rally: { accel: 0.23, grip: 0.35, braking: 0.08, launch: 0.14, topSpeed: 0.08, balance: 0.12 },
-  cross_country: {
-    accel: 0.2,
-    grip: 0.38,
-    braking: 0.08,
-    launch: 0.14,
-    topSpeed: 0.08,
-    balance: 0.12,
-  },
-  drag: { accel: 0.38, grip: 0.05, braking: 0.02, launch: 0.33, topSpeed: 0.12, balance: 0.1 },
-  drift: { accel: 0.34, grip: 0.24, braking: 0.04, launch: 0.02, topSpeed: 0.14, balance: 0.22 },
-  top_speed: { accel: 0.18, grip: 0.05, braking: 0.0, launch: 0.03, topSpeed: 0.7, balance: 0.04 },
-  pr_stunts: {
-    accel: 0.28,
-    grip: 0.24,
-    braking: 0.05,
-    launch: 0.13,
-    topSpeed: 0.22,
-    balance: 0.08,
-  },
-  custom: { accel: 0.24, grip: 0.31, braking: 0.13, launch: 0.07, topSpeed: 0.18, balance: 0.07 },
+  road: { accel: 0.24, grip: 0.28, braking: 0.15, launch: 0.03, topSpeed: 0.18, balance: 0.07, tireFit: 0.05 }, // prettier-ignore
+  street: { accel: 0.27, grip: 0.24, braking: 0.12, launch: 0.05, topSpeed: 0.2, balance: 0.07, tireFit: 0.05 }, // prettier-ignore
+  dirt: { accel: 0.23, grip: 0.31, braking: 0.08, launch: 0.13, topSpeed: 0.07, balance: 0.12, tireFit: 0.06 }, // prettier-ignore
+  rally: { accel: 0.23, grip: 0.29, braking: 0.08, launch: 0.14, topSpeed: 0.08, balance: 0.12, tireFit: 0.06 }, // prettier-ignore
+  cross_country: { accel: 0.2, grip: 0.32, braking: 0.08, launch: 0.14, topSpeed: 0.08, balance: 0.12, tireFit: 0.06 }, // prettier-ignore
+  drag: { accel: 0.34, grip: 0.05, braking: 0.02, launch: 0.33, topSpeed: 0.12, balance: 0.1, tireFit: 0.04 }, // prettier-ignore
+  drift: { accel: 0.3, grip: 0.18, braking: 0.03, launch: 0.02, topSpeed: 0.1, balance: 0.19, tireFit: 0.18 }, // prettier-ignore
+  top_speed: { accel: 0.18, grip: 0.05, braking: 0.0, launch: 0.03, topSpeed: 0.67, balance: 0.04, tireFit: 0.03 }, // prettier-ignore
+  pr_stunts: { accel: 0.28, grip: 0.19, braking: 0.05, launch: 0.13, topSpeed: 0.22, balance: 0.08, tireFit: 0.05 }, // prettier-ignore
+  custom: { accel: 0.24, grip: 0.26, braking: 0.13, launch: 0.07, topSpeed: 0.18, balance: 0.07, tireFit: 0.05 }, // prettier-ignore
 };
 
 /**
@@ -181,6 +171,40 @@ export const DRIVETRAIN_FIT: Record<Discipline, Record<Drivetrain, number>> = {
   top_speed: { AWD: 0.9, RWD: 1.0, FWD: 0.85 },
   pr_stunts: { AWD: 1.0, RWD: 0.8, FWD: 0.7 },
   custom: { AWD: 0.9, RWD: 0.9, FWD: 0.8 },
+};
+
+/**
+ * Discipline suitability of each tire compound (0..1). Unlike the raw `grip`
+ * metric — which always favours the highest-grip compound for the surface —
+ * this captures *purpose*: drift tires are the right choice for drift even
+ * though slicks grip harder, and loose surfaces want rally/off-road rubber.
+ * For grip disciplines it simply tracks grip (slicks on top), so it reinforces
+ * rather than fights that metric; only where purpose and raw grip diverge
+ * (notably drift) does it flip the choice. Compounds not listed use `default`.
+ * (FH6 exposes no dedicated drag compound as a part, so drag builds fall back to
+ * slicks — the best available — until one is modelled.)
+ */
+export const TIRE_FIT: Record<
+  Discipline,
+  { default: number } & Partial<Record<TireCompound, number>>
+> = {
+  road: { default: 0.5, slick: 1.0, semi_slick: 0.92, sport: 0.75, street: 0.6, drag: 0.7 },
+  street: { default: 0.5, slick: 1.0, semi_slick: 0.95, sport: 0.85, street: 0.72, drag: 0.7 },
+  dirt: { default: 0.4, offroad: 1.0, rally: 0.96, snow: 0.6, sport: 0.5, street: 0.45 },
+  rally: { default: 0.4, rally: 1.0, offroad: 0.9, snow: 0.6, sport: 0.5, street: 0.45 },
+  cross_country: { default: 0.4, offroad: 1.0, rally: 0.85, snow: 0.6, sport: 0.5 },
+  drag: { default: 0.5, drag: 1.0, slick: 0.85, semi_slick: 0.78, sport: 0.6, street: 0.5 },
+  drift: { default: 0.45, drift: 1.0, slick: 0.6, semi_slick: 0.58, sport: 0.55, street: 0.5 },
+  top_speed: { default: 0.6, slick: 1.0, semi_slick: 0.92, drag: 0.9, sport: 0.85, street: 0.75 },
+  pr_stunts: {
+    default: 0.55,
+    slick: 0.95,
+    semi_slick: 0.92,
+    sport: 0.85,
+    offroad: 0.7,
+    rally: 0.7,
+  },
+  custom: { default: 0.7, slick: 0.85, semi_slick: 0.82, sport: 0.78 },
 };
 
 /** Strategy tilt applied on top of the discipline weights, then re-normalized. */

@@ -1,5 +1,11 @@
 import { clamp, round, type Discipline, type ScoreBreakdown } from '@fh6/shared';
-import { DRIVETRAIN_FIT, SCORE_WEIGHTS, STRATEGY_TILT, type MetricWeights } from './constants.ts';
+import {
+  DRIVETRAIN_FIT,
+  SCORE_WEIGHTS,
+  STRATEGY_TILT,
+  TIRE_FIT,
+  type MetricWeights,
+} from './constants.ts';
 import type { BuiltSpec } from './types.ts';
 
 /**
@@ -19,6 +25,7 @@ interface NormalizedMetrics {
   launch: number;
   topSpeed: number;
   balance: number;
+  tireFit: number;
   raw: {
     accel: number;
     grip: number;
@@ -26,6 +33,7 @@ interface NormalizedMetrics {
     launch: number;
     topSpeed: number;
     balance: number;
+    tireFit: number;
   };
 }
 
@@ -45,6 +53,8 @@ export function normalizeMetrics(
   const launch = clamp((spec.launchFactor - 0.8) / 0.6, 0, 1);
   const topSpeed = clamp((spec.powerHp - 150) / 1250, 0, 1);
   const balance = DRIVETRAIN_FIT[discipline][spec.drivetrain];
+  const tireTable = TIRE_FIT[discipline];
+  const tireFit = tireTable[spec.tireCompound] ?? tireTable.default;
   return {
     accel,
     grip,
@@ -52,6 +62,7 @@ export function normalizeMetrics(
     launch,
     topSpeed,
     balance,
+    tireFit,
     raw: {
       accel: spec.powerToWeight,
       grip: spec.gripFactor,
@@ -59,6 +70,7 @@ export function normalizeMetrics(
       launch: spec.launchFactor,
       topSpeed: spec.powerHp,
       balance,
+      tireFit,
     },
   };
 }
@@ -77,8 +89,10 @@ export function disciplineWeights(
     launch: Math.max(0, base.launch + (t.launch ?? 0)),
     topSpeed: Math.max(0, base.topSpeed + (t.topSpeed ?? 0)),
     balance: Math.max(0, base.balance + (t.balance ?? 0)),
+    tireFit: Math.max(0, base.tireFit + (t.tireFit ?? 0)),
   };
-  const sum = raw.accel + raw.grip + raw.braking + raw.launch + raw.topSpeed + raw.balance || 1;
+  const sum =
+    raw.accel + raw.grip + raw.braking + raw.launch + raw.topSpeed + raw.balance + raw.tireFit || 1;
   return {
     accel: raw.accel / sum,
     grip: raw.grip / sum,
@@ -86,6 +100,7 @@ export function disciplineWeights(
     launch: raw.launch / sum,
     topSpeed: raw.topSpeed / sum,
     balance: raw.balance / sum,
+    tireFit: raw.tireFit / sum,
   };
 }
 
@@ -96,6 +111,7 @@ const METRIC_LABELS: Record<keyof MetricWeights, string> = {
   launch: 'Launch / traction',
   topSpeed: 'Top-end speed',
   balance: 'Drivetrain fit for the goal',
+  tireFit: 'Tire choice for the goal',
 };
 
 /**
@@ -116,6 +132,7 @@ export function scoreSpec(
     launch: m.launch,
     topSpeed: m.topSpeed,
     balance: m.balance,
+    tireFit: m.tireFit,
   };
   const rawByKey: Record<keyof MetricWeights, number> = {
     accel: m.raw.accel,
@@ -124,6 +141,7 @@ export function scoreSpec(
     launch: m.raw.launch,
     topSpeed: m.raw.topSpeed,
     balance: m.raw.balance,
+    tireFit: m.raw.tireFit,
   };
 
   const components = (Object.keys(weights) as (keyof MetricWeights)[]).map((key) => {

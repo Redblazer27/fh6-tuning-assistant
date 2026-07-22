@@ -64,13 +64,17 @@ up front (locks, no-swaps, no-aero, stock-looking, budget, preferred drivetrain/
 
 ## Scoring (`scoring.ts`)
 
-Six metrics normalized 0..1 (accel = pw; grip = mechanical grip + aero bonus; braking; launch;
-top-speed = power; **balance** = the drivetrain's fit for the goal, `DRIVETRAIN_FIT[discipline][drivetrain]`),
-weighted per discipline (`SCORE_WEIGHTS`) and tilted per strategy (`STRATEGY_TILT`), re-normalized to
-sum 1. Total is `Σ normalized·weight·100`. The `balance` metric encodes the biggest decision the raw
-performance numbers miss — drift wants RWD, loose surfaces and drag reward AWD traction — so the optimizer
-only takes a drivetrain swap when it suits the goal (and `launch` is kept low where AWD should not be
-rewarded just for launching). The full breakdown is returned and shown, so
+Seven metrics normalized 0..1 (accel = pw; grip = mechanical grip + aero bonus; braking; launch;
+top-speed = power; **balance** = the drivetrain's fit for the goal, `DRIVETRAIN_FIT[discipline][drivetrain]`;
+**tireFit** = the tire compound's fit for the goal, `TIRE_FIT[discipline][compound]`), weighted per
+discipline (`SCORE_WEIGHTS`) and tilted per strategy (`STRATEGY_TILT`), re-normalized to sum 1. Total is
+`Σ normalized·weight·100`. `balance` and `tireFit` encode the decisions the raw performance numbers miss
+or get wrong — drift wants RWD **and drift tires despite their lower raw grip**, loose surfaces and drag
+reward AWD traction and purpose rubber — so the optimizer only takes a drivetrain swap or a non-grippiest
+compound when it suits the goal (`launch` is kept low where AWD should not be rewarded just for launching,
+and drift's `grip` weight is trimmed so `tireFit` can pull the compound off slicks). Where purpose and raw
+grip agree (slicks on tarmac, rally rubber on dirt) `tireFit` simply reinforces `grip`. The full breakdown
+is returned and shown, so
 ranking is never a black box.
 
 ## Tuning heuristics (`tuning.ts`)
