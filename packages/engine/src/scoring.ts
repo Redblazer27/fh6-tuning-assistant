@@ -1,8 +1,10 @@
 import { clamp, round, type Discipline, type ScoreBreakdown } from '@fh6/shared';
 import {
+  DIFF_FIT,
   DRIVETRAIN_FIT,
   SCORE_WEIGHTS,
   STRATEGY_TILT,
+  SUSPENSION_FIT,
   TIRE_FIT,
   type MetricWeights,
 } from './constants.ts';
@@ -25,7 +27,7 @@ interface NormalizedMetrics {
   launch: number;
   topSpeed: number;
   balance: number;
-  tireFit: number;
+  setupFit: number;
   raw: {
     accel: number;
     grip: number;
@@ -33,7 +35,7 @@ interface NormalizedMetrics {
     launch: number;
     topSpeed: number;
     balance: number;
-    tireFit: number;
+    setupFit: number;
   };
 }
 
@@ -53,8 +55,16 @@ export function normalizeMetrics(
   const launch = clamp((spec.launchFactor - 0.8) / 0.6, 0, 1);
   const topSpeed = clamp((spec.powerHp - 150) / 1250, 0, 1);
   const balance = DRIVETRAIN_FIT[discipline][spec.drivetrain];
+  // Setup fit blends the discipline-variant parts: tire compound (half), then
+  // springs and differential (a quarter each). A drift build scores well only
+  // when all three are the drift variants, not the grippier race options.
   const tireTable = TIRE_FIT[discipline];
   const tireFit = tireTable[spec.tireCompound] ?? tireTable.default;
+  const suspTable = SUSPENSION_FIT[discipline];
+  const suspFit = suspTable[spec.suspensionTier] ?? suspTable.default;
+  const diffTable = DIFF_FIT[discipline];
+  const diffFit = diffTable[spec.diffTier] ?? diffTable.default;
+  const setupFit = 0.5 * tireFit + 0.25 * suspFit + 0.25 * diffFit;
   return {
     accel,
     grip,
@@ -62,7 +72,7 @@ export function normalizeMetrics(
     launch,
     topSpeed,
     balance,
-    tireFit,
+    setupFit,
     raw: {
       accel: spec.powerToWeight,
       grip: spec.gripFactor,
@@ -70,7 +80,7 @@ export function normalizeMetrics(
       launch: spec.launchFactor,
       topSpeed: spec.powerHp,
       balance,
-      tireFit,
+      setupFit,
     },
   };
 }
@@ -89,10 +99,11 @@ export function disciplineWeights(
     launch: Math.max(0, base.launch + (t.launch ?? 0)),
     topSpeed: Math.max(0, base.topSpeed + (t.topSpeed ?? 0)),
     balance: Math.max(0, base.balance + (t.balance ?? 0)),
-    tireFit: Math.max(0, base.tireFit + (t.tireFit ?? 0)),
+    setupFit: Math.max(0, base.setupFit + (t.setupFit ?? 0)),
   };
   const sum =
-    raw.accel + raw.grip + raw.braking + raw.launch + raw.topSpeed + raw.balance + raw.tireFit || 1;
+    raw.accel + raw.grip + raw.braking + raw.launch + raw.topSpeed + raw.balance + raw.setupFit ||
+    1;
   return {
     accel: raw.accel / sum,
     grip: raw.grip / sum,
@@ -100,7 +111,7 @@ export function disciplineWeights(
     launch: raw.launch / sum,
     topSpeed: raw.topSpeed / sum,
     balance: raw.balance / sum,
-    tireFit: raw.tireFit / sum,
+    setupFit: raw.setupFit / sum,
   };
 }
 
@@ -111,7 +122,7 @@ const METRIC_LABELS: Record<keyof MetricWeights, string> = {
   launch: 'Launch / traction',
   topSpeed: 'Top-end speed',
   balance: 'Drivetrain fit for the goal',
-  tireFit: 'Tire choice for the goal',
+  setupFit: 'Setup fit (tires, springs, diff)',
 };
 
 /**
@@ -132,7 +143,7 @@ export function scoreSpec(
     launch: m.launch,
     topSpeed: m.topSpeed,
     balance: m.balance,
-    tireFit: m.tireFit,
+    setupFit: m.setupFit,
   };
   const rawByKey: Record<keyof MetricWeights, number> = {
     accel: m.raw.accel,
@@ -141,7 +152,7 @@ export function scoreSpec(
     launch: m.raw.launch,
     topSpeed: m.raw.topSpeed,
     balance: m.raw.balance,
-    tireFit: m.raw.tireFit,
+    setupFit: m.raw.setupFit,
   };
 
   const components = (Object.keys(weights) as (keyof MetricWeights)[]).map((key) => {

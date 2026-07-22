@@ -1,4 +1,4 @@
-import type { TelemetrySummary } from '@fh6/shared';
+import type { Discipline, TelemetrySummary } from '@fh6/shared';
 import { TELEMETRY_DIAGNOSIS } from './constants.ts';
 import { SYMPTOMS, type SymptomAdjustment } from './symptoms.ts';
 
@@ -48,8 +48,15 @@ function finding(
   };
 }
 
-/** Diagnose handling issues from a recorded session summary. */
-export function diagnoseTelemetry(summary: TelemetrySummary): TelemetryDiagnosis {
+/**
+ * Diagnose handling issues from a recorded session summary. Pass the `discipline`
+ * so the read is judged against the goal — most importantly for drift, where a
+ * sliding, spinning rear is the POINT, not a fault to correct.
+ */
+export function diagnoseTelemetry(
+  summary: TelemetrySummary,
+  discipline?: Discipline,
+): TelemetryDiagnosis {
   const t = TELEMETRY_DIAGNOSIS;
   const findings: TelemetryFinding[] = [];
   const notes: string[] = [];
@@ -64,6 +71,29 @@ export function diagnoseTelemetry(summary: TelemetrySummary): TelemetryDiagnosis
   // Balance: understeerIndex > 0 = front slides more (understeer); < 0 = oversteer.
   const ui = summary.understeerIndex;
   const absUi = Math.abs(ui);
+  const [fl, fr, rl, rr] = summary.meanCombinedSlip;
+  const rearSlip = (rl + rr) / 2;
+  const frontSlip = (fl + fr) / 2;
+
+  if (discipline === 'drift') {
+    // For drift the rear SHOULD slide and spin; the only balance fault is the
+    // opposite — the front sliding more than the rear (can't take/hold angle).
+    if (ui >= t.balanceMild) {
+      findings.push(
+        finding(
+          'understeer-entry',
+          ui >= t.balanceStrong ? 'strong' : 'mild',
+          `Understeer index +${ui.toFixed(2)} — the front is sliding more than the rear, so the car resists taking and holding angle. (For drift you want the rear to lead.)`,
+        ),
+      );
+    } else {
+      notes.push(
+        `Drift session: the rear leads the slide (balance index ${ui.toFixed(2)}) and averages ${rearSlip.toFixed(1)} slip vs ${frontSlip.toFixed(1)} front — that's the goal. Judge it on holding and transitioning angle; if the rear snaps or spins uncontrollably, reduce differential accel lock and soften the rear.`,
+      );
+    }
+    return { findings, notes };
+  }
+
   if (absUi >= t.balanceMild) {
     const severity = absUi >= t.balanceStrong ? 'strong' : 'mild';
     if (ui > 0) {
@@ -86,8 +116,6 @@ export function diagnoseTelemetry(summary: TelemetrySummary): TelemetryDiagnosis
   }
 
   // Traction: drive-axle (rear) mean slip well above the limit reads as wheelspin.
-  const [, , rl, rr] = summary.meanCombinedSlip;
-  const rearSlip = (rl + rr) / 2;
   if (rearSlip >= t.wheelspinSlip) {
     findings.push(
       finding(

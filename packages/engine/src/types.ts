@@ -31,6 +31,9 @@ export interface BuiltSpec {
   drivetrain: Drivetrain;
   aspiration: Aspiration;
   tireCompound: TireCompound;
+  /** Tier of the chosen springs/dampers and differential (for discipline setup fit). */
+  suspensionTier: string;
+  diffTier: string;
   massKg: number;
   weightDistFrontPct: number;
   powerHp: number;

@@ -66,16 +66,17 @@ up front (locks, no-swaps, no-aero, stock-looking, budget, preferred drivetrain/
 
 Seven metrics normalized 0..1 (accel = pw; grip = mechanical grip + aero bonus; braking; launch;
 top-speed = power; **balance** = the drivetrain's fit for the goal, `DRIVETRAIN_FIT[discipline][drivetrain]`;
-**tireFit** = the tire compound's fit for the goal, `TIRE_FIT[discipline][compound]`), weighted per
-discipline (`SCORE_WEIGHTS`) and tilted per strategy (`STRATEGY_TILT`), re-normalized to sum 1. Total is
-`Σ normalized·weight·100`. `balance` and `tireFit` encode the decisions the raw performance numbers miss
-or get wrong — drift wants RWD **and drift tires despite their lower raw grip**, loose surfaces and drag
-reward AWD traction and purpose rubber — so the optimizer only takes a drivetrain swap or a non-grippiest
-compound when it suits the goal (`launch` is kept low where AWD should not be rewarded just for launching,
-and drift's `grip` weight is trimmed so `tireFit` can pull the compound off slicks). Where purpose and raw
-grip agree (slicks on tarmac, rally rubber on dirt) `tireFit` simply reinforces `grip`. The full breakdown
-is returned and shown, so
-ranking is never a black box.
+**setupFit** = how well the discipline-variant parts fit the goal), weighted per discipline (`SCORE_WEIGHTS`)
+and tilted per strategy (`STRATEGY_TILT`), re-normalized to sum 1. Total is `Σ normalized·weight·100`.
+`setupFit` blends three part choices — tire compound (`TIRE_FIT`, half), springs/dampers (`SUSPENSION_FIT`,
+a quarter) and differential (`DIFF_FIT`, a quarter) — so a **drift** build scores well only with drift
+tires, drift springs **and** a drift diff, even though a race setup grips harder in the raw metrics; loose
+surfaces likewise pull rally/off-road parts. `balance` and `setupFit` encode the decisions the raw numbers
+miss or get wrong, so the optimizer only takes a drivetrain swap or a non-grippiest variant part when it
+suits the goal (`launch` is kept low where AWD shouldn't be rewarded just for launching, and `grip` is
+trimmed where `setupFit` must pull parts off the grippiest race options). On tarmac the race parts win on
+both grip and fit, so `setupFit` just reinforces. The full breakdown is returned and shown, so ranking is
+never a black box.
 
 ## Car comparison (`compare.ts`)
 

@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { summarizeTelemetry, type TelemetryFrame, type TelemetrySummary } from '@fh6/shared';
+import {
+  summarizeTelemetry,
+  type Discipline,
+  type TelemetryFrame,
+  type TelemetrySummary,
+} from '@fh6/shared';
 import { diagnoseTelemetry, type TelemetryDiagnosis } from '@fh6/engine';
 import { DEFAULT_BRIDGE_WS, TelemetryClient, type TelemetryStatus } from '../lib/telemetry.ts';
 import { fmt } from '../lib/format.ts';
@@ -83,7 +88,7 @@ export function TelemetryPanel({
       setRecording(false);
       const summary = summarizeTelemetry(framesRef.current);
       setSummary(summary);
-      setDiagnosis(diagnoseTelemetry(summary));
+      setDiagnosis(diagnoseTelemetry(summary, buildContext?.discipline as Discipline | undefined));
       onSummary({
         frames: summary.frames,
         durationSec: Number(summary.durationSec.toFixed(1)),

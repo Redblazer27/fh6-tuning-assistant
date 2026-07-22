@@ -129,28 +129,35 @@ export interface MetricWeights {
   topSpeed: number;
   /** How well the build's drivetrain suits the discipline (see DRIVETRAIN_FIT). */
   balance: number;
-  /** How well the tire compound suits the discipline (see TIRE_FIT). */
-  tireFit: number;
+  /**
+   * How well the discipline-variant parts fit the goal — a blend of tire compound
+   * (TIRE_FIT), springs/dampers (SUSPENSION_FIT) and differential (DIFF_FIT). This
+   * is what makes a drift build pick drift tires, drift springs and a drift diff
+   * even though a race setup grips harder in the raw metrics.
+   */
+  setupFit: number;
 }
 
 // Each row sums to ~1. `balance` scores the drivetrain's fit for the goal and
-// `tireFit` the tire compound's — first-order build decisions the raw metrics
-// miss or get wrong (drift needs RWD + drift tires despite their lower raw grip;
-// loose surfaces and drag reward AWD traction). `launch` is kept low where AWD
-// should not be rewarded just for launching (notably drift), and drift's `grip`
-// is trimmed so `tireFit` can pull the compound off slicks — the fit metrics,
-// not raw grip, drive those choices.
+// `setupFit` the discipline-variant parts (tires + springs + diff) — first-order
+// build decisions the raw metrics miss or get wrong (drift needs RWD + drift
+// tires/springs/diff despite their lower raw grip; loose surfaces want rally/
+// off-road parts). `launch` is kept low where AWD should not be rewarded just for
+// launching (notably drift), and `grip` is trimmed where `setupFit` must pull the
+// parts off the grippiest (race) options — the fit metrics, not raw grip, drive
+// those choices. `setupFit` is weighted heavily only where variant parts matter
+// (drift, dirt, rally); on tarmac the race parts win on both, so it just reinforces.
 export const SCORE_WEIGHTS: Record<Discipline, MetricWeights> = {
-  road: { accel: 0.24, grip: 0.28, braking: 0.15, launch: 0.03, topSpeed: 0.18, balance: 0.07, tireFit: 0.05 }, // prettier-ignore
-  street: { accel: 0.27, grip: 0.24, braking: 0.12, launch: 0.05, topSpeed: 0.2, balance: 0.07, tireFit: 0.05 }, // prettier-ignore
-  dirt: { accel: 0.23, grip: 0.31, braking: 0.08, launch: 0.13, topSpeed: 0.07, balance: 0.12, tireFit: 0.06 }, // prettier-ignore
-  rally: { accel: 0.23, grip: 0.29, braking: 0.08, launch: 0.14, topSpeed: 0.08, balance: 0.12, tireFit: 0.06 }, // prettier-ignore
-  cross_country: { accel: 0.2, grip: 0.32, braking: 0.08, launch: 0.14, topSpeed: 0.08, balance: 0.12, tireFit: 0.06 }, // prettier-ignore
-  drag: { accel: 0.34, grip: 0.05, braking: 0.02, launch: 0.33, topSpeed: 0.12, balance: 0.1, tireFit: 0.04 }, // prettier-ignore
-  drift: { accel: 0.3, grip: 0.18, braking: 0.03, launch: 0.02, topSpeed: 0.1, balance: 0.19, tireFit: 0.18 }, // prettier-ignore
-  top_speed: { accel: 0.18, grip: 0.05, braking: 0.0, launch: 0.03, topSpeed: 0.67, balance: 0.04, tireFit: 0.03 }, // prettier-ignore
-  pr_stunts: { accel: 0.28, grip: 0.19, braking: 0.05, launch: 0.13, topSpeed: 0.22, balance: 0.08, tireFit: 0.05 }, // prettier-ignore
-  custom: { accel: 0.24, grip: 0.26, braking: 0.13, launch: 0.07, topSpeed: 0.18, balance: 0.07, tireFit: 0.05 }, // prettier-ignore
+  road: { accel: 0.24, grip: 0.28, braking: 0.15, launch: 0.03, topSpeed: 0.18, balance: 0.07, setupFit: 0.05 }, // prettier-ignore
+  street: { accel: 0.27, grip: 0.24, braking: 0.12, launch: 0.05, topSpeed: 0.2, balance: 0.07, setupFit: 0.05 }, // prettier-ignore
+  dirt: { accel: 0.23, grip: 0.21, braking: 0.08, launch: 0.13, topSpeed: 0.07, balance: 0.12, setupFit: 0.16 }, // prettier-ignore
+  rally: { accel: 0.23, grip: 0.19, braking: 0.08, launch: 0.14, topSpeed: 0.08, balance: 0.12, setupFit: 0.16 }, // prettier-ignore
+  cross_country: { accel: 0.2, grip: 0.22, braking: 0.08, launch: 0.14, topSpeed: 0.08, balance: 0.12, setupFit: 0.16 }, // prettier-ignore
+  drag: { accel: 0.34, grip: 0.05, braking: 0.02, launch: 0.33, topSpeed: 0.12, balance: 0.1, setupFit: 0.04 }, // prettier-ignore
+  drift: { accel: 0.28, grip: 0.12, braking: 0.03, launch: 0.02, topSpeed: 0.06, balance: 0.19, setupFit: 0.3 }, // prettier-ignore
+  top_speed: { accel: 0.18, grip: 0.05, braking: 0.0, launch: 0.03, topSpeed: 0.67, balance: 0.04, setupFit: 0.03 }, // prettier-ignore
+  pr_stunts: { accel: 0.28, grip: 0.19, braking: 0.05, launch: 0.13, topSpeed: 0.22, balance: 0.08, setupFit: 0.05 }, // prettier-ignore
+  custom: { accel: 0.24, grip: 0.26, braking: 0.13, launch: 0.07, topSpeed: 0.18, balance: 0.07, setupFit: 0.05 }, // prettier-ignore
 };
 
 /**
@@ -204,6 +211,84 @@ export const TIRE_FIT: Record<
     rally: 0.7,
   },
   custom: { default: 0.7, slick: 0.85, semi_slick: 0.82, sport: 0.78 },
+};
+
+/**
+ * Discipline suitability of the springs/dampers tier (0..1), keyed by the part's
+ * `tier` (stock | sport | race | rally | drift). Race is the grippiest on tarmac
+ * and wins there; drift and loose surfaces want their purpose-built variant even
+ * though it grips a little less. Feeds `setupFit`. Tiers not listed use `default`.
+ */
+export const SUSPENSION_FIT: Record<Discipline, { default: number } & Record<string, number>> = {
+  road: { default: 0.5, race: 1.0, sport: 0.72, rally: 0.45, drift: 0.5, stock: 0.35 },
+  street: { default: 0.5, race: 1.0, sport: 0.78, rally: 0.45, drift: 0.5, stock: 0.35 },
+  dirt: { default: 0.45, rally: 1.0, race: 0.6, drift: 0.4, sport: 0.5, stock: 0.35 },
+  rally: { default: 0.45, rally: 1.0, race: 0.6, drift: 0.4, sport: 0.5, stock: 0.35 },
+  cross_country: { default: 0.45, rally: 1.0, race: 0.55, drift: 0.4, sport: 0.5, stock: 0.35 },
+  drag: { default: 0.5, race: 1.0, sport: 0.75, drift: 0.5, rally: 0.4, stock: 0.4 },
+  drift: { default: 0.45, drift: 1.0, race: 0.55, rally: 0.5, sport: 0.5, stock: 0.4 },
+  top_speed: { default: 0.5, race: 1.0, sport: 0.8, drift: 0.5, rally: 0.4, stock: 0.4 },
+  pr_stunts: { default: 0.5, race: 1.0, rally: 0.7, sport: 0.6, drift: 0.5, stock: 0.4 },
+  custom: { default: 0.7, race: 0.9, sport: 0.75, rally: 0.7, drift: 0.7, stock: 0.5 },
+};
+
+/**
+ * Discipline suitability of the differential tier (0..1), keyed by the part's
+ * `tier` (stock | sport | race | rally | drift | offroad). A tunable race diff is
+ * the default best; drift wants a drift diff (near-locked rear), loose surfaces a
+ * rally/off-road diff. Feeds `setupFit`. Tiers not listed use `default`.
+ */
+export const DIFF_FIT: Record<Discipline, { default: number } & Record<string, number>> = {
+  road: { default: 0.5, race: 1.0, sport: 0.72, drift: 0.5, rally: 0.5, offroad: 0.4, stock: 0.35 },
+  street: {
+    default: 0.5,
+    race: 1.0,
+    sport: 0.75,
+    drift: 0.5,
+    rally: 0.5,
+    offroad: 0.4,
+    stock: 0.35,
+  },
+  dirt: {
+    default: 0.45,
+    offroad: 1.0,
+    rally: 0.95,
+    race: 0.6,
+    sport: 0.5,
+    drift: 0.4,
+    stock: 0.35,
+  },
+  rally: {
+    default: 0.45,
+    rally: 1.0,
+    offroad: 0.9,
+    race: 0.6,
+    sport: 0.5,
+    drift: 0.4,
+    stock: 0.35,
+  },
+  cross_country: { default: 0.45, offroad: 1.0, rally: 0.9, race: 0.55, sport: 0.5, stock: 0.35 },
+  drag: { default: 0.5, race: 1.0, sport: 0.72, drift: 0.5, rally: 0.45, stock: 0.4 },
+  drift: {
+    default: 0.45,
+    drift: 1.0,
+    race: 0.6,
+    sport: 0.55,
+    rally: 0.55,
+    offroad: 0.5,
+    stock: 0.4,
+  },
+  top_speed: { default: 0.5, race: 1.0, sport: 0.75, stock: 0.5 },
+  pr_stunts: { default: 0.5, race: 1.0, rally: 0.7, offroad: 0.65, sport: 0.6, stock: 0.4 },
+  custom: {
+    default: 0.7,
+    race: 0.9,
+    sport: 0.75,
+    rally: 0.7,
+    drift: 0.7,
+    offroad: 0.7,
+    stock: 0.5,
+  },
 };
 
 /** Strategy tilt applied on top of the discipline weights, then re-normalized. */

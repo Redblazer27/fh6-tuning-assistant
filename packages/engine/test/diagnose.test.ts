@@ -49,4 +49,25 @@ describe('telemetry diagnosis (closing the loop)', () => {
     expect(d.findings).toHaveLength(0);
     expect(d.notes.join(' ')).toMatch(/balanced/i);
   });
+
+  it('does NOT fault a drifting car for a sliding, spinning rear', () => {
+    // The real RX-7 drift capture: rear slides hard (negative index) and spins.
+    const drift = diagnoseTelemetry(
+      summary({ understeerIndex: -1.7, meanCombinedSlip: [0.86, 1.04, 6.0, 6.07] }),
+      'drift',
+    );
+    expect(drift.findings).toHaveLength(0); // no "oversteer" / "wheelspin" fault
+    expect(drift.notes.join(' ')).toMatch(/drift|that's the goal|hold/i);
+    // The same trace for a road build IS a fault.
+    const road = diagnoseTelemetry(
+      summary({ understeerIndex: -1.7, meanCombinedSlip: [0.86, 1.04, 6.0, 6.07] }),
+      'road',
+    );
+    expect(road.findings.some((f) => f.symptomId === 'oversteer-exit')).toBe(true);
+  });
+
+  it('flags understeer for a drift car that pushes at the front', () => {
+    const d = diagnoseTelemetry(summary({ understeerIndex: 0.2 }), 'drift');
+    expect(d.findings.some((f) => f.symptomId === 'understeer-entry')).toBe(true);
+  });
 });

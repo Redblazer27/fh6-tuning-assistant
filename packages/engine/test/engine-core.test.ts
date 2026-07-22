@@ -207,7 +207,7 @@ describe('determinism', () => {
 describe('scoring transparency', () => {
   it('weights sum to ~1 and contributions add up to the total', () => {
     const w = disciplineWeights('road', 'balanced');
-    const sum = w.accel + w.grip + w.braking + w.launch + w.topSpeed + w.balance + w.tireFit;
+    const sum = w.accel + w.grip + w.braking + w.launch + w.topSpeed + w.balance + w.setupFit;
     expect(sum).toBeCloseTo(1, 5);
 
     const car = rcar('porsche-911-gt3-991-2018');
@@ -221,7 +221,7 @@ describe('scoring transparency', () => {
     const car = rcar('koenigsegg-jesko-2020');
     const spec = buildSpec(store, car, {}, 'tarmac');
     const m = normalizeMetrics(spec, 'drift');
-    for (const v of [m.accel, m.grip, m.braking, m.launch, m.topSpeed, m.balance, m.tireFit]) {
+    for (const v of [m.accel, m.grip, m.braking, m.launch, m.topSpeed, m.balance, m.setupFit]) {
       expect(v).toBeGreaterThanOrEqual(0);
       expect(v).toBeLessThanOrEqual(1);
     }
@@ -272,6 +272,19 @@ describe('tire choice fits the goal', () => {
     expect(scoreSpec(onSlicks, w, 'road').total).toBeGreaterThan(
       scoreSpec(onDrift, w, 'road').total,
     );
+  });
+
+  it('a generated drift build selects the drift springs and drift differential', () => {
+    // Regression for real feedback: a drift build was recommending race springs
+    // and a sport diff instead of the drift variants.
+    const result = generateBuild(
+      store,
+      makeRequest({ carId: car.id, discipline: 'drift', targetClass: 'S1' }),
+    );
+    const top = result.strategies[0]!;
+    expect(top.selection.springs_dampers).toBe('susp-drift');
+    expect(top.selection.differential).toBe('diff-drift');
+    expect(top.selection.tire_compound).toBe('tire-drift');
   });
 });
 
