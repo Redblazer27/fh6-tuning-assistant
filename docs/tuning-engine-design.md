@@ -129,6 +129,15 @@ Thresholds live in `TELEMETRY_DIAGNOSIS` and are **heuristic / low confidence** 
 documented) — flagged as such in the UI, and a prime target for calibration once real captures are
 gathered. Like symptoms, findings are advice: they never change a tune on their own.
 
+**Capture pipeline.** `npm run capture` builds the web app and runs the bridge (`apps/bridge`), which
+listens for FH6 Data Out UDP (127.0.0.1:20440, **Car Dash** = 324 B) and streams decoded frames to the
+served app over WebSocket. The parser (`apps/bridge/src/parser.ts`) handles the FH6 layout — CarGroup /
+Smashable fields shift the dash base to 244, so driver inputs land at bytes 315/316/319 — and falls back
+to FH5 / Sled. In the Telemetry panel, **Record → Stop & summarize → Export session** downloads a
+self-describing `fh6-session` JSON: the build (car, discipline, parts, tune, estimated PI, score) plus the
+measured summary, diagnosis and downsampled frames. That paired _(build → measured behaviour)_ record is
+exactly what's needed to calibrate the low-confidence heuristics against reality.
+
 ## Determinism & tests
 
 - Pure functions, integer/float math only, no time/random.

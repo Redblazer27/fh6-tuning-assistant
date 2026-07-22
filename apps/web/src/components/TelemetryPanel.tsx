@@ -1,15 +1,39 @@
 import { useEffect, useRef, useState } from 'react';
-import { summarizeTelemetry, type TelemetryFrame } from '@fh6/shared';
+import { summarizeTelemetry, type TelemetryFrame, type TelemetrySummary } from '@fh6/shared';
 import { diagnoseTelemetry, type TelemetryDiagnosis } from '@fh6/engine';
 import { DEFAULT_BRIDGE_WS, TelemetryClient, type TelemetryStatus } from '../lib/telemetry.ts';
 import { fmt } from '../lib/format.ts';
 
 const WHEELS = ['FL', 'FR', 'RL', 'RR'];
 
+/** The current build, bundled into an exported session so a capture is self-describing. */
+export interface SessionBuildContext {
+  dataVersion: string;
+  carId: string;
+  carName: string;
+  discipline: string;
+  targetClass: string | null;
+  targetPI: number | null;
+  strategyId: string;
+  selection: Record<string, string | undefined>;
+  tune: unknown;
+  estimatedPI: { pi: number; uncertainty: number };
+  score: number;
+}
+
+/** Downsample frames to at most `cap` so an exported session stays a reasonable size. */
+function downsample(frames: TelemetryFrame[], cap = 1500): TelemetryFrame[] {
+  if (frames.length <= cap) return frames;
+  const step = Math.ceil(frames.length / cap);
+  return frames.filter((_, i) => i % step === 0);
+}
+
 export function TelemetryPanel({
   onSummary,
+  buildContext,
 }: {
   onSummary: (summary: Record<string, number>) => void;
+  buildContext?: SessionBuildContext | null;
 }) {
   const [url, setUrl] = useState(DEFAULT_BRIDGE_WS);
   const [status, setStatus] = useState<TelemetryStatus>('disconnected');
@@ -17,6 +41,7 @@ export function TelemetryPanel({
   const [recording, setRecording] = useState(false);
   const [recorded, setRecorded] = useState(0);
   const [diagnosis, setDiagnosis] = useState<TelemetryDiagnosis | null>(null);
+  const [summary, setSummary] = useState<TelemetrySummary | null>(null);
 
   const clientRef = useRef<TelemetryClient | null>(null);
   const framesRef = useRef<TelemetryFrame[]>([]);
@@ -50,12 +75,14 @@ export function TelemetryPanel({
       framesRef.current = [];
       setRecorded(0);
       setDiagnosis(null);
+      setSummary(null);
       recordingRef.current = true;
       setRecording(true);
     } else {
       recordingRef.current = false;
       setRecording(false);
       const summary = summarizeTelemetry(framesRef.current);
+      setSummary(summary);
       setDiagnosis(diagnoseTelemetry(summary));
       onSummary({
         frames: summary.frames,
@@ -70,6 +97,32 @@ export function TelemetryPanel({
     }
   };
 
+  const exportSession = () => {
+    if (!summary) return;
+    const bundle = {
+      kind: 'fh6-session',
+      version: 1,
+      recordedAt: new Date().toISOString(),
+      // The build this session was driven with — so a capture is self-describing.
+      build: buildContext ?? null,
+      telemetry: {
+        summary,
+        diagnosis,
+        // Full frames are 60 Hz; downsample so the file stays small but analyzable.
+        frames: downsample(framesRef.current),
+        totalFramesRecorded: framesRef.current.length,
+      },
+    };
+    const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    const car = buildContext?.carId ?? 'car';
+    const disc = buildContext?.discipline ?? 'session';
+    a.download = `fh6-session-${car}-${disc}-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
   return (
     <div className="card">
       <div className="row" style={{ justifyContent: 'space-between' }}>
@@ -80,8 +133,10 @@ export function TelemetryPanel({
         </span>
       </div>
       <p className="dim" style={{ marginTop: -4 }}>
-        Run the bridge, then in FH6: Settings → HUD and Gameplay → Data Out = On, IP 127.0.0.1, Port
-        20440.
+        Run <code>npm run capture</code> and open this page at{' '}
+        <code>http://localhost:8123</code>. In FH6: Settings → HUD and Gameplay → Data Out = On, IP
+        127.0.0.1, Port 20440 (Data Out format = Car Dash). Then <b>Record a session</b>, drive a few
+        corners, <b>Stop &amp; summarize</b>, and <b>Export session</b> to share the capture.
       </p>
 
       <div className="row">
@@ -99,6 +154,9 @@ export function TelemetryPanel({
           disabled={status !== 'connected'}
         >
           {recording ? `Stop & summarize (${recorded})` : 'Record session'}
+        </button>
+        <button onClick={exportSession} disabled={!summary || recording} title="Download this session (build + telemetry) as JSON to share">
+          Export session
         </button>
       </div>
 

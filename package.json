@@ -16,6 +16,7 @@
     "build": "npm run build -w @fh6/web",
     "build:bridge": "npm run build -w @fh6/bridge",
     "bridge": "npm run start -w @fh6/bridge",
+    "capture": "npm run build && npm run build -w @fh6/bridge && node apps/bridge/dist/fh6-bridge.cjs --web apps/web/dist",
     "package:release": "node scripts/package-release.mjs",
     "preview": "npm run preview -w @fh6/web",
     "test": "vitest run",

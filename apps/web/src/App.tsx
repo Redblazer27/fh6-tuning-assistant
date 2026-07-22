@@ -200,7 +200,24 @@ export function App() {
               {tab === 'compare' && (
                 <Compare store={store} request={request} initialCarId={request.carId} />
               )}
-              {tab === 'telemetry' && <TelemetryPanel onSummary={setTelemetrySummary} />}
+              {tab === 'telemetry' && (
+                <TelemetryPanel
+                  onSummary={setTelemetrySummary}
+                  buildContext={{
+                    dataVersion: store.dataset.version.dataVersion,
+                    carId: result.car.id,
+                    carName: result.car.name,
+                    discipline: request.discipline,
+                    targetClass: request.targetClass ?? null,
+                    targetPI: request.targetPI ?? null,
+                    strategyId: selected.id,
+                    selection: selected.selection,
+                    tune: selected.tune.tune,
+                    estimatedPI: { pi: selected.pi.pi, uncertainty: selected.pi.uncertainty },
+                    score: selected.score.total,
+                  }}
+                />
+              )}
               {tab === 'admin' && (
                 <AdminPanel
                   store={store}

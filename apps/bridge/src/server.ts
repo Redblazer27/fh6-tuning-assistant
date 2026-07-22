@@ -52,10 +52,19 @@ export interface Bridge {
   stop(): void;
 }
 
+/** Name the Data Out format from a packet length, so the user can confirm FH6. */
+function formatName(len: number): string {
+  if (len === 324) return 'FH6/FH5 Car Dash (324 B) ✓';
+  if (len >= 311 && len <= 323) return `Car Dash variant (${len} B)`;
+  if (len === 232) return 'Sled only (232 B) — switch Data Out to "Car Dash" for full data';
+  return `unrecognized length ${len} B`;
+}
+
 export function createBridge(opts: BridgeOptions): Bridge {
   const clients = new Set<WebSocket>();
   let recordStream: WriteStream | null = null;
   let frameCount = 0;
+  let sawPacket = false;
 
   const serveStatic = async (req: IncomingMessage, res: ServerResponse) => {
     if (req.url === '/health') {
@@ -100,6 +109,10 @@ export function createBridge(opts: BridgeOptions): Bridge {
 
   const udp = dgram.createSocket('udp4');
   udp.on('message', (msg) => {
+    if (!sawPacket) {
+      sawPacket = true;
+      opts.log(`first packet received — ${formatName((msg as Buffer).length)}`);
+    }
     const frame = parsePacket(msg as Buffer);
     if (!frame) return;
     frameCount += 1;
