@@ -119,6 +119,16 @@ one-line rationale (e.g., understeer-on-exit → reduce diff accel lock, then so
 front aero). Condition modifiers (controller / wheel / wet) add global notes. These are guidance layered
 on the baseline — applying one is the user's choice and never rewrites the baseline tune.
 
+## Telemetry diagnosis — closing the loop (`diagnose.ts`)
+
+`diagnoseTelemetry(summary)` turns a **recorded session** into a diagnosis: it reads what the car actually
+did — the mean front-vs-rear slip balance (`understeerIndex`) and per-wheel combined slip — and maps it to
+the matching `SYMPTOMS` entry, surfacing that symptom's smallest-safe-first fixes. So the loop runs
+model → drive → measure → concrete tune fix, instead of the user guessing which complaint applies.
+Thresholds live in `TELEMETRY_DIAGNOSIS` and are **heuristic / low confidence** (FH6's slip units aren't
+documented) — flagged as such in the UI, and a prime target for calibration once real captures are
+gathered. Like symptoms, findings are advice: they never change a tune on their own.
+
 ## Determinism & tests
 
 - Pure functions, integer/float math only, no time/random.

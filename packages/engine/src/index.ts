@@ -27,3 +27,4 @@ export {
   type CarComparisonRow,
   type CompareResult,
 } from './compare.ts';
+export { diagnoseTelemetry, type TelemetryFinding, type TelemetryDiagnosis } from './diagnose.ts';

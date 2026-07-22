@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { summarizeTelemetry, type TelemetryFrame } from '@fh6/shared';
+import { diagnoseTelemetry, type TelemetryDiagnosis } from '@fh6/engine';
 import { DEFAULT_BRIDGE_WS, TelemetryClient, type TelemetryStatus } from '../lib/telemetry.ts';
 import { fmt } from '../lib/format.ts';
 
@@ -15,6 +16,7 @@ export function TelemetryPanel({
   const [frame, setFrame] = useState<TelemetryFrame | null>(null);
   const [recording, setRecording] = useState(false);
   const [recorded, setRecorded] = useState(0);
+  const [diagnosis, setDiagnosis] = useState<TelemetryDiagnosis | null>(null);
 
   const clientRef = useRef<TelemetryClient | null>(null);
   const framesRef = useRef<TelemetryFrame[]>([]);
@@ -47,12 +49,14 @@ export function TelemetryPanel({
     if (!recording) {
       framesRef.current = [];
       setRecorded(0);
+      setDiagnosis(null);
       recordingRef.current = true;
       setRecording(true);
     } else {
       recordingRef.current = false;
       setRecording(false);
       const summary = summarizeTelemetry(framesRef.current);
+      setDiagnosis(diagnoseTelemetry(summary));
       onSummary({
         frames: summary.frames,
         durationSec: Number(summary.durationSec.toFixed(1)),
@@ -118,6 +122,41 @@ export function TelemetryPanel({
       ) : (
         <div className="notice info" style={{ marginTop: 10 }}>
           No frames yet. Connect the bridge and start driving in-game.
+        </div>
+      )}
+
+      {diagnosis && (
+        <div style={{ marginTop: 14 }}>
+          <h3>Diagnosis from this session</h3>
+          {diagnosis.findings.length === 0 ? (
+            <p className="dim" style={{ marginTop: 0 }}>
+              {diagnosis.notes.join(' ')}
+            </p>
+          ) : (
+            <>
+              {diagnosis.findings.map((f) => (
+                <div key={f.symptomId} className="notice info" style={{ marginTop: 8 }}>
+                  <div>
+                    <strong>{f.label}</strong> <span className="dim">({f.severity})</span>
+                  </div>
+                  <div className="dim" style={{ fontSize: '0.8rem' }}>
+                    {f.evidence}
+                  </div>
+                  <ul style={{ margin: '6px 0 0', paddingLeft: 18 }}>
+                    {f.adjustments.map((a) => (
+                      <li key={a.change} style={{ fontSize: '0.85rem' }}>
+                        <strong>{a.change}</strong> — <span className="dim">{a.rationale}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+              <p className="dim" style={{ fontSize: '0.75rem', marginTop: 8 }}>
+                Measured read of tire slip — try the smallest change first and re-record. Heuristic /
+                low confidence until calibrated against real captures.
+              </p>
+            </>
+          )}
         </div>
       )}
     </div>

@@ -234,3 +234,19 @@ export const WEIGHT_BALANCE_IDEAL: Record<Discipline, { front: number; spread: n
 
 /** Max ± points the weight-balance fit can move a car's comparison score. */
 export const CHASSIS_COMPARE_SWING = 5;
+
+// --- Telemetry diagnosis thresholds -------------------------------------------
+// Turn a recorded session's summary into a handling diagnosis. These thresholds
+// are HEURISTIC and LOW CONFIDENCE — FH6 slip-angle units aren't documented, so
+// they should be calibrated against real captures. `understeerIndex` is the mean
+// front-minus-rear slip angle (>0 = understeer, <0 = oversteer); slip values are
+// mean combined slip per wheel (≈1 = at the limit, >1 = sliding).
+export const TELEMETRY_DIAGNOSIS = {
+  /** Below this many racing frames, a session is too short to diagnose. */
+  minFrames: 60,
+  /** |understeerIndex| for a mild / strong balance finding. */
+  balanceMild: 0.05,
+  balanceStrong: 0.12,
+  /** Drive-axle mean slip above this reads as wheelspin / traction-limited. */
+  wheelspinSlip: 1.15,
+};
