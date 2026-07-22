@@ -180,9 +180,8 @@ export const DRIVETRAIN_FIT: Record<Discipline, Record<Drivetrain, number>> = {
  * though slicks grip harder, and loose surfaces want rally/off-road rubber.
  * For grip disciplines it simply tracks grip (slicks on top), so it reinforces
  * rather than fights that metric; only where purpose and raw grip diverge
- * (notably drift) does it flip the choice. Compounds not listed use `default`.
- * (FH6 exposes no dedicated drag compound as a part, so drag builds fall back to
- * slicks — the best available — until one is modelled.)
+ * (notably drift, and drag) does it flip the choice. Compounds not listed use
+ * `default`.
  */
 export const TIRE_FIT: Record<
   Discipline,

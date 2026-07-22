@@ -76,6 +76,8 @@ export interface PartLine {
   cost: number;
   unlocks: TuningCategory[];
   isUpgrade: boolean;
+  /** The physics + reason this part helps (or costs), shown in the UI. */
+  rationale?: string;
 }
 
 export interface TuneResult {

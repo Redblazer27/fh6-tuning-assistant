@@ -1,4 +1,5 @@
 import type { PartInput } from '../types.ts';
+import { CATEGORY_PHYSICS } from '../part-physics.ts';
 import { DATA_VERSION } from './version.ts';
 
 /**
@@ -11,21 +12,38 @@ import { DATA_VERSION } from './version.ts';
  * (confidence: medium) or inferred (low) — never presented as exact.
  *
  * Every category includes a stock (tierRank 0) option so "no change" is a valid
- * choice for the optimizer.
+ * choice for the optimizer, and every upgrade carries a `rationale` — the physics
+ * and the reason it helps — shown alongside the part in the UI. Where the reason
+ * is the same for every tier in a category it comes from CATEGORY_PHYSICS below;
+ * parts whose physics differ from their category (e.g. turbo vs supercharger,
+ * each tire compound) set their own. The shared CATEGORY_PHYSICS map (also used
+ * as a load-time fallback for imported parts) lives in ../part-physics.ts.
  */
 
 type PartSeed = Omit<PartInput, 'source' | 'confidence' | 'dataVersion'> &
   Partial<Pick<PartInput, 'source' | 'confidence' | 'dataVersion'>>;
 
-const P = (p: PartSeed): PartInput => ({
-  source: 'community-tuning-consensus',
-  confidence: 'medium',
-  dataVersion: DATA_VERSION,
-  ...p,
-});
+const P = (p: PartSeed): PartInput => {
+  const { rationale, ...rest } = p;
+  return {
+    source: 'community-tuning-consensus',
+    confidence: 'medium',
+    dataVersion: DATA_VERSION,
+    // Every upgrade is explained: its own reason, else the category's physics.
+    rationale: rationale ?? CATEGORY_PHYSICS[p.category],
+    ...rest,
+  };
+};
 
 const stock = (category: PartInput['category'], name: string): PartInput =>
-  P({ id: `${category}-stock`, category, name, tierRank: 0, tier: 'stock' });
+  P({
+    id: `${category}-stock`,
+    category,
+    name,
+    tierRank: 0,
+    tier: 'stock',
+    rationale: 'Factory part — the baseline the upgrades improve on. No change to the car.',
+  });
 
 export const parts: PartInput[] = [
   // ---- Engine: power adders (multiplicative) --------------------------------
@@ -263,6 +281,8 @@ export const parts: PartInput[] = [
     setsAspiration: 'turbo',
     cost: 45000,
     confidence: 'low',
+    rationale:
+      'A turbocharger uses exhaust energy to force-feed air — a big power jump for its weight, with some throttle lag before boost builds.',
   }),
   P({
     id: 'fi-twin-turbo',
@@ -274,6 +294,8 @@ export const parts: PartInput[] = [
     setsAspiration: 'twin_turbo',
     cost: 65000,
     confidence: 'low',
+    rationale:
+      'Two smaller turbos spool faster and flow more air than one — the largest forced-induction gain, at the most added weight.',
   }),
   P({
     id: 'fi-supercharger',
@@ -285,6 +307,8 @@ export const parts: PartInput[] = [
     setsAspiration: 'supercharged',
     cost: 55000,
     confidence: 'low',
+    rationale:
+      'A belt-driven supercharger boosts power with instant, lag-free response and strong low-end torque, at a parasitic drive cost.',
   }),
   P({
     id: 'fi-centrifugal',
@@ -296,6 +320,8 @@ export const parts: PartInput[] = [
     setsAspiration: 'centrifugal',
     cost: 58000,
     confidence: 'low',
+    rationale:
+      'A centrifugal supercharger builds boost with revs — strong top-end power and less heat than a roots blower, with a more progressive delivery.',
   }),
 
   // ---- Conversions ----------------------------------------------------------
@@ -310,6 +336,8 @@ export const parts: PartInput[] = [
     cost: 90000,
     confidence: 'low',
     notes: 'Generic swap estimate; real swaps set a specific engine/power.',
+    rationale:
+      'Drops in a much stronger engine for the largest possible power gain. Adds weight and can change the car’s balance; per-car swaps use the specific engine’s real power.',
   }),
 
   stock('drivetrain_swap', 'Stock Drivetrain'),
@@ -323,6 +351,8 @@ export const parts: PartInput[] = [
     setsDrivetrain: 'AWD',
     cost: 85000,
     confidence: 'low',
+    rationale:
+      'Drives all four wheels: far better launch and traction, especially on loose or wet surfaces — at a notable weight penalty. Great for drag, rally and off-road.',
   }),
   P({
     id: 'dt-swap-rwd',
@@ -334,6 +364,8 @@ export const parts: PartInput[] = [
     setsDrivetrain: 'RWD',
     cost: 60000,
     confidence: 'low',
+    rationale:
+      'Drives the rear wheels — the cleaner steering feel and balance most circuit and drift builds want, and it sheds a little driveline weight.',
   }),
   P({
     id: 'dt-swap-fwd',
@@ -345,6 +377,8 @@ export const parts: PartInput[] = [
     setsDrivetrain: 'FWD',
     cost: 50000,
     confidence: 'low',
+    rationale:
+      'Drives the front wheels — the lightest layout, but it limits power-down under acceleration and is rarely chosen for performance builds.',
   }),
 
   // ---- Brakes ---------------------------------------------------------------
@@ -410,6 +444,8 @@ export const parts: PartInput[] = [
     unlocks: ['alignment', 'springs', 'damping'],
     cost: 32000,
     notes: 'Higher travel; better for dirt/rally.',
+    rationale:
+      'Rally coilovers add suspension travel and run softer rates to soak up bumps and keep the tires planted on dirt and gravel — the choice for loose surfaces.',
   }),
   P({
     id: 'susp-drift',
@@ -420,6 +456,8 @@ export const parts: PartInput[] = [
     effects: { gripMultiplier: 1.02 },
     unlocks: ['alignment', 'springs', 'damping'],
     cost: 32000,
+    rationale:
+      'Drift coilovers favor a stiff, responsive setup with steering geometry that helps initiate and hold big slide angles.',
   }),
 
   // ---- Anti-roll bars -------------------------------------------------------
@@ -453,13 +491,33 @@ export const parts: PartInput[] = [
   // ---- Chassis / weight -----------------------------------------------------
   stock('chassis_reinforcement', 'Stock Chassis'),
   P({
+    id: 'chassis-street',
+    category: 'chassis_reinforcement',
+    name: 'Street Chassis Reinforcement',
+    tierRank: 1,
+    tier: 'street',
+    effects: { gripMultiplier: 1.004, massKgDelta: 3 },
+    cost: 6000,
+  }),
+  P({
+    id: 'chassis-sport',
+    category: 'chassis_reinforcement',
+    name: 'Sport Chassis Reinforcement',
+    tierRank: 2,
+    tier: 'sport',
+    effects: { gripMultiplier: 1.007, massKgDelta: 6 },
+    cost: 11000,
+  }),
+  P({
     id: 'chassis-race',
     category: 'chassis_reinforcement',
-    name: 'Roll Cage / Chassis Reinforcement',
-    tierRank: 1,
+    name: 'Roll Cage',
+    tierRank: 3,
     tier: 'race',
     effects: { gripMultiplier: 1.01, massKgDelta: 10 },
     cost: 18000,
+    rationale:
+      'A welded-in roll cage is the stiffest reinforcement, so the suspension and alignment work exactly as tuned — the sharpest, most consistent handling, at a little safety weight.',
   }),
 
   stock('weight_reduction', 'Stock Weight'),
@@ -600,6 +658,8 @@ export const parts: PartInput[] = [
     unlocks: ['differential'],
     cost: 30000,
     confidence: 'low',
+    rationale:
+      'A drift diff runs near-locked so both rear wheels spin together — essential for breaking traction smoothly and sustaining a slide.',
   }),
   P({
     id: 'diff-offroad',
@@ -614,6 +674,9 @@ export const parts: PartInput[] = [
   }),
 
   // ---- Tires & rims ---------------------------------------------------------
+  // Compounds set the tire's grip and the surface it works on. Per-compound
+  // rationale explains the trade-off — raw tarmac grip is not always the goal
+  // (drift tires and drag tires trade lateral grip for control / launch).
   stock('tire_compound', 'Stock Tires'),
   P({
     id: 'tire-street',
@@ -623,6 +686,7 @@ export const parts: PartInput[] = [
     tier: 'street',
     setsTireCompound: 'street',
     cost: 9000,
+    rationale: 'Street tires: a modest grip bump over stock for road driving.',
   }),
   P({
     id: 'tire-sport',
@@ -632,6 +696,7 @@ export const parts: PartInput[] = [
     tier: 'sport',
     setsTireCompound: 'sport',
     cost: 18000,
+    rationale: 'Sport tires: noticeably more tarmac grip for spirited road and light track use.',
   }),
   P({
     id: 'tire-semi-slick',
@@ -641,6 +706,7 @@ export const parts: PartInput[] = [
     tier: 'semi_slick',
     setsTireCompound: 'semi_slick',
     cost: 30000,
+    rationale: 'Semi-slick tires: near-race tarmac grip that is still usable in the cold and wet.',
   }),
   P({
     id: 'tire-slick',
@@ -650,6 +716,19 @@ export const parts: PartInput[] = [
     tier: 'slick',
     setsTireCompound: 'slick',
     cost: 45000,
+    rationale:
+      'Race slicks: the most tarmac grip available — the default for circuit and top-speed builds, but useless on loose surfaces.',
+  }),
+  P({
+    id: 'tire-drag',
+    category: 'tire_compound',
+    name: 'Drag Tires',
+    tierRank: 4,
+    tier: 'drag',
+    setsTireCompound: 'drag',
+    cost: 40000,
+    rationale:
+      'Drag tires: soft, sticky rubber built for maximum straight-line launch and traction off the line — poor lateral grip, so only for drag.',
   }),
   P({
     id: 'tire-rally',
@@ -659,6 +738,8 @@ export const parts: PartInput[] = [
     tier: 'rally',
     setsTireCompound: 'rally',
     cost: 30000,
+    rationale:
+      'Rally tires: grippy on dirt and gravel while still workable on tarmac — the all-surface choice.',
   }),
   P({
     id: 'tire-offroad',
@@ -668,6 +749,8 @@ export const parts: PartInput[] = [
     tier: 'offroad',
     setsTireCompound: 'offroad',
     cost: 30000,
+    rationale:
+      'Off-road tires: maximum grip on loose, rough terrain, at the cost of tarmac grip — for cross-country.',
   }),
   P({
     id: 'tire-drift',
@@ -677,6 +760,8 @@ export const parts: PartInput[] = [
     tier: 'drift',
     setsTireCompound: 'drift',
     cost: 30000,
+    rationale:
+      'Drift tires: tuned for a smooth, controllable breakaway so you can hold big angles — lower outright grip than slicks, but that is the point.',
   }),
   P({
     id: 'tire-snow',
@@ -686,6 +771,7 @@ export const parts: PartInput[] = [
     tier: 'snow',
     setsTireCompound: 'snow',
     cost: 30000,
+    rationale: 'Snow tires: the only compound that grips on snow and ice.',
   }),
 
   stock('front_tire_width', 'Stock Front Tire Width'),

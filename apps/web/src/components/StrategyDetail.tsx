@@ -39,18 +39,33 @@ export function StrategyDetail({ car, strategy, store, locks, onSetLock, onRemov
             <tbody>
               {store.categories.map((category) => {
                 const selectedId = strategy.selection[category];
-                const options = store.getPartsByCategory(category);
+                // Car-aware list: a car's profile may lock a category or restrict
+                // parts, so this can be a subset of the global catalog.
+                const options = store.getAvailablePartsByCategory(car.id, category);
+                const canUpgrade = options.some((o) => o.tierRank > 0);
                 const locked = category in locks;
                 const part = selectedId ? store.getPart(selectedId) : undefined;
                 const isUpgrade = (part?.tierRank ?? 0) > 0;
                 return (
                   <tr key={category} style={{ opacity: isUpgrade || locked ? 1 : 0.6 }}>
-                    <td>{categoryLabel(category)}</td>
+                    <td>
+                      {categoryLabel(category)}
+                      {!canUpgrade && (
+                        <span
+                          className="dim"
+                          title="This car cannot upgrade this category (stock only)."
+                          style={{ display: 'block', fontSize: '0.72rem' }}
+                        >
+                          🔒 not upgradable
+                        </span>
+                      )}
+                    </td>
                     <td>
                       <select
                         value={selectedId ?? ''}
                         onChange={(e) => onSetLock(category, e.target.value)}
                         aria-label={`${categoryLabel(category)} part`}
+                        disabled={!canUpgrade}
                       >
                         {options.map((o) => (
                           <option key={o.id} value={o.id}>
@@ -58,6 +73,14 @@ export function StrategyDetail({ car, strategy, store, locks, onSetLock, onRemov
                           </option>
                         ))}
                       </select>
+                      {isUpgrade && part?.rationale && (
+                        <span
+                          className="dim"
+                          style={{ display: 'block', fontSize: '0.74rem', marginTop: 2 }}
+                        >
+                          {part.rationale}
+                        </span>
+                      )}
                     </td>
                     <td className="num">{part?.cost ? credits(part.cost) : '—'}</td>
                     <td className="dim" style={{ fontSize: '0.78rem' }}>
@@ -67,6 +90,7 @@ export function StrategyDetail({ car, strategy, store, locks, onSetLock, onRemov
                       <input
                         type="checkbox"
                         checked={locked}
+                        disabled={!canUpgrade}
                         onChange={(e) =>
                           e.target.checked
                             ? selectedId && onSetLock(category, selectedId)

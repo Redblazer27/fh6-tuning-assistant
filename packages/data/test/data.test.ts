@@ -53,10 +53,22 @@ describe('seed dataset', () => {
     }
   });
 
-  it('tire_compound parts set a compound', () => {
+  it('tire_compound parts set a compound, including drag tires', () => {
     const tires = defaultStore.getPartsByCategory('tire_compound').filter((p) => p.tierRank > 0);
     expect(tires.length).toBeGreaterThan(0);
     for (const t of tires) expect(t.setsTireCompound).toBeTruthy();
+    // FH6 has drag tires — a dedicated straight-line compound.
+    const drag = tires.find((t) => t.setsTireCompound === 'drag');
+    expect(drag).toBeDefined();
+  });
+
+  it('every upgrade part explains its physics (rationale)', () => {
+    for (const category of defaultStore.categories) {
+      for (const part of defaultStore.getPartsByCategory(category)) {
+        expect(part.rationale, `${part.id} needs a rationale`).toBeTruthy();
+        expect(part.rationale!.length).toBeGreaterThan(10);
+      }
+    }
   });
 
   it('race suspension unlocks springs & damping', () => {

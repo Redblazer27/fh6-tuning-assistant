@@ -1,4 +1,5 @@
 import { piToClass, type UpgradeCategory } from '@fh6/shared';
+import { CATEGORY_PHYSICS } from './part-physics.ts';
 import { datasetSchema } from './schemas.ts';
 import type { Car, CarUpgradeProfile, Dataset, Part, Source, TuneRanges } from './types.ts';
 
@@ -34,6 +35,9 @@ export function loadDataset(raw: unknown): Dataset {
     partCategoryById.set(part.id, part.category);
     if (!sourceIds.has(part.source))
       problems.push(`Part ${part.id} cites unknown source ${part.source}`);
+    // Guarantee every part is explained: fall back to the category's physics for
+    // parts (e.g. imported engine swaps) that don't set their own rationale.
+    if (!part.rationale) part.rationale = CATEGORY_PHYSICS[part.category];
   }
 
   for (const tr of dataset.tuneRanges) {

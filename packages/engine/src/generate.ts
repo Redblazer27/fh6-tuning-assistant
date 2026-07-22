@@ -41,6 +41,7 @@ export function partLines(store: DataStore, selection: PartSelection): PartLine[
       cost: part.cost,
       unlocks: part.unlocks,
       isUpgrade: part.tierRank > 0,
+      rationale: part.rationale,
     });
   }
   return lines;

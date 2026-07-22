@@ -143,6 +143,12 @@ export const partSchema = provenanceSchema.extend({
   tierRank: z.number().int().min(0),
   /** Short tier label, e.g. 'stock' | 'street' | 'sport' | 'race' | 'rally' | 'drift'. */
   tier: z.string().min(1),
+  /**
+   * The physics + reason this upgrade exists: what it changes on the car and why
+   * that helps (or costs). Shown in the UI so every recommended part is explained,
+   * not just listed. Seed parts fall back to a per-category default when omitted.
+   */
+  rationale: z.string().optional(),
   effects: partEffectsSchema.default({}),
   /** Tuning menu sections this part unlocks. */
   unlocks: z.array(tuningCategorySchema).default([]),
