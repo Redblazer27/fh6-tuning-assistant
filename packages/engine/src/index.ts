@@ -21,3 +21,9 @@ export {
   applyTuneOverrides,
   partLines,
 } from './generate.ts';
+export {
+  compareCars,
+  chassisBalanceFit,
+  type CarComparisonRow,
+  type CompareResult,
+} from './compare.ts';

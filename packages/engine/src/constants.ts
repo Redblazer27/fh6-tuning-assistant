@@ -212,3 +212,25 @@ export const STRATEGY_TILT: Record<'grip' | 'balanced' | 'speed', Partial<Metric
   balanced: {},
   speed: { topSpeed: 0.1, accel: 0.08, grip: -0.14, braking: -0.04 },
 };
+
+// --- Weight-distribution fit (car comparison only) -----------------------------
+// Ideal static front weight %, and how fast fit falls off, per discipline. This
+// is a LOW-confidence, secondary factor: no upgrade changes a car's weight
+// distribution, so it never affects a single car's build. It is used only to
+// rank *different cars* against each other for a goal — where a mid/rear-engine
+// balance genuinely suits drift or a nose-light layout suits a loose surface.
+export const WEIGHT_BALANCE_IDEAL: Record<Discipline, { front: number; spread: number }> = {
+  road: { front: 49, spread: 14 },
+  street: { front: 49, spread: 14 },
+  dirt: { front: 50, spread: 16 },
+  rally: { front: 50, spread: 16 },
+  cross_country: { front: 50, spread: 16 },
+  drag: { front: 45, spread: 16 }, // rear weight helps RWD launch
+  drift: { front: 53, spread: 14 }, // front-engine RWD balance
+  top_speed: { front: 50, spread: 18 },
+  pr_stunts: { front: 50, spread: 16 },
+  custom: { front: 50, spread: 16 },
+};
+
+/** Max ± points the weight-balance fit can move a car's comparison score. */
+export const CHASSIS_COMPARE_SWING = 5;

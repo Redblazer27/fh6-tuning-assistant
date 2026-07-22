@@ -77,6 +77,16 @@ grip agree (slicks on tarmac, rally rubber on dirt) `tireFit` simply reinforces 
 is returned and shown, so
 ranking is never a black box.
 
+## Car comparison (`compare.ts`)
+
+`compareCars(store, carIds, request)` ranks several cars for one goal: it builds each car for the same
+request and ranks by its goal-fit score (drivetrain + tire fit already included). On top it adds a small,
+bounded **weight-distribution** term — `chassisBalanceFit(frontPct, discipline)` against
+`WEIGHT_BALANCE_IDEAL` (e.g. drag rewards a nose-light car, drift a ~53% front balance). No upgrade changes
+a car's weight balance, so this term never affects a *single* car's build — it only breaks ties **between**
+cars (bounded to ±`CHASSIS_COMPARE_SWING` points), which is exactly where a car's fixed layout earns its
+place. Low confidence, and disclosed as such (cars without balance data fall back to a neutral 50/50).
+
 ## Tuning heuristics (`tuning.ts`)
 
 Every value is clamped/snapped to the car's legal `TuneRanges`, so output is always in-game-valid.

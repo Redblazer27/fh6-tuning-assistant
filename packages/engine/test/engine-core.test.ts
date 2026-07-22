@@ -12,6 +12,7 @@ import {
   disciplineWeights,
 } from '../src/index.ts';
 import { bruteForceOptimize, optimizeSelection } from '../src/optimizer.ts';
+import { chassisBalanceFit, compareCars } from '../src/compare.ts';
 import { assertTuneWithinRanges, makeRequest, rcar, resolvedCars, store } from './helpers.ts';
 
 describe('PI estimate (stock-anchored)', () => {
@@ -116,6 +117,76 @@ describe('optimizer optimality', () => {
       expect(scoreOf(heuristic.selection)).toBeCloseTo(scoreOf(exhaustive.selection), 4);
     });
   }
+});
+
+describe('car comparison', () => {
+  it('chassis-balance fit peaks at the discipline ideal and stays in 0..1', () => {
+    // Drag rewards a rear-biased (nose-light) car; drift a ~53% front balance.
+    expect(chassisBalanceFit(45, 'drag')).toBeGreaterThan(chassisBalanceFit(55, 'drag'));
+    expect(chassisBalanceFit(53, 'drift')).toBeGreaterThan(chassisBalanceFit(40, 'drift'));
+    for (const f of [30, 45, 50, 55, 70]) {
+      const v = chassisBalanceFit(f, 'road');
+      expect(v).toBeGreaterThanOrEqual(0);
+      expect(v).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('ranks cars, skipping unknown and duplicate ids', () => {
+    const req = makeRequest({ discipline: 'road', targetClass: 'S1' });
+    const result = compareCars(
+      store,
+      ['mazda-mx5-nd-2019', 'bmw-m3-e46-2005', 'mazda-mx5-nd-2019', 'ghost-car'],
+      req,
+    );
+    expect(result.rows).toHaveLength(2); // dupe + unknown dropped
+    for (let i = 1; i < result.rows.length; i += 1) {
+      expect(result.rows[i - 1]!.comparisonScore).toBeGreaterThanOrEqual(
+        result.rows[i]!.comparisonScore,
+      );
+    }
+    // Deterministic.
+    const again = compareCars(store, ['mazda-mx5-nd-2019', 'bmw-m3-e46-2005'], req);
+    expect(again.rows.map((r) => r.carId)).toEqual(
+      result.rows.map((r) => r.carId).filter((id) => id !== undefined),
+    );
+  });
+
+  it('weight distribution breaks ties between otherwise-identical cars', () => {
+    // Two cars identical except weight balance; for drift the ~53%-front one wins.
+    const dataset = structuredClone(store.dataset);
+    const base: Car = {
+      id: '',
+      year: 2020,
+      make: 'Test',
+      model: 'T',
+      name: '2020 Test T',
+      ownership: 'Base game',
+      isBaseGame: true,
+      stockClass: 'A',
+      stockPI: 650,
+      drivetrain: 'RWD',
+      massKg: 1300,
+      powerHp: 400,
+      aspiration: 'NA',
+      stockTireCompound: 'stock',
+      source: 'forza-official-cars',
+      confidence: 'medium',
+      dataVersion: 'test',
+    };
+    dataset.cars.push(
+      { ...base, id: 'balance-good', weightDistFrontPct: 53 },
+      { ...base, id: 'balance-bad', weightDistFrontPct: 40 },
+    );
+    const testStore = createDataStore(dataset);
+    const result = compareCars(
+      testStore,
+      ['balance-bad', 'balance-good'],
+      makeRequest({ discipline: 'drift', targetClass: 'A' }),
+    );
+    expect(result.rows[0]!.carId).toBe('balance-good');
+    expect(result.rows[0]!.goalFitScore).toBeCloseTo(result.rows[1]!.goalFitScore, 4);
+    expect(result.rows[0]!.chassisFit).toBeGreaterThan(result.rows[1]!.chassisFit);
+  });
 });
 
 describe('determinism', () => {

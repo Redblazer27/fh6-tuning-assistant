@@ -16,6 +16,7 @@ import { SymptomPanel } from './components/SymptomPanel.tsx';
 import { FeedbackPanel } from './components/FeedbackPanel.tsx';
 import { TelemetryPanel } from './components/TelemetryPanel.tsx';
 import { AdminPanel } from './components/AdminPanel.tsx';
+import { Compare } from './components/Compare.tsx';
 import { Trust } from './components/Trust.tsx';
 import { decodeFromHash, defaultRequest, toSavedBuild } from './state.ts';
 import {
@@ -54,7 +55,7 @@ export function App() {
   );
   const [savedBuilds, setSavedBuilds] = useState<StoredBuild[]>(() => loadSavedBuilds());
   const [telemetrySummary, setTelemetrySummary] = useState<Record<string, number> | undefined>();
-  const [tab, setTab] = useState<'tune' | 'telemetry' | 'admin'>('tune');
+  const [tab, setTab] = useState<'tune' | 'compare' | 'telemetry' | 'admin'>('tune');
 
   // If the active dataset no longer contains the selected car, reset safely.
   useEffect(() => {
@@ -174,6 +175,12 @@ export function App() {
                   Adjust
                 </button>
                 <button
+                  className={`pill ${tab === 'compare' ? 'active' : ''}`}
+                  onClick={() => setTab('compare')}
+                >
+                  Compare
+                </button>
+                <button
                   className={`pill ${tab === 'telemetry' ? 'active' : ''}`}
                   onClick={() => setTab('telemetry')}
                 >
@@ -189,6 +196,9 @@ export function App() {
                   <SymptomPanel input={request.input} />
                   <FeedbackPanel buildId={buildParam} telemetrySummary={telemetrySummary} />
                 </>
+              )}
+              {tab === 'compare' && (
+                <Compare store={store} request={request} initialCarId={request.carId} />
               )}
               {tab === 'telemetry' && <TelemetryPanel onSummary={setTelemetrySummary} />}
               {tab === 'admin' && (
