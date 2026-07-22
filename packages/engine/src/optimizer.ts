@@ -3,6 +3,7 @@ import {
   type Aspiration,
   type BuildRequest,
   type Drivetrain,
+  type EngineType,
   type LockedSelections,
   type StrategyKind,
   type Surface,
@@ -11,7 +12,7 @@ import {
 } from '@fh6/shared';
 import type { DataStore, Part } from '@fh6/data';
 import { tireGrip } from './constants.ts';
-import { LAUNCH_BASE } from './buildSpec.ts';
+import { LAUNCH_BASE, baseEngineAllows } from './buildSpec.ts';
 import type { ResolvedCar } from './effectiveCar.ts';
 import { estimatePI } from './pi.ts';
 import { disciplineWeights, scoreSpec } from './scoring.ts';
@@ -138,9 +139,10 @@ interface Agg {
   aeroRear: AeroCapability | null;
   cost: number;
   engineUpgrades: Part['engineUpgrades'];
+  baseEngineType: EngineType;
 }
 
-const initAgg = (car: ResolvedCar): Agg => ({
+const initAgg = (car: ResolvedCar, baseEngineType: EngineType): Agg => ({
   powerMult: 1,
   powerDelta: 0,
   basePowerHp: car.powerHp,
@@ -161,6 +163,7 @@ const initAgg = (car: ResolvedCar): Agg => ({
   aeroRear: null,
   cost: 0,
   engineUpgrades: undefined,
+  baseEngineType,
 });
 
 const engineSupports = (agg: Agg, part: Part): boolean => {
@@ -207,7 +210,12 @@ function applyPart(
       agg.maxEngineMult = m;
     }
   }
-  if (e.powerMultiplier && engineSupports(agg, part)) agg.powerMult *= e.powerMultiplier;
+  if (
+    e.powerMultiplier &&
+    engineSupports(agg, part) &&
+    baseEngineAllows(agg.baseEngineType, agg.engineUpgrades !== undefined, part)
+  )
+    agg.powerMult *= e.powerMultiplier;
   if (e.powerHpDelta) agg.powerDelta += e.powerHpDelta;
   if (e.massMultiplier) agg.massMult *= e.massMultiplier;
   if (e.massKgDelta) agg.massDelta += e.massKgDelta;
@@ -298,6 +306,7 @@ export function optimizeSelection(
 ): OptimizeOutput {
   const notes: string[] = [];
   const weights = disciplineWeights(request.discipline, opts.strategy);
+  const baseEngineType = store.getUpgradeProfile(car.id)?.engineType ?? 'piston';
   const cats = store.categories;
   const candidates = new Map<UpgradeCategory, Part[]>();
   for (const cat of cats)
@@ -312,7 +321,7 @@ export function optimizeSelection(
   };
 
   const evaluate = (sel: PartSelection): Eval => {
-    const agg = initAgg(car);
+    const agg = initAgg(car, baseEngineType);
     for (const cat of cats) {
       const id = sel[cat];
       const part = (id ? store.getPart(id) : undefined) ?? stockOf(cat);
@@ -526,12 +535,13 @@ export function bruteForceOptimize(
 ): OptimizeOutput {
   const notes: string[] = [];
   const weights = disciplineWeights(request.discipline, opts.strategy);
+  const baseEngineType = store.getUpgradeProfile(car.id)?.engineType ?? 'piston';
   const cats = [...store.categories];
   const candidates = cats.map((cat) => candidatesFor(store, car, request, cat, opts.locks, notes));
 
   const maxEngineMult = new Map<string, number>();
   const evaluate = (sel: PartSelection): Eval => {
-    const agg = initAgg(car);
+    const agg = initAgg(car, baseEngineType);
     for (const cat of cats) {
       const p = store.getPart(sel[cat]!);
       if (p) applyPart(store, agg, p, maxEngineMult);

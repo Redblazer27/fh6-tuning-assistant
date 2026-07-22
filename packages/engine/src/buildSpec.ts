@@ -1,4 +1,4 @@
-import type { Drivetrain, Surface, TuningCategory, UpgradeCategory } from '@fh6/shared';
+import type { EngineType, Drivetrain, Surface, TuningCategory, UpgradeCategory } from '@fh6/shared';
 import type { DataStore, Part } from '@fh6/data';
 import { tireGrip } from './constants.ts';
 import type { ResolvedCar } from './effectiveCar.ts';
@@ -20,6 +20,38 @@ const ENGINE_UPGRADE_CATEGORIES = new Set<UpgradeCategory>([
   'intercooler',
   'flywheel',
 ]);
+
+/** A rotary has no camshaft, valves, pistons or fixed displacement to upgrade. */
+const ROTARY_UNSUPPORTED = new Set<UpgradeCategory>([
+  'camshaft',
+  'valves',
+  'pistons_compression',
+  'displacement',
+]);
+/** An electric motor has none of the combustion-engine (or forced-induction) upgrades. */
+const ELECTRIC_UNSUPPORTED = new Set<UpgradeCategory>([
+  ...ENGINE_UPGRADE_CATEGORIES,
+  'forced_induction',
+  'aspiration',
+]);
+
+/**
+ * Whether a car's BASE engine (when no engine swap is fitted) can take this upgrade.
+ * A swapped engine is instead gated by its own per-engine upgrade list, so this only
+ * limits the stock engine: a rotary/electric platform doesn't have piston internals,
+ * so those parts add no power (and the optimizer won't pay for them). Fixes over-
+ * modelling a rotary swap/engine as if it took the full piston upgrade suite.
+ */
+export function baseEngineAllows(
+  engineType: EngineType,
+  hasRealSwap: boolean,
+  part: Part,
+): boolean {
+  if (hasRealSwap || part.tierRank === 0) return true;
+  if (engineType === 'rotary') return !ROTARY_UNSUPPORTED.has(part.category);
+  if (engineType === 'electric') return !ELECTRIC_UNSUPPORTED.has(part.category);
+  return true;
+}
 
 /** Resolve the concrete part chosen for a category (falls back to the stock part). */
 export function resolvePart(
@@ -81,6 +113,9 @@ export function buildSpec(
     const tiers = engineUpgrades[part.category];
     return tiers ? tiers.includes(part.tier) : false;
   };
+  // Base-engine platform gate: a stock rotary/electric can't take piston internals.
+  const baseEngineType: EngineType = store.getUpgradeProfile(car.id)?.engineType ?? 'piston';
+  const hasRealSwap = engineUpgrades !== undefined;
 
   for (const category of store.categories) {
     const part = resolvePart(store, category, selection);
@@ -90,7 +125,12 @@ export function buildSpec(
     const e = part.effects;
     if (e.setsPowerHp) basePowerHp = e.setsPowerHp;
     if (e.setsMaxPowerHp) maxPowerHp = e.setsMaxPowerHp;
-    if (e.powerMultiplier && engineSupports(part)) powerMult *= e.powerMultiplier;
+    if (
+      e.powerMultiplier &&
+      engineSupports(part) &&
+      baseEngineAllows(baseEngineType, hasRealSwap, part)
+    )
+      powerMult *= e.powerMultiplier;
     if (e.powerHpDelta) powerDelta += e.powerHpDelta;
     if (e.massMultiplier) massMult *= e.massMultiplier;
     if (e.massKgDelta) massDelta += e.massKgDelta;

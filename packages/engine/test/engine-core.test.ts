@@ -372,6 +372,33 @@ describe('swap-engine power interpolation', () => {
   });
 });
 
+describe('base-engine platform gate (rotary)', () => {
+  it('a rotary car gains no power from piston-only upgrades, but does from valid ones', () => {
+    const rec = store.getCar('1990-mazda-savanna-rx-7');
+    expect(rec, 'expected a rotary seed car to exist').toBeDefined();
+    const car = resolveEffectiveCar(rec!).car;
+    const stock = buildSpec(store, car, {}, 'tarmac');
+
+    // Camshaft is a piston-only internal — a rotary has none, so it adds no power.
+    const cam = store.getPartsByCategory('camshaft').find((p) => p.effects.powerMultiplier)!;
+    const withCam = buildSpec(store, car, { camshaft: cam.id }, 'tarmac');
+    expect(withCam.powerHp).toBeCloseTo(stock.powerHp, 3);
+
+    // Intake is valid on a rotary — it still adds power.
+    const intake = store.getPartsByCategory('intake').find((p) => p.effects.powerMultiplier)!;
+    const withIntake = buildSpec(store, car, { intake: intake.id }, 'tarmac');
+    expect(withIntake.powerHp).toBeGreaterThan(stock.powerHp);
+  });
+
+  it('a piston car still gains power from a camshaft (gate is engine-type specific)', () => {
+    const car = rcar('bmw-m3-e46-2005');
+    const stock = buildSpec(store, car, {}, 'tarmac');
+    const cam = store.getPartsByCategory('camshaft').find((p) => p.effects.powerMultiplier)!;
+    const withCam = buildSpec(store, car, { camshaft: cam.id }, 'tarmac');
+    expect(withCam.powerHp).toBeGreaterThan(stock.powerHp);
+  });
+});
+
 describe('effective car (physics fallback)', () => {
   const bare: Car = {
     id: 'roster-test',
