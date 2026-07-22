@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { TUNING_CATEGORIES } from '@fh6/shared';
+import { createDataStore, loadDataset, rawSeed } from '@fh6/data';
 import { CONDITION_MODIFIERS, SYMPTOMS, generateBuild } from '../src/index.ts';
 import { makeRequest, store } from './helpers.ts';
 
@@ -68,9 +69,10 @@ describe('constraints', () => {
   });
 
   it('uses a preferred engine swap', () => {
+    // Mustang GT has no per-car profile, so the generic swap is available.
     const s = topOf(
       makeRequest({
-        carId: 'mazda-mx5-nd-2019',
+        carId: 'ford-mustang-gt-2018',
         discipline: 'top_speed',
         constraints: { preferredEngineSwapId: 'engine-swap-highperf', allowEngineSwap: true },
       }),
@@ -78,19 +80,29 @@ describe('constraints', () => {
     expect(s.selection.engine_swap).toBe('engine-swap-highperf');
   });
 
-  it("a car's locked-swap profile overrides an explicit engine-swap request", () => {
-    // The Jesko's upgrade profile forbids engine swaps, so even an explicit
-    // preferred swap cannot be applied — the car simply can't do it.
-    const s = topOf(
+  it('a locked-swap profile overrides an explicit engine-swap request', () => {
+    // A car whose profile forbids swaps can't apply one, even when explicitly requested.
+    const raw = structuredClone(rawSeed);
+    raw.carUpgradeProfiles!.push({
+      source: 'community-tuning-consensus',
+      confidence: 'low',
+      dataVersion: raw.version.dataVersion,
+      carId: 'ford-mustang-gt-2018',
+      availableEngineSwapIds: [],
+      availableDrivetrainSwapIds: [],
+    });
+    const locked = createDataStore(loadDataset(raw));
+    const s = generateBuild(
+      locked,
       makeRequest({
-        carId: 'koenigsegg-jesko-2020',
+        carId: 'ford-mustang-gt-2018',
         discipline: 'top_speed',
         targetClass: 'R',
         constraints: { preferredEngineSwapId: 'engine-swap-highperf', allowEngineSwap: true },
       }),
-    );
-    expect(s.selection.engine_swap).toBe(store.getStockPart('engine_swap')!.id);
-    expect(s.selection.drivetrain_swap).toBe(store.getStockPart('drivetrain_swap')!.id);
+    ).strategies[0]!;
+    expect(s.selection.engine_swap).toBe(locked.getStockPart('engine_swap')!.id);
+    expect(s.selection.drivetrain_swap).toBe(locked.getStockPart('drivetrain_swap')!.id);
   });
 
   it('honors the no-aero constraint', () => {

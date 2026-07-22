@@ -53,6 +53,26 @@ const CURATED = [
   ['Koenigsegg', 'Jesko', 2020],
 ];
 
+// Curated-car id -> its exact FH6 wiki page title (hand-verified to the right
+// generation). Cars with no clean FH6 page (S550 Mustang GT, 991.2 GT3, 2017
+// Raptor) are omitted rather than matched to the wrong generation.
+const CURATED_PROFILES = [
+  ['mazda-mx5-nd-2019', 'Mazda MX-5 (2016)'],
+  ['toyota-supra-rz-1998', 'Toyota Supra RZ'],
+  ['vw-golf-gti-2021', 'Volkswagen Golf GTI'],
+  ['ford-fiesta-st-2019', 'Ford Fiesta ST (2023)'],
+  ['honda-civic-type-r-2018', 'Honda Civic Type R (2018)'],
+  ['subaru-wrx-sti-2019', 'Subaru WRX STI (2015)'],
+  ['nissan-skyline-gtr-r34-1999', 'Nissan Skyline GT-R V-spec II (2000)'],
+  ['nissan-silvia-s15-1999', 'Nissan Silvia Spec-R (2002)'],
+  ['bmw-m3-e46-2005', 'BMW M3 (2005)'],
+  ['chevrolet-corvette-z06-2015', 'Chevrolet Corvette Z06 (2015)'],
+  ['lamborghini-huracan-2014', 'Lamborghini Huracán LP 610-4'],
+  ['audi-sport-quattro-1984', 'Audi Sport quattro'],
+  ['ford-rs200-evolution-1986', 'Ford RS200 Evolution'],
+  ['koenigsegg-jesko-2020', 'Koenigsegg Jesko'],
+];
+
 const norm = (s) =>
   (s || '')
     .normalize('NFD')
@@ -215,7 +235,7 @@ function parseCar(title, wt) {
   const conv = {};
   let convProxy = false;
   const FH_ORDER = ['fh6', 'fh5', 'fh4', 'fh3', 'fh2'];
-  for (const kind of ['eng', 'drive', 'asp']) {
+  for (const kind of ['eng', 'drive', 'asp', 'body']) {
     const b = extractTemplate(wt, `CarConversions|${kind}`);
     if (!b) {
       conv[kind] = null;
@@ -274,6 +294,17 @@ function parseCar(title, wt) {
       ? conv.asp
           .split(',')
           .map((s) => s.trim())
+          .filter(Boolean)
+      : [],
+    bodyKits: conv.body
+      ? conv.body
+          .split(',')
+          .map((s) =>
+            s
+              .replace(/\[\[([^\]|]+)(?:\|[^\]]*)?\]\]/g, '$1')
+              .replace(/[[\]']/g, '')
+              .trim(),
+          )
           .filter(Boolean)
       : [],
   };
@@ -403,6 +434,30 @@ async function main() {
   const curatedKeys = new Set(CURATED.map(([mk, md, yr]) => key(mk, md, yr)));
   const DT = { AWD: 'dt-swap-awd', RWD: 'dt-swap-rwd', FWD: 'dt-swap-fwd' };
 
+  // Build a per-car upgrade profile from a parsed Fandom car, or null if it has none.
+  const makeProfile = (carId, f) => {
+    if (!(
+      f.engineType ||
+      f.engineSwaps.length ||
+      f.drivetrainSwaps.length ||
+      f.aspirationSwaps.length ||
+      f.bodyKits.length
+    ))
+      return null;
+    const dtIds = [...new Set(f.drivetrainSwaps.map((d) => DT[d]).filter(Boolean))].filter(
+      (p) => p !== DT[f.drivetrain],
+    );
+    return {
+      carId,
+      engineType: f.engineType && f.engineType !== 'piston' ? f.engineType : null,
+      dtIds,
+      eng: f.engineSwaps,
+      asp: f.aspirationSwaps,
+      body: f.bodyKits,
+      proxy: f.convProxy,
+    };
+  };
+
   // Real, tunable cars only: exclude traffic/null/special variants (no PI).
   const real = fandom.filter((c) => c.make && c.model && c.year && c.pi);
   console.log(
@@ -452,26 +507,28 @@ async function main() {
       'Car data from the community wiki (medium); ownership cross-checked with the official list.';
     cars.push(car);
 
-    if (
-      f.engineType ||
-      f.engineSwaps.length ||
-      f.drivetrainSwaps.length ||
-      f.aspirationSwaps.length
-    ) {
-      const dtIds = [...new Set(f.drivetrainSwaps.map((d) => DT[d]).filter(Boolean))].filter(
-        (p) => p !== DT[f.drivetrain],
-      );
-      profiles.push({
-        carId: id,
-        engineType: f.engineType && f.engineType !== 'piston' ? f.engineType : null,
-        dtIds,
-        eng: f.engineSwaps,
-        asp: f.aspirationSwaps,
-        proxy: f.convProxy,
-      });
-    }
+    const prof = makeProfile(id, f);
+    if (prof) profiles.push(prof);
   }
   const matched = enriched;
+
+  // Curated cars (hand-authored, with real physics): attach profiles from their
+  // exact FH6 wiki page. Titles are hand-verified to avoid wrong-generation matches.
+  const fandomByTitle = new Map(fandom.map((c) => [c.title, c]));
+  let curatedProfiles = 0;
+  for (const [carId, title] of CURATED_PROFILES) {
+    const f = fandomByTitle.get(title);
+    if (!f) {
+      console.warn(`  ! curated profile: no wiki page "${title}" for ${carId}`);
+      continue;
+    }
+    const prof = makeProfile(carId, f);
+    if (prof) {
+      profiles.push(prof);
+      curatedProfiles++;
+    }
+  }
+  console.log(`  ${curatedProfiles} curated-car profiles.`);
 
   // Concrete swap engines: fetch specs for every referenced engine, emit a catalog,
   // and allowlist the real engine ids on each car's profile so builds simulate them.
@@ -552,6 +609,7 @@ ${cars.map(carLit).join(',\n')},
     if (p.dtIds.length) L.push(`    availableDrivetrainSwapIds: ${arr(p.dtIds)},`);
     if (p.eng.length) L.push(`    engineSwapOptions: ${arr(p.eng)},`);
     if (p.asp.length) L.push(`    aspirationOptions: ${arr(p.asp)},`);
+    if (p.body.length) L.push(`    bodyKitOptions: ${arr(p.body)},`);
     L.push(
       `    source: 'fandom-fh6-cars',`,
       `    confidence: ${p.proxy ? "'low'" : "'medium'"},`,

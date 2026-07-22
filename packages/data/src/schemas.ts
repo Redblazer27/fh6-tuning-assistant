@@ -186,6 +186,8 @@ export const carUpgradeProfileSchema = provenanceSchema.extend({
    */
   engineSwapOptions: z.array(z.string().min(1)).default([]),
   aspirationOptions: z.array(z.string().min(1)).default([]),
+  /** Body-kit / widebody options available for this car (display names; cosmetic). */
+  bodyKitOptions: z.array(z.string().min(1)).default([]),
 });
 
 // --- Tunable ranges -----------------------------------------------------------

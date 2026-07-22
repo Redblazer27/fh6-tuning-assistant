@@ -82,24 +82,41 @@ describe('data store', () => {
 });
 
 describe('per-car upgrade profiles', () => {
-  const JESKO = 'koenigsegg-jesko-2020';
+  // Curated cars with no generated FH6 profile — safe to attach synthetic ones.
+  const NO_PROFILE = 'ford-mustang-gt-2018';
+  const LOCK_CAR = 'porsche-911-gt3-991-2018';
+  const withProfile = (carId: string, profile: Record<string, unknown>) => {
+    const raw = structuredClone(rawSeed);
+    raw.carUpgradeProfiles!.push({
+      source: 'community-tuning-consensus',
+      confidence: 'low',
+      dataVersion: raw.version.dataVersion,
+      carId,
+      ...profile,
+    });
+    return createDataStore(loadDataset(raw));
+  };
 
   it('locks engine & drivetrain swaps for a car whose profile forbids them', () => {
-    const swaps = defaultStore.getAvailablePartsByCategory(JESKO, 'engine_swap');
+    const store = withProfile(LOCK_CAR, {
+      availableEngineSwapIds: [],
+      availableDrivetrainSwapIds: [],
+    });
+    const swaps = store.getAvailablePartsByCategory(LOCK_CAR, 'engine_swap');
     expect(swaps).toHaveLength(1);
     expect(swaps[0]!.tierRank).toBe(0);
-    const dt = defaultStore.getAvailablePartsByCategory(JESKO, 'drivetrain_swap');
+    const dt = store.getAvailablePartsByCategory(LOCK_CAR, 'drivetrain_swap');
     expect(dt.every((p) => p.tierRank === 0)).toBe(true);
   });
 
   it('a car without a profile gets the full catalog except opt-in real engines', () => {
-    expect(defaultStore.getUpgradeProfile('mazda-mx5-nd-2019')).toBeUndefined();
+    expect(defaultStore.getUpgradeProfile(NO_PROFILE)).toBeUndefined();
     // Non-swap categories are identical to the global catalog (backward compatible).
     const intakeAll = defaultStore.getPartsByCategory('intake');
-    const intakeForCar = defaultStore.getAvailablePartsByCategory('mazda-mx5-nd-2019', 'intake');
+    const intakeForCar = defaultStore.getAvailablePartsByCategory(NO_PROFILE, 'intake');
     expect(intakeForCar).toEqual(intakeAll);
     // Engine swaps: the generic swap is offered, but concrete real engines are opt-in only.
-    const swaps = defaultStore.getAvailablePartsByCategory('mazda-mx5-nd-2019', 'engine_swap');
+    const swaps = defaultStore.getAvailablePartsByCategory(NO_PROFILE, 'engine_swap');
     expect(swaps.some((p) => p.id === 'engine-swap-highperf')).toBe(true);
     expect(swaps.some((p) => p.id.startsWith('eng-'))).toBe(false);
   });
@@ -114,30 +131,25 @@ describe('per-car upgrade profiles', () => {
     expect(realEngines.every((e) => (e.effects.setsPowerHp ?? 0) > 0)).toBe(true);
   });
 
-  it('exposes the profile and its engine type', () => {
-    expect(defaultStore.getUpgradeProfile(JESKO)?.engineType).toBe('piston');
+  it('exposes real per-car conversion data (rotary type, body kits)', () => {
+    const profiles = defaultDataset.carUpgradeProfiles;
+    expect(profiles.some((p) => p.engineType === 'rotary')).toBe(true);
+    expect(profiles.some((p) => p.bodyKitOptions.length > 0)).toBe(true);
   });
 
   it('restricts swaps to an allowlist, blocklists parts, and locks categories', () => {
-    const raw = structuredClone(rawSeed);
-    raw.carUpgradeProfiles!.push({
-      source: 'community-tuning-consensus',
-      confidence: 'low',
-      dataVersion: raw.version.dataVersion,
-      carId: 'toyota-supra-rz-1998',
+    const store = withProfile(NO_PROFILE, {
       availableEngineSwapIds: ['engine-swap-highperf'],
       lockedCategories: ['intake'],
       restrictedPartIds: ['exhaust-race'],
     });
-    const store = createDataStore(loadDataset(raw));
-
-    const swaps = store.getAvailablePartsByCategory('toyota-supra-rz-1998', 'engine_swap');
+    const swaps = store.getAvailablePartsByCategory(NO_PROFILE, 'engine_swap');
     expect(swaps.map((p) => p.id).sort()).toEqual(['engine-swap-highperf', 'engine_swap-stock']);
 
-    const intake = store.getAvailablePartsByCategory('toyota-supra-rz-1998', 'intake');
+    const intake = store.getAvailablePartsByCategory(NO_PROFILE, 'intake');
     expect(intake.every((p) => p.tierRank === 0)).toBe(true);
 
-    const exhaust = store.getAvailablePartsByCategory('toyota-supra-rz-1998', 'exhaust');
+    const exhaust = store.getAvailablePartsByCategory(NO_PROFILE, 'exhaust');
     expect(exhaust.some((p) => p.id === 'exhaust-race')).toBe(false);
     expect(exhaust.some((p) => p.tierRank === 0)).toBe(true);
   });

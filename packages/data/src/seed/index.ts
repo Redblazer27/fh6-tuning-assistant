@@ -1,6 +1,5 @@
 import type { DatasetInput } from '../types.ts';
 import { cars } from './cars.ts';
-import { carUpgradeProfiles } from './car-upgrade-profiles.ts';
 import { fandomUpgradeProfiles } from './car-upgrade-profiles-fandom.ts';
 import { swapEngines } from './engines-catalog.ts';
 import { parts } from './parts.ts';
@@ -22,7 +21,7 @@ export const rawSeed: DatasetInput = {
   cars: [...cars, ...rosterCars],
   parts: [...parts, ...swapEngines],
   tuneRanges,
-  carUpgradeProfiles: [...carUpgradeProfiles, ...fandomUpgradeProfiles],
+  carUpgradeProfiles: fandomUpgradeProfiles,
 };
 
 export { DATA_VERSION } from './version.ts';
