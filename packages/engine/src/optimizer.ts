@@ -133,6 +133,7 @@ interface Agg {
   tireCompound: TireCompound;
   suspensionTier: string;
   diffTier: string;
+  transmissionTier: string;
   aeroFront: AeroCapability | null;
   aeroRear: AeroCapability | null;
   cost: number;
@@ -155,6 +156,7 @@ const initAgg = (car: ResolvedCar): Agg => ({
   tireCompound: car.stockTireCompound,
   suspensionTier: 'stock',
   diffTier: 'stock',
+  transmissionTier: 'stock',
   aeroFront: null,
   aeroRear: null,
   cost: 0,
@@ -219,6 +221,7 @@ function applyPart(
   if (part.setsTireCompound) agg.tireCompound = part.setsTireCompound;
   if (part.category === 'springs_dampers') agg.suspensionTier = part.tier;
   if (part.category === 'differential') agg.diffTier = part.tier;
+  if (part.category === 'transmission') agg.transmissionTier = part.tier;
   agg.cost += part.cost;
 }
 
@@ -242,6 +245,7 @@ function deriveFromAgg(car: ResolvedCar, agg: Agg, surface: Surface): BuiltSpec 
     tireCompound: agg.tireCompound,
     suspensionTier: agg.suspensionTier,
     diffTier: agg.diffTier,
+    transmissionTier: agg.transmissionTier,
     massKg,
     weightDistFrontPct: car.weightDistFrontPct,
     powerHp,

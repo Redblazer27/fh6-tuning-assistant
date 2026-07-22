@@ -16,7 +16,7 @@ export function makeRequest(overrides: Partial<BuildRequest> = {}): BuildRequest
     discipline: 'road' as Discipline,
     targetPI: null,
     targetClass: null,
-    input: 'controller',
+    input: 'wheel',
     drivingStyle: 'balanced',
     constraints: {},
     ...overrides,

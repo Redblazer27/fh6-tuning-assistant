@@ -2,7 +2,23 @@ import { useState } from 'react';
 import type { TuningCategory } from '@fh6/shared';
 import type { BuildStrategy } from '@fh6/engine';
 import type { Car } from '@fh6/data';
-import { copyToClipboard, differentialLines, fmt, tuneToText } from '../lib/format.ts';
+import {
+  copyToClipboard,
+  differentialLines,
+  downforceText,
+  fmt,
+  pressureText,
+  rideHeightText,
+  springText,
+  tuneToText,
+  type UnitSystem,
+} from '../lib/format.ts';
+
+const UNITS_KEY = 'fh6-units';
+const initialUnitSystem = (): UnitSystem =>
+  (typeof localStorage !== 'undefined' && localStorage.getItem(UNITS_KEY)) === 'imperial'
+    ? 'imperial'
+    : 'metric';
 
 interface Props {
   car: Car;
@@ -44,13 +60,23 @@ function Section({
 
 export function TunePanel({ car, strategy }: Props) {
   const [copied, setCopied] = useState(false);
+  const [system, setSystem] = useState<UnitSystem>(initialUnitSystem);
   const t = strategy.tune.tune;
   const u = t.units;
   const tn = strategy.tune.tunable;
   const rat = strategy.tune.rationale;
 
+  const chooseUnits = (next: UnitSystem) => {
+    setSystem(next);
+    try {
+      localStorage.setItem(UNITS_KEY, next);
+    } catch {
+      /* ignore storage errors (private mode) */
+    }
+  };
+
   const copy = async () => {
-    const ok = await copyToClipboard(tuneToText(car, strategy));
+    const ok = await copyToClipboard(tuneToText(car, strategy, system));
     setCopied(ok);
     setTimeout(() => setCopied(false), 1500);
   };
@@ -59,13 +85,29 @@ export function TunePanel({ car, strategy }: Props) {
     <div className="card">
       <div className="row" style={{ justifyContent: 'space-between' }}>
         <h2>5 · In-game tune</h2>
-        <button className="small" onClick={copy}>
-          {copied ? 'Copied ✓' : 'Copy tune'}
-        </button>
+        <div className="row" style={{ gap: 8 }}>
+          <div className="pill-group">
+            <button
+              className={`pill ${system === 'metric' ? 'active' : ''}`}
+              onClick={() => chooseUnits('metric')}
+            >
+              metric
+            </button>
+            <button
+              className={`pill ${system === 'imperial' ? 'active' : ''}`}
+              onClick={() => chooseUnits('imperial')}
+            >
+              imperial
+            </button>
+          </div>
+          <button className="small" onClick={copy}>
+            {copied ? 'Copied ✓' : 'Copy tune'}
+          </button>
+        </div>
       </div>
       <p className="dim" style={{ marginTop: -4 }}>
         Enter in the FH6 tuning menu, top to bottom. “Needs part” means install that upgrade to unlock the
-        section in-game.
+        section in-game. Set the same units ({system}) in your FH6 settings so the numbers match.
       </p>
 
       <Section
@@ -74,8 +116,8 @@ export function TunePanel({ car, strategy }: Props) {
         tunable={tn.tires}
         rationale={rat.tires}
         rows={[
-          ['Front pressure', `${fmt(t.tires.frontPsi)} psi`],
-          ['Rear pressure', `${fmt(t.tires.rearPsi)} psi`],
+          ['Front pressure', pressureText(t.tires.frontPsi, system)],
+          ['Rear pressure', pressureText(t.tires.rearPsi, system)],
         ]}
       />
       <Section
@@ -117,10 +159,10 @@ export function TunePanel({ car, strategy }: Props) {
         tunable={tn.springs}
         rationale={rat.springs}
         rows={[
-          ['Front rate', `${fmt(t.springs.frontRate)} ${u.springRate}`],
-          ['Rear rate', `${fmt(t.springs.rearRate)} ${u.springRate}`],
-          ['Ride height front', `${fmt(t.springs.frontRideHeight)} ${u.rideHeight}`],
-          ['Ride height rear', `${fmt(t.springs.rearRideHeight)} ${u.rideHeight}`],
+          ['Front rate', springText(t.springs.frontRate, u.springRate, system)],
+          ['Rear rate', springText(t.springs.rearRate, u.springRate, system)],
+          ['Ride height front', rideHeightText(t.springs.frontRideHeight, u.rideHeight, system)],
+          ['Ride height rear', rideHeightText(t.springs.rearRideHeight, u.rideHeight, system)],
         ]}
       />
       <Section
@@ -143,8 +185,8 @@ export function TunePanel({ car, strategy }: Props) {
         rows={
           t.aero
             ? [
-                ['Front downforce', `${fmt(t.aero.frontDownforce, 0)} ${u.downforce}`],
-                ['Rear downforce', `${fmt(t.aero.rearDownforce, 0)} ${u.downforce}`],
+                ['Front downforce', downforceText(t.aero.frontDownforce, u.downforce, system)],
+                ['Rear downforce', downforceText(t.aero.rearDownforce, u.downforce, system)],
               ]
             : [['Aero', 'none / not applicable']]
         }

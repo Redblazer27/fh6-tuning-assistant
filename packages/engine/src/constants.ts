@@ -131,11 +131,19 @@ export interface MetricWeights {
   balance: number;
   /**
    * How well the discipline-variant parts fit the goal — a blend of tire compound
-   * (TIRE_FIT), springs/dampers (SUSPENSION_FIT) and differential (DIFF_FIT). This
-   * is what makes a drift build pick drift tires, drift springs and a drift diff
-   * even though a race setup grips harder in the raw metrics.
+   * (TIRE_FIT), springs/dampers (SUSPENSION_FIT), differential (DIFF_FIT) and
+   * transmission (TRANSMISSION_FIT). This is what makes a drift build pick drift
+   * springs + a rally/drift diff + a race transmission (for the gear-ratio unlock)
+   * over a generic race setup that grips harder in the raw metrics.
    */
   setupFit: number;
+  /**
+   * How well the build's power level suits the goal. Only meaningful for drift,
+   * where peak power hurts control: it peaks across a drift "sweet-spot" band and
+   * falls off for over-powered builds (see DRIFT_POWER_BAND). Zero-weighted
+   * elsewhere, where `accel`/`topSpeed` already reward power monotonically.
+   */
+  powerFit: number;
 }
 
 // Each row sums to ~1. `balance` scores the drivetrain's fit for the goal and
@@ -148,16 +156,31 @@ export interface MetricWeights {
 // those choices. `setupFit` is weighted heavily only where variant parts matter
 // (drift, dirt, rally); on tarmac the race parts win on both, so it just reinforces.
 export const SCORE_WEIGHTS: Record<Discipline, MetricWeights> = {
-  road: { accel: 0.24, grip: 0.28, braking: 0.15, launch: 0.03, topSpeed: 0.18, balance: 0.07, setupFit: 0.05 }, // prettier-ignore
-  street: { accel: 0.27, grip: 0.24, braking: 0.12, launch: 0.05, topSpeed: 0.2, balance: 0.07, setupFit: 0.05 }, // prettier-ignore
-  dirt: { accel: 0.23, grip: 0.21, braking: 0.08, launch: 0.13, topSpeed: 0.07, balance: 0.12, setupFit: 0.16 }, // prettier-ignore
-  rally: { accel: 0.23, grip: 0.19, braking: 0.08, launch: 0.14, topSpeed: 0.08, balance: 0.12, setupFit: 0.16 }, // prettier-ignore
-  cross_country: { accel: 0.2, grip: 0.22, braking: 0.08, launch: 0.14, topSpeed: 0.08, balance: 0.12, setupFit: 0.16 }, // prettier-ignore
-  drag: { accel: 0.34, grip: 0.05, braking: 0.02, launch: 0.33, topSpeed: 0.12, balance: 0.1, setupFit: 0.04 }, // prettier-ignore
-  drift: { accel: 0.28, grip: 0.12, braking: 0.03, launch: 0.02, topSpeed: 0.06, balance: 0.19, setupFit: 0.3 }, // prettier-ignore
-  top_speed: { accel: 0.18, grip: 0.05, braking: 0.0, launch: 0.03, topSpeed: 0.67, balance: 0.04, setupFit: 0.03 }, // prettier-ignore
-  pr_stunts: { accel: 0.28, grip: 0.19, braking: 0.05, launch: 0.13, topSpeed: 0.22, balance: 0.08, setupFit: 0.05 }, // prettier-ignore
-  custom: { accel: 0.24, grip: 0.26, braking: 0.13, launch: 0.07, topSpeed: 0.18, balance: 0.07, setupFit: 0.05 }, // prettier-ignore
+  road: { accel: 0.24, grip: 0.28, braking: 0.15, launch: 0.03, topSpeed: 0.18, balance: 0.07, setupFit: 0.05, powerFit: 0 }, // prettier-ignore
+  street: { accel: 0.27, grip: 0.24, braking: 0.12, launch: 0.05, topSpeed: 0.2, balance: 0.07, setupFit: 0.05, powerFit: 0 }, // prettier-ignore
+  dirt: { accel: 0.23, grip: 0.21, braking: 0.08, launch: 0.13, topSpeed: 0.07, balance: 0.12, setupFit: 0.16, powerFit: 0 }, // prettier-ignore
+  rally: { accel: 0.23, grip: 0.19, braking: 0.08, launch: 0.14, topSpeed: 0.08, balance: 0.12, setupFit: 0.16, powerFit: 0 }, // prettier-ignore
+  cross_country: { accel: 0.2, grip: 0.22, braking: 0.08, launch: 0.14, topSpeed: 0.08, balance: 0.12, setupFit: 0.16, powerFit: 0 }, // prettier-ignore
+  drag: { accel: 0.34, grip: 0.05, braking: 0.02, launch: 0.33, topSpeed: 0.12, balance: 0.1, setupFit: 0.04, powerFit: 0 }, // prettier-ignore
+  // Drift: peak power hurts control, so `accel` is trimmed and a `powerFit` band
+  // rewards a sensible mid-power build; `setupFit` (now incl. transmission) leads.
+  drift: { accel: 0.2, grip: 0.12, braking: 0.03, launch: 0.02, topSpeed: 0.06, balance: 0.19, setupFit: 0.3, powerFit: 0.08 }, // prettier-ignore
+  top_speed: { accel: 0.18, grip: 0.05, braking: 0.0, launch: 0.03, topSpeed: 0.67, balance: 0.04, setupFit: 0.03, powerFit: 0 }, // prettier-ignore
+  pr_stunts: { accel: 0.28, grip: 0.19, braking: 0.05, launch: 0.13, topSpeed: 0.22, balance: 0.08, setupFit: 0.05, powerFit: 0 }, // prettier-ignore
+  custom: { accel: 0.24, grip: 0.26, braking: 0.13, launch: 0.07, topSpeed: 0.18, balance: 0.07, setupFit: 0.05, powerFit: 0 }, // prettier-ignore
+};
+
+/**
+ * Drift "power sweet-spot" band (hp), from expert guides: for drift, control
+ * matters more than peak power, so a mid-power build is ideal and an over-powered
+ * one is penalised. `powerFit` is 1.0 within [idealMin, idealMax], falling linearly
+ * to 0 at `floor` below and `ceil` above. Low confidence; drift-only.
+ */
+export const DRIFT_POWER_BAND = {
+  idealMin: 350,
+  idealMax: 650,
+  floor: 150,
+  ceil: 1000,
 };
 
 /**
@@ -200,7 +223,11 @@ export const TIRE_FIT: Record<
   rally: { default: 0.4, rally: 1.0, offroad: 0.9, snow: 0.6, sport: 0.5, street: 0.45 },
   cross_country: { default: 0.4, offroad: 1.0, rally: 0.85, snow: 0.6, sport: 0.5 },
   drag: { default: 0.5, drag: 1.0, slick: 0.85, semi_slick: 0.78, sport: 0.6, street: 0.5 },
-  drift: { default: 0.45, drift: 1.0, slick: 0.6, semi_slick: 0.58, sport: 0.55, street: 0.5 },
+  // Drift (expert consensus, high-grip/wheel style): STREET tires are the baseline
+  // — grip is control, and you tune slip in elsewhere. Drift tires are a solid
+  // second pick; sport is a touch grippy; rally is the fallback when street isn't
+  // offered. Slicks/semi-slicks grip too hard to modulate a slide.
+  drift: { default: 0.4, street: 1.0, drift: 0.85, sport: 0.8, rally: 0.78, semi_slick: 0.55, slick: 0.5, drag: 0.45, offroad: 0.45, snow: 0.35 }, // prettier-ignore
   top_speed: { default: 0.6, slick: 1.0, semi_slick: 0.92, drag: 0.9, sport: 0.85, street: 0.75 },
   pr_stunts: {
     default: 0.55,
@@ -269,13 +296,17 @@ export const DIFF_FIT: Record<Discipline, { default: number } & Record<string, n
   },
   cross_country: { default: 0.45, offroad: 1.0, rally: 0.9, race: 0.55, sport: 0.5, stock: 0.35 },
   drag: { default: 0.5, race: 1.0, sport: 0.72, drift: 0.5, rally: 0.45, stock: 0.4 },
+  // Drift (expert consensus): a RALLY diff loses grip more smoothly than a fully
+  // locked drift diff, which suits the high-grip/wheel style; the drift diff is a
+  // close second (better for low-grip/low-power slidey builds). Both are tuned
+  // ~95/85 in the tune.
   drift: {
     default: 0.45,
-    drift: 1.0,
-    race: 0.6,
+    rally: 1.0,
+    drift: 0.9,
+    offroad: 0.6,
+    race: 0.65,
     sport: 0.55,
-    rally: 0.55,
-    offroad: 0.5,
     stock: 0.4,
   },
   top_speed: { default: 0.5, race: 1.0, sport: 0.75, stock: 0.5 },
@@ -289,6 +320,26 @@ export const DIFF_FIT: Record<Discipline, { default: number } & Record<string, n
     offroad: 0.7,
     stock: 0.5,
   },
+};
+
+/**
+ * Discipline suitability of the transmission tier (0..1), keyed by the part's
+ * `tier` (stock | sport | race). A race transmission's real value is that it
+ * UNLOCKS full gear-ratio + final-drive tuning — which drift depends on (you tune
+ * 3rd/4th as the drift gears). So drift strongly prefers race; other disciplines
+ * only mildly (their gearing tune helps but isn't make-or-break). Feeds `setupFit`.
+ */
+export const TRANSMISSION_FIT: Record<Discipline, { default: number } & Record<string, number>> = {
+  road: { default: 0.7, race: 0.82, sport: 0.72, stock: 0.6 },
+  street: { default: 0.7, race: 0.82, sport: 0.72, stock: 0.6 },
+  dirt: { default: 0.7, race: 0.82, sport: 0.72, stock: 0.6 },
+  rally: { default: 0.7, race: 0.82, sport: 0.72, stock: 0.6 },
+  cross_country: { default: 0.7, race: 0.82, sport: 0.72, stock: 0.6 },
+  drag: { default: 0.7, race: 0.9, sport: 0.74, stock: 0.55 },
+  drift: { default: 0.5, race: 1.0, sport: 0.55, stock: 0.3 },
+  top_speed: { default: 0.7, race: 0.88, sport: 0.74, stock: 0.55 },
+  pr_stunts: { default: 0.7, race: 0.82, sport: 0.72, stock: 0.6 },
+  custom: { default: 0.7, race: 0.8, sport: 0.72, stock: 0.6 },
 };
 
 /** Strategy tilt applied on top of the discipline weights, then re-normalized. */
@@ -311,14 +362,36 @@ export const WEIGHT_BALANCE_IDEAL: Record<Discipline, { front: number; spread: n
   rally: { front: 50, spread: 16 },
   cross_country: { front: 50, spread: 16 },
   drag: { front: 45, spread: 16 }, // rear weight helps RWD launch
-  drift: { front: 53, spread: 14 }, // front-engine RWD balance
+  // Front-engine RWD balance. Expert consensus puts the drift sweet-spot at
+  // 50–56% front (a touch nose-heavy floats the rear); a steeper spread makes the
+  // choice matter more, since for drift the chassis is a primary car-selection stat.
+  drift: { front: 53, spread: 11 },
   top_speed: { front: 50, spread: 18 },
   pr_stunts: { front: 50, spread: 16 },
   custom: { front: 50, spread: 16 },
 };
 
-/** Max ± points the weight-balance fit can move a car's comparison score. */
+/** Default max ± points the weight-balance fit can move a car's comparison score. */
 export const CHASSIS_COMPARE_SWING = 5;
+
+/**
+ * Per-discipline override of CHASSIS_COMPARE_SWING. Drift gets a bigger swing:
+ * weight distribution is one of the two most important (unchangeable) car-choice
+ * stats for drift, so it should separate cars more decisively than elsewhere.
+ */
+export const CHASSIS_COMPARE_SWING_BY_DISCIPLINE: Partial<Record<Discipline, number>> = {
+  drift: 8,
+};
+
+/**
+ * Wheelbase suitability for DRIFT (car comparison only, when the car has real
+ * wheelbase data). A longer wheelbase makes everything happen slower — smoother
+ * and much easier to control — while a very short one is snappy/twitchy (great for
+ * points drifting, hard for flowing lines). Fit rises with length between these
+ * bounds; bounded and low-confidence, so it only nudges the ranking.
+ */
+export const WHEELBASE_DRIFT_MM = { short: 2350, long: 2750 };
+export const WHEELBASE_DRIFT_SWING = 3;
 
 // --- Telemetry diagnosis thresholds -------------------------------------------
 // Turn a recorded session's summary into a handling diagnosis. These thresholds

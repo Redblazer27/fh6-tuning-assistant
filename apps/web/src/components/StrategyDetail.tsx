@@ -136,7 +136,9 @@ export function StrategyDetail({ car, strategy, store, locks, onSetLock, onRemov
             </tr>
           </thead>
           <tbody>
-            {strategy.score.components.map((c) => (
+            {strategy.score.components
+              .filter((c) => c.weight > 0.0001)
+              .map((c) => (
               <tr key={c.label}>
                 <td>{c.label}</td>
                 <td className="num">{c.value}</td>

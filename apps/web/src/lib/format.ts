@@ -1,9 +1,61 @@
-import type { TuneSpec } from '@fh6/shared';
+import {
+  cmToIn,
+  inToCm,
+  kgfPerMmToNPerMm,
+  kgfToLbf,
+  lbfPerInToNPerMm,
+  lbfToKgf,
+  nPerMmToKgfPerMm,
+  nPerMmToLbfPerIn,
+  psiToBar,
+  type TuneSpec,
+  type TuneUnits,
+} from '@fh6/shared';
 import type { BuildStrategy } from '@fh6/engine';
 import type { Car } from '@fh6/data';
 
 export const fmt = (n: number, d = 1): string =>
   Number.isFinite(n) ? n.toFixed(d) : '—';
+
+/**
+ * Display unit system. FH6 shows tune values in whichever system the player's game
+ * is set to; the app defaults to metric (bar / kgf·mm / cm) — what most non-US
+ * players, and both drift guides, use. Values are stored canonically (psi springs
+ * in the data unit) and converted here for display only.
+ */
+export type UnitSystem = 'metric' | 'imperial';
+
+/** Tire pressure is stored in psi; show bar for metric. */
+export function pressureText(psi: number, system: UnitSystem): string {
+  return system === 'metric' ? `${psiToBar(psi).toFixed(2)} bar` : `${fmt(psi)} psi`;
+}
+
+const springToNPerMm = (v: number, unit: TuneUnits['springRate']): number =>
+  unit === 'lbf/in' ? lbfPerInToNPerMm(v) : unit === 'kgf/mm' ? kgfPerMmToNPerMm(v) : v;
+
+/** Spring rate is stored in the car's data unit; show kgf/mm for metric, lbf/in for imperial. */
+export function springText(v: number, unit: TuneUnits['springRate'], system: UnitSystem): string {
+  const nmm = springToNPerMm(v, unit);
+  return system === 'metric'
+    ? `${nPerMmToKgfPerMm(nmm).toFixed(1)} kgf/mm`
+    : `${nPerMmToLbfPerIn(nmm).toFixed(0)} lbf/in`;
+}
+
+/** Ride height stored in cm or in; show cm for metric, in for imperial. */
+export function rideHeightText(
+  v: number,
+  unit: TuneUnits['rideHeight'],
+  system: UnitSystem,
+): string {
+  const cm = unit === 'in' ? inToCm(v) : v;
+  return system === 'metric' ? `${cm.toFixed(1)} cm` : `${cmToIn(cm).toFixed(1)} in`;
+}
+
+/** Downforce stored in kgf or lbf; show kgf for metric, lbf for imperial. */
+export function downforceText(v: number, unit: TuneUnits['downforce'], system: UnitSystem): string {
+  const kgf = unit === 'lbf' ? lbfToKgf(v) : v;
+  return system === 'metric' ? `${Math.round(kgf)} kgf` : `${Math.round(kgfToLbf(kgf))} lbf`;
+}
 
 export const credits = (n: number): string => `${Math.round(n).toLocaleString()} cr`;
 
@@ -23,7 +75,7 @@ export function differentialLines(t: TuneSpec['differential']): [string, string]
  * Render a full tune as copyable plain text in FH6 tuning-menu order.
  * Used for the "copy tune" button and checklists.
  */
-export function tuneToText(car: Car, strategy: BuildStrategy): string {
+export function tuneToText(car: Car, strategy: BuildStrategy, system: UnitSystem = 'metric'): string {
   const t = strategy.tune.tune;
   const u = t.units;
   const L: string[] = [];
@@ -31,7 +83,9 @@ export function tuneToText(car: Car, strategy: BuildStrategy): string {
   L.push(`# Estimated PI ${strategy.pi.pi} ±${strategy.pi.uncertainty} (${strategy.pi.class})`);
   L.push('');
   L.push('Tires');
-  L.push(`  Front: ${fmt(t.tires.frontPsi)} psi   Rear: ${fmt(t.tires.rearPsi)} psi`);
+  L.push(
+    `  Front: ${pressureText(t.tires.frontPsi, system)}   Rear: ${pressureText(t.tires.rearPsi, system)}`,
+  );
   L.push('Gearing');
   L.push(`  Final drive: ${fmt(t.gearing.finalDrive, 2)}`);
   t.gearing.gears.forEach((g, i) => L.push(`  ${i + 1}${ordinal(i + 1)}: ${fmt(g, 2)}`));
@@ -42,15 +96,19 @@ export function tuneToText(car: Car, strategy: BuildStrategy): string {
   L.push('Anti-roll bars');
   L.push(`  Front: ${fmt(t.antiRollBars.front)}   Rear: ${fmt(t.antiRollBars.rear)}`);
   L.push('Springs');
-  L.push(`  Front: ${fmt(t.springs.frontRate)} ${u.springRate}   Rear: ${fmt(t.springs.rearRate)} ${u.springRate}`);
-  L.push(`  Ride height F/R: ${fmt(t.springs.frontRideHeight)} / ${fmt(t.springs.rearRideHeight)} ${u.rideHeight}`);
+  L.push(
+    `  Front: ${springText(t.springs.frontRate, u.springRate, system)}   Rear: ${springText(t.springs.rearRate, u.springRate, system)}`,
+  );
+  L.push(
+    `  Ride height F/R: ${rideHeightText(t.springs.frontRideHeight, u.rideHeight, system)} / ${rideHeightText(t.springs.rearRideHeight, u.rideHeight, system)}`,
+  );
   L.push('Damping');
   L.push(`  Rebound F/R: ${fmt(t.damping.reboundFront)} / ${fmt(t.damping.reboundRear)}`);
   L.push(`  Bump F/R: ${fmt(t.damping.bumpFront)} / ${fmt(t.damping.bumpRear)}`);
   L.push('Aero');
   L.push(
     t.aero
-      ? `  Front: ${fmt(t.aero.frontDownforce, 0)} ${u.downforce}   Rear: ${fmt(t.aero.rearDownforce, 0)} ${u.downforce}`
+      ? `  Front: ${downforceText(t.aero.frontDownforce, u.downforce, system)}   Rear: ${downforceText(t.aero.rearDownforce, u.downforce, system)}`
       : '  (no adjustable aero)',
   );
   L.push('Brakes');

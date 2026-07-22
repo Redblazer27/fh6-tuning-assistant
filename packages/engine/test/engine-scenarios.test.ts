@@ -144,11 +144,18 @@ describe('discipline-specific builds', () => {
     expect(s.tune.tune.differential.accelRearPct ?? 0).toBeGreaterThanOrEqual(55);
   });
 
-  it('drift build runs a much stiffer rear ARB than front', () => {
+  it('drift build runs soft bars, front stiffer than rear, near-locked rear diff', () => {
     const s = topOf(
       makeRequest({ carId: 'nissan-silvia-s15-1999', discipline: 'drift', targetClass: 'A' }),
     );
-    expect(s.tune.tune.antiRollBars.rear).toBeGreaterThan(s.tune.tune.antiRollBars.front);
+    const arb = s.tune.tune.antiRollBars;
+    // Expert model: bars on the soft side, FRONT slightly stiffer than rear
+    // (sharper turn-in + a soft, grippy rear you drive the slide through).
+    expect(arb.front).toBeGreaterThan(arb.rear);
+    expect(arb.front).toBeLessThan(30); // soft, not the old max-stiff
+    // Front toe-OUT (negative), rear toe-IN (positive), caster maxed.
+    expect(s.tune.tune.alignment.toeFrontDeg).toBeLessThan(0);
+    expect(s.tune.tune.alignment.toeRearDeg).toBeGreaterThan(0);
     expect(s.tune.tune.differential.accelRearPct ?? 0).toBeGreaterThanOrEqual(90);
   });
 

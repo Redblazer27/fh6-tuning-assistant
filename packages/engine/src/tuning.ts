@@ -1,6 +1,7 @@
 import {
   DISCIPLINE_SURFACE,
   TUNING_CATEGORIES,
+  barToPsi,
   clamp,
   nPerMmToKgfPerMm,
   nPerMmToLbfPerIn,
@@ -59,7 +60,7 @@ export function computeTune(
 
   const tires = computeTirePressure(ranges, surface, discipline, wd, wdRear, rationale);
   const gearing = computeGearing(car, spec, ranges, discipline, rationale);
-  const alignment = computeAlignment(ranges, surface, discipline, spec, request.input, rationale);
+  const alignment = computeAlignment(ranges, surface, discipline, spec, rationale);
   const antiRollBars = computeArbs(
     ranges,
     surface,
@@ -71,9 +72,9 @@ export function computeTune(
     rationale,
   );
   const springs = computeSprings(spec, ranges, surface, discipline, wd, wdRear, rationale);
-  const damping = computeDamping(ranges, surface, rationale);
+  const damping = computeDamping(ranges, surface, discipline, rationale);
   const aero = computeAero(spec, ranges, discipline, request, wd, rationale);
-  const brakes = computeBrakes(ranges, wd, request, rationale);
+  const brakes = computeBrakes(ranges, wd, discipline, request, rationale);
   const differential = computeDifferential(spec, ranges, discipline, request, rationale);
 
   const tune: TuneSpec = {
@@ -112,15 +113,25 @@ function computeTirePressure(
   wdRear: number,
   rationale: TuneResult['rationale'],
 ): TuneSpec['tires'] {
+  if (discipline === 'drift') {
+    // Drift (grip = control): FRONT a touch less grip (higher pressure) so it
+    // won't rotate the car on entry; REAR lower pressure for tire deformation /
+    // side bite so the car drives through the corner instead of skating. Rear
+    // pressure is the primary grip knob — drop it for more grip, raise for less.
+    const frontPsi = snapRange(ranges.tirePressurePsi, barToPsi(2.5)); // ~36 psi
+    const rearPsi = snapRange(ranges.tirePressurePsi, barToPsi(1.5)); // ~22 psi
+    rationale.tires =
+      'Drift: front ~2.5 bar (slightly less grip so entries don’t snap the car around), rear ~1.5 bar ' +
+      'for side bite and drive off the corner. Rear pressure is your main grip dial — lower = more grip.';
+    return { frontPsi, rearPsi };
+  }
+
   let base = TIRE_PRESSURE_BASE[surface];
   let frontAdj = 0;
   let rearAdj = 0;
   if (discipline === 'drag') {
     frontAdj -= 3;
     rearAdj += 1;
-  } else if (discipline === 'drift') {
-    frontAdj += 1;
-    rearAdj += 3;
   } else if (discipline === 'top_speed') {
     base += 3;
   }
@@ -157,11 +168,12 @@ function computeGearing(
     pr_stunts: 0.85,
     custom: 0.9,
   };
+  // Drift no longer chases a top speed (see below); other technical disciplines
+  // still target a fixed sensible top.
   const fixedTop: Partial<Record<Discipline, number>> = {
     dirt: 195,
     rally: 205,
     cross_country: 185,
-    drift: 155,
   };
   const targetTop = clamp(fixedTop[discipline] ?? vmax * topFactor[discipline], 120, 480);
 
@@ -181,12 +193,9 @@ function computeGearing(
       ? 2.7
       : 3.1;
 
-  const gearCount = discipline === 'top_speed' || spec.powerHp > 600 ? 7 : 6;
-
-  // Final drive so redline in top gear lands at the target top speed.
-  const vTarget = targetTop / 3.6; // m/s
-  const wheelRpm = ((vTarget / r) * 60) / (2 * Math.PI);
-  const finalDrive = snapRange(ranges.finalDrive, redline / (wheelRpm * topGearRatio));
+  // Drift keeps 6 gears so 3rd/4th can be the drift gears and 5/6 stay for cruising.
+  const gearCount =
+    discipline === 'drift' ? 6 : discipline === 'top_speed' || spec.powerHp > 600 ? 7 : 6;
 
   // Geometric spacing between 1st and top gear so shift points sit near the peak.
   const gears: number[] = [];
@@ -196,9 +205,30 @@ function computeGearing(
     gears.push(snapRange(ranges.gearRatio, ratio));
   }
 
-  rationale.gearing =
-    'Final drive set so top gear tops out near your target speed; ratios spaced geometrically so ' +
-    'each shift lands near peak power. Shorter for dirt/technical, taller for top speed.';
+  let finalDrive: number;
+  if (discipline === 'drift') {
+    // Don't target a top speed. Raise the final drive so 3rd/4th (the drift gears)
+    // sit high in the powerband at corner speeds and never bounce off the limiter
+    // mid-slide. Anchor 4th gear's redline speed to a moderate drift speed that
+    // scales gently with power; a low-power, high-revving car therefore gets a
+    // shorter overall gearing (fixing the old "rev-limiter at ~109 km/h" build).
+    const vDrift4 = clamp(115 + (spec.powerHp - 300) * 0.03, 105, 150); // km/h at redline in 4th
+    const gear4 = gears[3] ?? gears[gears.length - 1]!;
+    const wheelRpm4 = ((vDrift4 / 3.6 / r) * 60) / (2 * Math.PI);
+    finalDrive = snapRange(ranges.finalDrive, redline / (wheelRpm4 * gear4));
+    rationale.gearing =
+      'Drift: final drive raised so 3rd and 4th are the drift gears — high in the powerband at corner ' +
+      'speed, no rev-limiter bounce mid-slide. 1st/2nd short, 5th/6th just cruise. If 4th bogs at low ' +
+      'speed, shorten it (or raise the final drive) a touch.';
+  } else {
+    // Final drive so redline in top gear lands at the target top speed.
+    const vTarget = targetTop / 3.6; // m/s
+    const wheelRpm = ((vTarget / r) * 60) / (2 * Math.PI);
+    finalDrive = snapRange(ranges.finalDrive, redline / (wheelRpm * topGearRatio));
+    rationale.gearing =
+      'Final drive set so top gear tops out near your target speed; ratios spaced geometrically so ' +
+      'each shift lands near peak power. Shorter for dirt/technical, taller for top speed.';
+  }
   return { finalDrive, gears };
 }
 
@@ -208,30 +238,42 @@ function computeAlignment(
   surface: Surface,
   discipline: Discipline,
   spec: BuiltSpec,
-  input: BuildRequest['input'],
   rationale: TuneResult['rationale'],
 ): TuneSpec['alignment'] {
+  if (discipline === 'drift') {
+    // Drift on a wheel (expert model): moderate front camber for a contact patch
+    // at lock; REAR camber near zero because FH6 over-exaggerates it (rear grip is
+    // what you want). Front toe-OUT fakes the positive Ackermann the game lacks
+    // (angle + stability); rear toe-IN gives forward bite / drive. Caster MAXED —
+    // on a wheel there's no downside: more self-steer, load transfer and camber
+    // gain at lock.
+    rationale.alignment =
+      'Drift (wheel): ~-2.5° front camber, rear camber near zero for rear grip (FH6 over-does camber). ' +
+      'Front toe-out fakes Ackermann for angle + stability; rear toe-in gives forward bite. Caster maxed ' +
+      'for self-steer and grip.';
+    return {
+      camberFrontDeg: snapRange(ranges.camberDeg, -2.5),
+      camberRearDeg: snapRange(ranges.camberDeg, -0.3),
+      toeFrontDeg: snapRange(ranges.toeDeg, -1.0), // toe-OUT front
+      toeRearDeg: snapRange(ranges.toeDeg, 0.5), // toe-IN rear
+      casterDeg: ranges.casterDeg.max,
+    };
+  }
+
   const baseCamber: Record<Surface, number> = { tarmac: -1.3, dirt: -0.6, snow: -0.4, mixed: -0.9 };
   let camberFront = baseCamber[surface];
   if (['semi_slick', 'slick'].includes(spec.tireCompound)) camberFront -= 0.2;
   if (discipline === 'drag') camberFront += 1.0;
   if (discipline === 'top_speed') camberFront += 0.5;
-  if (discipline === 'drift') camberFront += 0.4;
   const camberRear = camberFront + 0.3; // rear a touch less negative
 
   let toeFront = 0;
   let toeRear = 0.1;
   if (['road', 'street'].includes(discipline)) toeFront = -0.1;
-  if (discipline === 'drift') {
-    toeFront = -0.3;
-    toeRear = 0.0;
-  }
   if (['dirt', 'rally', 'cross_country'].includes(discipline)) toeRear = 0.15;
 
   let caster = 5.5;
-  if (discipline === 'drift') caster = 6.5;
   if (discipline === 'drag') caster = 4.5;
-  if (input === 'controller') caster = Math.min(caster + 0.3, 7.0); // a bit more self-centering
 
   rationale.alignment =
     'Negative camber for cornering contact (less for straight-line events), small front toe-out ' +
@@ -268,13 +310,20 @@ function computeArbs(
   rearFrac += bias;
 
   if (discipline === 'drift') {
-    frontFrac = 0.3;
-    rearFrac = 0.85;
+    // Drift (expert consensus across guides): bars run VERY soft (~5–7, not the
+    // game's stiff default) so the car can roll and load its outside tires for grip.
+    // Front kept a touch stiffer than rear: a stiffer front sharpens turn-in, a soft
+    // rear is a pure grip aid (keeps the rear planted so you drive through the slide).
+    frontFrac = 0.1;
+    rearFrac = 0.065;
   }
 
   rationale.antiroll_bars =
-    'Bars scaled to axle weight, then biased for balance (stiffer rear reduces understeer, stiffer ' +
-    'front reduces oversteer). Change these first for a handling-balance issue.';
+    discipline === 'drift'
+      ? 'Very soft bars for grip, front a touch stiffer than rear: stiffer front = sharper turn-in, soft ' +
+        'rear = more rear grip so you drive through the slide. Stiffen the front a little if entries feel lazy.'
+      : 'Bars scaled to axle weight, then biased for balance (stiffer rear reduces understeer, stiffer ' +
+        'front reduces oversteer). Change these first for a handling-balance issue.';
   return {
     front: fracToRange(ranges.arb, frontFrac),
     rear: fracToRange(ranges.arb, rearFrac),
@@ -324,12 +373,18 @@ function computeSprings(
 
   const rideBase: Record<Surface, number> = { tarmac: 0.14, dirt: 0.78, snow: 0.72, mixed: 0.5 };
   const rh = rideBase[surface];
-  const frontRideHeight = fracToRange(ranges.rideHeight, rh);
-  const rearRideHeight = fracToRange(ranges.rideHeight, rh + 0.04); // slight rake
+  // Drift wants rake the OTHER way — rear LOWER than front — to load and settle the
+  // rear suspension (rear grip / stability). Everything else keeps a slight
+  // front-low rake for grip/aero.
+  const frontRideHeight = fracToRange(ranges.rideHeight, discipline === 'drift' ? rh + 0.05 : rh);
+  const rearRideHeight = fracToRange(ranges.rideHeight, discipline === 'drift' ? rh : rh + 0.04);
 
   rationale.springs =
-    'Spring rates from target ride frequencies (stiffer on tarmac, softer on loose surfaces), scaled ' +
-    'to each corner’s sprung mass. Ride height low for grip/aero, high for dirt to avoid bottoming.';
+    discipline === 'drift'
+      ? 'Front stiffer than rear, both realistic (never full-stiff — that kills control). Rear ride ' +
+        'height LOWER than front to load and settle the rear for grip and stability.'
+      : 'Spring rates from target ride frequencies (stiffer on tarmac, softer on loose surfaces), scaled ' +
+        'to each corner’s sprung mass. Ride height low for grip/aero, high for dirt to avoid bottoming.';
   return { frontRate, rearRate, frontRideHeight, rearRideHeight };
 }
 
@@ -337,8 +392,23 @@ function computeSprings(
 function computeDamping(
   ranges: TuneRanges,
   surface: Surface,
+  discipline: Discipline,
   rationale: TuneResult['rationale'],
 ): TuneSpec['damping'] {
+  if (discipline === 'drift') {
+    // Drift (expert model): HIGH rebound (slows the shock extending → the car feels
+    // softer and stays settled), rear higher than front; LOW bump so the suspension
+    // compresses quickly, rear softest. Front bump kept mid so the nose isn't twitchy.
+    rationale.damping =
+      'Drift: high rebound (keeps the car settled through transitions; rear a bit higher than front) and ' +
+      'low bump (lets the suspension compress fast, rear softest). If the car won’t transition, drop rear rebound.';
+    return {
+      reboundFront: fracToRange(ranges.damping, 0.53),
+      reboundRear: fracToRange(ranges.damping, 0.84),
+      bumpFront: fracToRange(ranges.damping, 0.32),
+      bumpRear: fracToRange(ranges.damping, 0.16),
+    };
+  }
   const reboundFrac = DAMPING_REBOUND_FRACTION[surface];
   const bumpFrac = reboundFrac * BUMP_TO_REBOUND_RATIO;
   rationale.damping =
@@ -372,7 +442,7 @@ function computeAero(
     rally: 0.6,
     cross_country: 0.6,
     drag: 0.0,
-    drift: 0.5,
+    drift: 0.05,
     top_speed: 0.0,
     pr_stunts: 0.4,
     custom: 0.7,
@@ -396,16 +466,28 @@ function computeAero(
 function computeBrakes(
   ranges: TuneRanges,
   wd: number,
+  discipline: Discipline,
   request: BuildRequest,
   rationale: TuneResult['rationale'],
 ): TuneSpec['brakes'] {
+  if (discipline === 'drift') {
+    // Drift (expert consensus): strong FRONT bias + REDUCED force so you can left-foot
+    // brake to adjust angle without upsetting the car (too far front = over-rotate,
+    // too far rear = bogs/straightens; too much force = snaps the car around). Guides
+    // run ~70–85% front and ~40–60% force — this sits in the middle of that.
+    rationale.brakes =
+      'Drift: ~75% front brake bias and ~55% force so a dab of (left-foot) brake tightens your line ' +
+      'instead of spinning or straightening the car. Drop the force further if the brakes feel too strong.';
+    return {
+      balanceFrontPct: snapRange(ranges.brakeBalancePct, 75),
+      pressurePct: snapRange(ranges.brakePressurePct, 55),
+    };
+  }
   const balanceFront = 50 + (wd * 100 - 50) * 0.15;
   let pressure = 100;
-  if (request.input === 'controller') pressure = 96;
   if (request.drivingStyle === 'smooth') pressure -= 2;
   rationale.brakes =
-    'Balance biased slightly toward the heavier axle. Lower pressure a little on a controller or in ' +
-    'the wet to avoid lock-ups.';
+    'Balance biased slightly toward the heavier axle. Lower pressure a little in the wet to avoid lock-ups.';
   return {
     balanceFrontPct: snapRange(ranges.brakeBalancePct, balanceFront),
     pressurePct: snapRange(ranges.brakePressurePct, pressure),
@@ -438,11 +520,14 @@ function computeDifferential(
     custom: 40,
   };
   const rearDecelBase =
-    discipline === 'drift' ? 40 : ['dirt', 'rally', 'cross_country'].includes(discipline) ? 25 : 15;
+    discipline === 'drift' ? 85 : ['dirt', 'rally', 'cross_country'].includes(discipline) ? 25 : 15;
 
   rationale.differential =
-    'Accel lock controls power-down and corner-exit traction; decel lock controls stability under ' +
-    'braking. Higher accel for loose surfaces and drift; lower on FWD to cut understeer.';
+    discipline === 'drift'
+      ? 'Drift: ~95% accel lock so both rear wheels drive together and break traction smoothly; ~85% ' +
+        'decel so the diff frees up a little in transitions and big entries instead of over-rotating.'
+      : 'Accel lock controls power-down and corner-exit traction; decel lock controls stability under ' +
+        'braking. Higher accel for loose surfaces and drift; lower on FWD to cut understeer.';
 
   if (dt === 'FWD') {
     const accel =

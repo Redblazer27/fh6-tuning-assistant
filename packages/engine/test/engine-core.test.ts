@@ -207,7 +207,8 @@ describe('determinism', () => {
 describe('scoring transparency', () => {
   it('weights sum to ~1 and contributions add up to the total', () => {
     const w = disciplineWeights('road', 'balanced');
-    const sum = w.accel + w.grip + w.braking + w.launch + w.topSpeed + w.balance + w.setupFit;
+    const sum =
+      w.accel + w.grip + w.braking + w.launch + w.topSpeed + w.balance + w.setupFit + w.powerFit;
     expect(sum).toBeCloseTo(1, 5);
 
     const car = rcar('porsche-911-gt3-991-2018');
@@ -221,7 +222,16 @@ describe('scoring transparency', () => {
     const car = rcar('koenigsegg-jesko-2020');
     const spec = buildSpec(store, car, {}, 'tarmac');
     const m = normalizeMetrics(spec, 'drift');
-    for (const v of [m.accel, m.grip, m.braking, m.launch, m.topSpeed, m.balance, m.setupFit]) {
+    for (const v of [
+      m.accel,
+      m.grip,
+      m.braking,
+      m.launch,
+      m.topSpeed,
+      m.balance,
+      m.setupFit,
+      m.powerFit,
+    ]) {
       expect(v).toBeGreaterThanOrEqual(0);
       expect(v).toBeLessThanOrEqual(1);
     }
@@ -274,17 +284,20 @@ describe('tire choice fits the goal', () => {
     );
   });
 
-  it('a generated drift build selects the drift springs and drift differential', () => {
-    // Regression for real feedback: a drift build was recommending race springs
-    // and a sport diff instead of the drift variants.
+  it('a generated drift build selects the drift/street setup the expert model prefers', () => {
+    // Real-feedback regression, updated to the expert (video-2) model: drift springs
+    // for the extra lock, a RALLY diff (smoother grip loss than a locked drift diff),
+    // STREET tires (grip is control — you tune slip in elsewhere), and a RACE
+    // transmission for the gear-ratio unlock the drift gears need.
     const result = generateBuild(
       store,
       makeRequest({ carId: car.id, discipline: 'drift', targetClass: 'S1' }),
     );
     const top = result.strategies[0]!;
     expect(top.selection.springs_dampers).toBe('susp-drift');
-    expect(top.selection.differential).toBe('diff-drift');
-    expect(top.selection.tire_compound).toBe('tire-drift');
+    expect(top.selection.differential).toBe('diff-rally');
+    expect(top.selection.tire_compound).toBe('tire-street');
+    expect(top.selection.transmission).toBe('trans-race');
   });
 });
 

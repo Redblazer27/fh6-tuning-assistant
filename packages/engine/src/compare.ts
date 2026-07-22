@@ -8,7 +8,14 @@ import {
   type Drivetrain,
 } from '@fh6/shared';
 import type { Car, DataStore } from '@fh6/data';
-import { CHASSIS_COMPARE_SWING, DISCLAIMER, WEIGHT_BALANCE_IDEAL } from './constants.ts';
+import {
+  CHASSIS_COMPARE_SWING,
+  CHASSIS_COMPARE_SWING_BY_DISCIPLINE,
+  DISCLAIMER,
+  WEIGHT_BALANCE_IDEAL,
+  WHEELBASE_DRIFT_MM,
+  WHEELBASE_DRIFT_SWING,
+} from './constants.ts';
 import { generateBuild } from './generate.ts';
 import type { BuildStrategy } from './types.ts';
 
@@ -29,6 +36,12 @@ import type { BuildStrategy } from './types.ts';
 export function chassisBalanceFit(frontPct: number, discipline: Discipline): number {
   const { front, spread } = WEIGHT_BALANCE_IDEAL[discipline];
   return clamp(1 - Math.abs(frontPct - front) / spread, 0, 1);
+}
+
+/** Drift wheelbase fit (0..1): longer = easier to control. Only meaningful with real data. */
+export function wheelbaseDriftFit(wheelbaseMm: number): number {
+  const { short, long } = WHEELBASE_DRIFT_MM;
+  return clamp((wheelbaseMm - short) / (long - short), 0, 1);
 }
 
 export interface CarComparisonRow {
@@ -90,7 +103,14 @@ export function compareCars(
     const frontPct = best.builtSpec.weightDistFrontPct;
     const chassisFit = chassisBalanceFit(frontPct, request.discipline);
     const goalFitScore = best.score.total;
-    const comparisonScore = round(goalFitScore + (chassisFit - 0.5) * CHASSIS_COMPARE_SWING, 2);
+    const swing = CHASSIS_COMPARE_SWING_BY_DISCIPLINE[request.discipline] ?? CHASSIS_COMPARE_SWING;
+    // For drift, a longer wheelbase is easier to control — nudge the ranking, but
+    // only when the car actually has wheelbase data (most don't; skip otherwise).
+    const wheelbaseNudge =
+      request.discipline === 'drift' && car.wheelbaseMm !== undefined
+        ? (wheelbaseDriftFit(car.wheelbaseMm) - 0.5) * WHEELBASE_DRIFT_SWING
+        : 0;
+    const comparisonScore = round(goalFitScore + (chassisFit - 0.5) * swing + wheelbaseNudge, 2);
 
     rows.push({
       carId,

@@ -65,6 +65,7 @@ export function buildSpec(
   let tireCompound = car.stockTireCompound;
   let suspensionTier = 'stock';
   let diffTier = 'stock';
+  let transmissionTier = 'stock';
   let aeroFront: AeroCapability | null = null;
   let aeroRear: AeroCapability | null = null;
   const unlockedTuning = new Set<TuningCategory>(['tires']);
@@ -104,6 +105,7 @@ export function buildSpec(
     if (part.setsTireCompound) tireCompound = part.setsTireCompound;
     if (category === 'springs_dampers') suspensionTier = part.tier;
     if (category === 'differential') diffTier = part.tier;
+    if (category === 'transmission') transmissionTier = part.tier;
 
     for (const u of part.unlocks) unlockedTuning.add(u);
     totalCost += part.cost;
@@ -148,6 +150,7 @@ export function buildSpec(
     tireCompound,
     suspensionTier,
     diffTier,
+    transmissionTier,
     massKg,
     weightDistFrontPct: car.weightDistFrontPct,
     powerHp,

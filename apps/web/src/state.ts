@@ -13,7 +13,7 @@ export function defaultRequest(carId: string): BuildRequest {
     discipline: 'road',
     targetPI: null,
     targetClass: 'A',
-    input: 'controller',
+    input: 'wheel',
     drivingStyle: 'balanced',
     constraints: {},
   };
