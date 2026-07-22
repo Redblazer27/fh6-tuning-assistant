@@ -107,13 +107,31 @@ describe('swap-engine power interpolation', () => {
     const stock = buildSpec(store, car, { engine_swap: engine.id }, 'tarmac');
     expect(stock.powerHp).toBeCloseTo(engine.effects.setsPowerHp!, 0);
 
-    // Every top-power part in every category → the engine's real max power.
+    // The best power part this engine supports in every category → its real max.
+    const engineCats = new Set([
+      'intake',
+      'fuel_system',
+      'ignition',
+      'exhaust',
+      'camshaft',
+      'valves',
+      'displacement',
+      'pistons_compression',
+      'oil_cooling',
+      'intercooler',
+      'flywheel',
+    ]);
     const sel: Record<string, string> = { engine_swap: engine.id };
     for (const cat of store.categories) {
       if (cat === 'engine_swap') continue;
+      const gated = engine.engineUpgrades && engineCats.has(cat);
+      const tiers = gated ? engine.engineUpgrades![cat] : undefined;
+      if (gated && !tiers) continue; // engine doesn't offer this category
       let best: string | undefined;
       let bestMult = 1;
       for (const p of store.getPartsByCategory(cat)) {
+        if (p.tierRank === 0) continue;
+        if (gated && tiers && !tiers.includes(p.tier)) continue;
         const m = p.effects.powerMultiplier ?? 1;
         if (m > bestMult) {
           bestMult = m;
@@ -125,6 +143,28 @@ describe('swap-engine power interpolation', () => {
     const maxed = buildSpec(store, car, sel, 'tarmac');
     expect(maxed.powerHp).toBeGreaterThan(stock.powerHp);
     expect(maxed.powerHp).toBeCloseTo(engine.effects.setsMaxPowerHp!, -1); // within ~5 hp
+  });
+
+  it('an upgrade the engine does not support adds no power', () => {
+    const engine = store
+      .getPartsByCategory('engine_swap')
+      .find((p) => p.engineUpgrades && Object.keys(p.engineUpgrades).length < 8);
+    if (!engine) return; // no restricted engine in the data
+    const car = rcar('bmw-m3-e46-2005');
+    // Find an engine-internal category this engine does NOT list.
+    const unsupported = (['camshaft', 'valves', 'intake', 'exhaust'] as const).find(
+      (c) => !engine.engineUpgrades![c],
+    );
+    if (!unsupported) return;
+    const race = store.getPartsByCategory(unsupported).find((p) => p.tierRank > 0)!;
+    const base = buildSpec(store, car, { engine_swap: engine.id }, 'tarmac');
+    const withUnsupported = buildSpec(
+      store,
+      car,
+      { engine_swap: engine.id, [unsupported]: race.id },
+      'tarmac',
+    );
+    expect(withUnsupported.powerHp).toBeCloseTo(base.powerHp, 3);
   });
 });
 

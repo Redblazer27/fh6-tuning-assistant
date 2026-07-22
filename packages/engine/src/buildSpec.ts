@@ -1,10 +1,25 @@
-import type { Drivetrain, Surface, TuningCategory } from '@fh6/shared';
+import type { Drivetrain, Surface, TuningCategory, UpgradeCategory } from '@fh6/shared';
 import type { DataStore, Part } from '@fh6/data';
 import { tireGrip } from './constants.ts';
 import type { ResolvedCar } from './effectiveCar.ts';
 import type { AeroCapability, BuiltSpec, PartSelection } from './types.ts';
 
 export const LAUNCH_BASE: Record<Drivetrain, number> = { AWD: 1.2, RWD: 1.0, FWD: 0.85 };
+
+/** Engine-internal upgrade categories gated by a swap engine's per-engine upgrade list. */
+const ENGINE_UPGRADE_CATEGORIES = new Set<UpgradeCategory>([
+  'intake',
+  'fuel_system',
+  'ignition',
+  'exhaust',
+  'camshaft',
+  'valves',
+  'displacement',
+  'pistons_compression',
+  'oil_cooling',
+  'intercooler',
+  'flywheel',
+]);
 
 /** Resolve the concrete part chosen for a category (falls back to the stock part). */
 export function resolvePart(
@@ -54,6 +69,16 @@ export function buildSpec(
 
   const resolvedSelection: PartSelection = {};
 
+  // A swapped engine only supports the upgrade tiers the wiki lists for it; parts it
+  // can't take add no power (and so the optimizer won't pay for them).
+  const engineUpgrades = resolvePart(store, 'engine_swap', selection)?.engineUpgrades;
+  const engineSupports = (part: Part): boolean => {
+    if (!engineUpgrades || part.tierRank === 0) return true;
+    if (!ENGINE_UPGRADE_CATEGORIES.has(part.category)) return true;
+    const tiers = engineUpgrades[part.category];
+    return tiers ? tiers.includes(part.tier) : false;
+  };
+
   for (const category of store.categories) {
     const part = resolvePart(store, category, selection);
     if (!part) continue;
@@ -62,7 +87,7 @@ export function buildSpec(
     const e = part.effects;
     if (e.setsPowerHp) basePowerHp = e.setsPowerHp;
     if (e.setsMaxPowerHp) maxPowerHp = e.setsMaxPowerHp;
-    if (e.powerMultiplier) powerMult *= e.powerMultiplier;
+    if (e.powerMultiplier && engineSupports(part)) powerMult *= e.powerMultiplier;
     if (e.powerHpDelta) powerDelta += e.powerHpDelta;
     if (e.massMultiplier) massMult *= e.massMultiplier;
     if (e.massKgDelta) massDelta += e.massKgDelta;
@@ -89,9 +114,14 @@ export function buildSpec(
     for (const category of store.categories) {
       // The swap itself sets base power (not a multiplier), so exclude its category.
       if (category === 'engine_swap') continue;
-      const best = store
-        .getPartsByCategory(category)
-        .reduce((m, p) => Math.max(m, p.effects.powerMultiplier ?? 1), 1);
+      let candidates = store.getPartsByCategory(category);
+      // Restrict engine-internal categories to the tiers this engine actually supports.
+      if (engineUpgrades && ENGINE_UPGRADE_CATEGORIES.has(category)) {
+        const tiers = engineUpgrades[category];
+        if (!tiers) continue; // engine doesn't offer this upgrade at all
+        candidates = candidates.filter((p) => p.tierRank === 0 || tiers.includes(p.tier));
+      }
+      const best = candidates.reduce((m, p) => Math.max(m, p.effects.powerMultiplier ?? 1), 1);
       maxMult *= best;
     }
     const progress = maxMult > 1 ? Math.min(Math.max((powerMult - 1) / (maxMult - 1), 0), 1) : 0;

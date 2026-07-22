@@ -309,6 +309,42 @@ function parseCar(title, wt) {
       : [],
   };
 }
+// Wiki engine-upgrade category names -> our UpgradeCategory ids.
+const WIKI_UPGRADE_CAT = {
+  intake: 'intake',
+  'fuel system': 'fuel_system',
+  ignition: 'ignition',
+  exhaust: 'exhaust',
+  camshaft: 'camshaft',
+  valves: 'valves',
+  displacement: 'displacement',
+  'pistons / compression': 'pistons_compression',
+  'pistons/compression': 'pistons_compression',
+  'oil / cooling': 'oil_cooling',
+  'oil/cooling': 'oil_cooling',
+  flywheel: 'flywheel',
+  intercooler: 'intercooler',
+};
+
+// Parse the ==Upgrades== section: which engine-power categories/tiers this engine has.
+function parseEngineUpgrades(wt) {
+  const m = wt.match(/==\s*Upgrades\s*==([\s\S]*?)(?:\n==[^=]|$)/);
+  if (!m) return undefined;
+  const out = {};
+  for (const line of m[1].split('\n')) {
+    const lm = line.match(/^\*+\s*([^-\n]+?)\s*[-–]\s*(.+)$/);
+    if (!lm) continue;
+    const cat = WIKI_UPGRADE_CAT[lm[1].trim().toLowerCase()];
+    if (!cat) continue;
+    const tiers = lm[2]
+      .split(',')
+      .map((t) => t.trim().toLowerCase())
+      .filter((t) => ['street', 'sport', 'race'].includes(t));
+    if (tiers.length) out[cat] = tiers;
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
 // Parse an engine-swap page's {{EngineSwapInfobox}} (real specs for a swap engine).
 function parseEngine(title, wt) {
   const b = extractTemplate(wt, 'EngineSwapInfobox');
@@ -324,6 +360,7 @@ function parseEngine(title, wt) {
     aspiration: aspMap(p.aspiration),
     configuration: p.configuration,
     displacementCc: num(p.displacement),
+    upgrades: parseEngineUpgrades(wt),
   };
 }
 
@@ -656,6 +693,12 @@ ${profiles.map(profLit).join(',\n')},
         : `    effects: { setsPowerHp: ${e.power} },`,
     ];
     if (e.aspiration) L.push(`    setsAspiration: ${q(e.aspiration)},`);
+    if (e.upgrades)
+      L.push(
+        `    engineUpgrades: { ${Object.entries(e.upgrades)
+          .map(([k, tiers]) => `${k}: ${arr(tiers)}`)
+          .join(', ')} },`,
+      );
     L.push(
       `    cost: ${Math.round(Math.min(90000, Math.max(8000, e.power * 40)))},`,
       `    source: 'fandom-fh6-cars',`,

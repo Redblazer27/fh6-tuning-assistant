@@ -4415,14 +4415,13 @@ export const fandomUpgradeProfiles: CarUpgradeProfileInput[] = [
   },
   {
     carId: '1991-jaguar-sport-xjr-15',
-    availableEngineSwapIds: ['eng-5-0l-v8-dsc', 'eng-racing-v12', 'eng-7-7l-v12'],
+    availableEngineSwapIds: ['eng-5-0l-v8-dsc', 'eng-3-5l-v6-tt-680-hp', 'eng-1-6l-i4-t-890-hp'],
     availableDrivetrainSwapIds: ['dt-swap-awd'],
-    engineSwapOptions: ['5.0L V8 DSC', 'Racing V12', '7.7L V12'],
+    engineSwapOptions: ['5.0L V8 DSC', '3.5L V6-TT (680 hp)', '1.6L I4-T (890 hp)'],
     aspirationOptions: ['Twin Turbo', 'Positive-displacement Supercharger'],
     source: 'fandom-fh6-cars',
-    confidence: 'low',
+    confidence: 'medium',
     dataVersion: DATA_VERSION,
-    notes: 'Conversions from a prior Forza Horizon title; the FH6 line is not yet on the wiki.',
   },
   {
     carId: '2020-lamborghini-sian-roadster',

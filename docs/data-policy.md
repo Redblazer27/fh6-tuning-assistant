@@ -71,6 +71,10 @@ therefore estimates exactly the stock PI; an upgraded build estimates `stockPI +
   `engine_swap` parts from the wiki's `EngineSwapInfobox` (base power, aspiration) — ~130 engines with
   real specs (some pages are red links, so power is read from the engine name, e.g. "… (315 hp)"),
   opt-in per car via the profile's `availableEngineSwapIds` so builds simulate the swap's real power.
+  Each engine also stores its **stock→max power** (build power interpolates between them) and its
+  **per-engine upgrade list** (`engineUpgrades`, from the wiki's `==Upgrades==` section, ~86 engines):
+  a swapped engine only benefits from the upgrade tiers it actually supports, so the optimizer won't
+  pay for parts that engine can't take.
   **Body kits** (widebody/kits, from the same `CarConversions|body` template) are recorded by name on
   ~94 cars. The ~17 hand-curated cars get profiles from their exact FH6 wiki page (hand-verified titles
   to avoid wrong-generation matches). ~110 cars have no `CarConversions` entry at all (locked upgrade

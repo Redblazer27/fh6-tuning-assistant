@@ -156,6 +156,13 @@ export const partSchema = provenanceSchema.extend({
   cosmeticVisible: z.boolean().default(false),
   /** If true, this part is a wing/splitter subject to the "no aero" constraint. */
   isAeroPart: z.boolean().default(false),
+  /**
+   * Engine-swap parts only: which engine-power upgrade categories/tiers this engine
+   * actually supports (from the wiki's per-engine Upgrades list), e.g.
+   * { intake: ['street','sport','race'], pistons_compression: ['race'] }. Lets the
+   * power model respect each engine's real upgrade set.
+   */
+  engineUpgrades: z.record(upgradeCategorySchema, z.array(z.string().min(1))).optional(),
 });
 
 // --- Per-car upgrade profile --------------------------------------------------
