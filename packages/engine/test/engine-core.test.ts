@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DISCIPLINE_SURFACE } from '@fh6/shared';
+import { DISCIPLINE_SURFACE, classMaxPi, type Discipline, type UpgradeCategory } from '@fh6/shared';
 import { createDataStore, type Car } from '@fh6/data';
 import {
   buildSpec,
@@ -11,6 +11,7 @@ import {
   scoreSpec,
   disciplineWeights,
 } from '../src/index.ts';
+import { bruteForceOptimize, optimizeSelection } from '../src/optimizer.ts';
 import { assertTuneWithinRanges, makeRequest, rcar, resolvedCars, store } from './helpers.ts';
 
 describe('PI estimate (stock-anchored)', () => {
@@ -58,6 +59,63 @@ describe('tuning output legality', () => {
     const g = tune.tune.gearing.gears;
     for (let i = 1; i < g.length; i += 1) expect(g[i]!).toBeLessThanOrEqual(g[i - 1]!);
   });
+});
+
+describe('optimizer optimality', () => {
+  // On a search space small enough to enumerate exhaustively, the heuristic must
+  // return a build whose score equals the true (brute-force) optimum.
+  const cases: {
+    car: string;
+    discipline: Discipline;
+    cls: 'B' | 'A' | 'S1';
+    free: UpgradeCategory[];
+  }[] = [
+    {
+      car: 'bmw-m3-e46-2005',
+      discipline: 'road',
+      cls: 'S1',
+      free: ['tire_compound', 'brakes', 'intake', 'weight_reduction', 'springs_dampers'],
+    },
+    {
+      car: 'subaru-wrx-sti-2019',
+      discipline: 'rally',
+      cls: 'A',
+      free: ['tire_compound', 'drivetrain_swap', 'weight_reduction', 'differential'],
+    },
+    {
+      car: 'ford-mustang-gt-2018',
+      discipline: 'drag',
+      cls: 'S1',
+      free: ['tire_compound', 'intake', 'exhaust', 'weight_reduction', 'transmission'],
+    },
+  ];
+
+  for (const tc of cases) {
+    it(`matches the exhaustive optimum: ${tc.car} · ${tc.discipline} · ${tc.cls}`, () => {
+      const car = rcar(tc.car);
+      const surface = DISCIPLINE_SURFACE[tc.discipline];
+      const cap = classMaxPi(tc.cls);
+      const req = makeRequest({
+        carId: tc.car,
+        discipline: tc.discipline,
+        targetClass: tc.cls,
+        constraints: { allowedCategories: tc.free },
+      });
+      const opts = { strategy: 'balanced' as const };
+      const weights = disciplineWeights(tc.discipline, 'balanced');
+      const scoreOf = (sel: Record<string, string>) =>
+        scoreSpec(buildSpec(store, car, sel, surface), weights).total;
+
+      const heuristic = optimizeSelection(store, car, req, surface, cap, null, opts);
+      const exhaustive = bruteForceOptimize(store, car, req, surface, cap, null, opts);
+
+      // Both feasible, and the heuristic's score equals the true optimum.
+      expect(
+        estimatePI(car, buildSpec(store, car, heuristic.selection, surface)).pi,
+      ).toBeLessThanOrEqual(cap);
+      expect(scoreOf(heuristic.selection)).toBeCloseTo(scoreOf(exhaustive.selection), 4);
+    });
+  }
 });
 
 describe('determinism', () => {
