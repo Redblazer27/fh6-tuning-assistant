@@ -1,0 +1,31 @@
+FH6 Tuning Assistant — context bundle
+======================================
+
+This "context" folder is documentation only — it is NOT needed to run the app
+(that's the fh6-bridge.exe + web/ folder next to it, see ../RUN.txt).
+
+It exists so a fresh Claude Code session on this PC (or anyone else) can get
+full project context without re-deriving it. Contents:
+
+  README.md                    - what this is, how to run it, project layout
+  PROGRESS.md                  - what's verified, assumed, missing, next steps
+  docs/data-policy.md          - source & confidence rules for all data
+  docs/competitor-research.md  - competitor landscape and our differentiators
+  docs/product-spec.md         - full feature/requirements spec
+  docs/tuning-engine-design.md - every tuning heuristic + its rationale
+
+If you open Claude Code on this PC and want it to pick up where the other
+session left off, point it at this folder (or a full clone of the repo, see
+below) and say:
+
+  "Read context/PROGRESS.md and context/docs/*.md first, then continue."
+
+Full source code (this zip only has the compiled app, not the editable
+source/tests/engine) lives at:
+
+  https://github.com/Redblazer27/fh6-tuning-assistant   (private repo, sign in as Redblazer27)
+
+To develop further (not just run it), clone that repo instead of using this
+zip:
+
+  git clone https://github.com/Redblazer27/fh6-tuning-assistant.git

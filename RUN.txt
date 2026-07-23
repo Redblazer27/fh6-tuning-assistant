@@ -1,0 +1,13 @@
+FH6 Tuning Assistant — local app + telemetry bridge
+
+1. Run the executable:
+     fh6-bridge.exe
+2. It prints a URL like  http://127.0.0.1:8123  — open it in your browser for the full app.
+3. For live telemetry, in Forza Horizon 6:
+     Settings -> HUD and Gameplay -> Data Out = On
+     Data Out IP Address = 127.0.0.1
+     Data Out IP Port    = 20440
+   Then start driving. The app's Telemetry tab should light up (ws://localhost:8123).
+
+Options: --port 8123  --udp-port 20440  --record session.csv
+No installation or Node.js required.
