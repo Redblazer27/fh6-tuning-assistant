@@ -93,3 +93,15 @@ Last updated: 2026-07-21
   defaults, low confidence) — real mass/power/drivetrain/aspiration and per-car upgrade/swap data are
   not bulk-available (Fandom blocks scraping; community DBs are JS-rendered). Enrich via Admin/Import,
   community sources, or in-game capture. A few official cars may near-duplicate curated ones.
+
+## 2026-07-23 — authoritative game database integrated
+
+- Replaced the community/wiki-primary runtime seed with a deterministic import from the extracted FH6 game database, Steam build `24241019`. Game data now wins every conflict; community data only fills ownership, tire-compound, wheelbase and descriptive body-kit gaps.
+- Runtime coverage: 651 cars, 660 engines, 19 motors, 151 swap engines, 6 drivetrain-conversion families, 14,912 purchasable engine-option rows, 1,390 physics settings and 651 per-car suspension range envelopes.
+- Added exact active-engine compatibility and effects. Camshaft torque curves provide power/redline/peak RPM/smoothness; FI rows preserve single/twin/quad/supercharger family, progression and anti-lag. Explicit engine/drivetrain choices are now actually forced.
+- Removed the inaccurate broad rotary gate from game-backed cars. The game rows prove rotary camshaft upgrades exist; each rotary now follows its own menu.
+- The optimizer uses stock-engine candidates by default and a chosen swap engine’s menu when explicitly selected. Final selections are sanitized by `buildSpec` so unsupported parts cannot leak into recommendations.
+- Added `npm run data:import-game`, compact generated JSON, source documentation and PWA precache support for the offline database.
+- Verification: format, ESLint, TypeScript and 97 tests pass; production PWA build passes. The bundle is intentionally ~4.82 MB uncompressed (~435 KB gzip) because the full offline engine-option database is included.
+
+The old “community-sourced seed / estimated physics for ~620 cars” notes above are historical and superseded by this section. Remaining inferred areas are the PI delta model and tuning heuristics themselves, not the underlying stock car/engine/compatibility data.

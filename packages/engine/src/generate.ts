@@ -91,8 +91,8 @@ function makeStrategy(
     strategy: {
       id: kind,
       label: STRATEGY_LABELS[kind],
-      selection,
-      parts: partLines(store, selection),
+      selection: spec.selection,
+      parts: partLines(store, spec.selection),
       totalCost: spec.totalCost,
       builtSpec: spec,
       pi,

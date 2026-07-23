@@ -15,6 +15,7 @@ export const ASPIRATIONS = [
   'NA', // naturally aspirated
   'turbo',
   'twin_turbo',
+  'quad_turbo',
   'supercharged',
   'centrifugal',
 ] as const;
@@ -148,6 +149,7 @@ export const UPGRADE_CATEGORIES = [
   'aspiration',
   // Engine (power)
   'intake',
+  'intake_manifold',
   'fuel_system',
   'ignition',
   'exhaust',
@@ -159,6 +161,7 @@ export const UPGRADE_CATEGORIES = [
   'oil_cooling',
   'flywheel',
   'forced_induction', // turbo/super install & upgrade
+  'restrictor_plate',
   // Platform & handling
   'brakes',
   'springs_dampers',

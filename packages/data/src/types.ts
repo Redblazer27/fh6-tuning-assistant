@@ -5,8 +5,10 @@ import type {
   datasetSchema,
   feedbackSchema,
   gameVersionSchema,
+  gameEngineUpgradeSpecSchema,
   partEffectsSchema,
   partSchema,
+  partOverrideSchema,
   sourceSchema,
   tuneRangesSchema,
 } from './schemas.ts';
@@ -20,6 +22,8 @@ export type TuneRanges = z.infer<typeof tuneRangesSchema>;
 export type CarUpgradeProfile = z.infer<typeof carUpgradeProfileSchema>;
 export type Feedback = z.infer<typeof feedbackSchema>;
 export type Dataset = z.infer<typeof datasetSchema>;
+export type PartOverride = z.infer<typeof partOverrideSchema>;
+export type GameEngineUpgradeSpec = z.infer<typeof gameEngineUpgradeSpecSchema>;
 
 // Input types (defaults optional) — used when authoring seed / importing.
 export type CarInput = z.input<typeof carSchema>;

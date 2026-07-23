@@ -12,7 +12,7 @@ import {
 } from '@fh6/shared';
 import type { DataStore, Part } from '@fh6/data';
 import { tireGrip } from './constants.ts';
-import { LAUNCH_BASE, baseEngineAllows } from './buildSpec.ts';
+import { LAUNCH_BASE, baseEngineAllows, resolvePartData } from './buildSpec.ts';
 import type { ResolvedCar } from './effectiveCar.ts';
 import { estimatePI } from './pi.ts';
 import { disciplineWeights, scoreSpec } from './scoring.ts';
@@ -30,6 +30,7 @@ export interface OptimizeOutput {
 
 /** Engine-internal categories gated by a swap engine's per-engine upgrade list. */
 const ENGINE_UPGRADE_CATEGORIES = new Set<UpgradeCategory>([
+  'intake_manifold',
   'intake',
   'fuel_system',
   'ignition',
@@ -41,6 +42,8 @@ const ENGINE_UPGRADE_CATEGORIES = new Set<UpgradeCategory>([
   'oil_cooling',
   'intercooler',
   'flywheel',
+  'forced_induction',
+  'restrictor_plate',
 ]);
 
 /** Candidate parts for a category after applying locks and constraints. */
@@ -53,9 +56,13 @@ function candidatesFor(
   notes: string[],
 ): Part[] {
   const c = request.constraints;
+  const requestedEngineSwap = locks?.engine_swap ?? c.preferredEngineSwapId ?? undefined;
+  const activeGameEngineId = requestedEngineSwap
+    ? store.getPart(requestedEngineSwap)?.gameEngineId
+    : store.getUpgradeProfile(car.id)?.stockGameEngineId;
   // Car-aware catalog: applies the car's upgrade profile (locked categories,
   // engine/drivetrain swap allowlists, blocklist) before any user constraints.
-  const all = store.getAvailablePartsByCategory(car.id, category);
+  const all = store.getAvailablePartsByCategory(car.id, category, activeGameEngineId);
   const stock = all.find((p) => p.tierRank === 0);
   const onlyStock = (): Part[] => (stock ? [stock] : []);
 
@@ -113,7 +120,16 @@ function candidatesFor(
     list = list.filter((p) => !p.cosmeticVisible || p.tierRank === 0);
   }
 
-  if (stock && !list.some((p) => p.tierRank === 0)) list.push(stock);
+  if (category === 'differential' && request.discipline === 'drift') {
+    const rally = list.find((part) => part.tier === 'rally');
+    if (rally) list = [rally];
+  }
+  const forcedChoice =
+    locked !== undefined ||
+    (category === 'engine_swap' && Boolean(c.preferredEngineSwapId)) ||
+    (category === 'drivetrain_swap' && Boolean(c.preferredDrivetrain)) ||
+    (category === 'differential' && request.discipline === 'drift');
+  if (stock && !forcedChoice && !list.some((p) => p.tierRank === 0)) list.push(stock);
   return list.length ? list : onlyStock();
 }
 
@@ -140,9 +156,18 @@ interface Agg {
   cost: number;
   engineUpgrades: Part['engineUpgrades'];
   baseEngineType: EngineType;
+  carId: string;
+  activeGameEngineId: number | undefined;
+  hasExactEngineData: boolean;
+  weightDistFrontPct: number;
+  torqueNm: number | undefined;
+  redlineRpm: number;
+  powerPeakRpm: number;
+  powerDeliverySmoothness: number;
 }
 
-const initAgg = (car: ResolvedCar, baseEngineType: EngineType): Agg => ({
+const initAgg = (store: DataStore, car: ResolvedCar, baseEngineType: EngineType): Agg => ({
+  carId: car.id,
   powerMult: 1,
   powerDelta: 0,
   basePowerHp: car.powerHp,
@@ -164,6 +189,13 @@ const initAgg = (car: ResolvedCar, baseEngineType: EngineType): Agg => ({
   cost: 0,
   engineUpgrades: undefined,
   baseEngineType,
+  activeGameEngineId: store.getUpgradeProfile(car.id)?.stockGameEngineId,
+  hasExactEngineData: store.getUpgradeProfile(car.id)?.stockGameEngineId !== undefined,
+  weightDistFrontPct: car.weightDistFrontPct,
+  torqueNm: car.torqueNm,
+  redlineRpm: car.redlineRpm ?? 7000,
+  powerPeakRpm: car.powerPeakRpm ?? (car.redlineRpm ?? 7000) * 0.8,
+  powerDeliverySmoothness: car.powerDeliverySmoothness ?? 0.75,
 });
 
 const engineSupports = (agg: Agg, part: Part): boolean => {
@@ -196,12 +228,16 @@ function applyPart(
   part: Part,
   maxEngineMult?: Map<string, number>,
 ): void {
-  const e = part.effects;
+  if (part.category === 'engine_swap' && part.gameEngineId)
+    agg.activeGameEngineId = part.gameEngineId;
+  const resolved = resolvePartData(store, agg.carId, agg.activeGameEngineId, part);
+  if (!resolved.supported) return;
+  const e = resolved.effects;
   if (e.setsPowerHp) agg.basePowerHp = e.setsPowerHp;
   if (e.setsMaxPowerHp) agg.maxPowerHp = e.setsMaxPowerHp;
   if (part.category === 'engine_swap') {
     agg.engineUpgrades = part.engineUpgrades;
-    if (part.effects.setsMaxPowerHp) {
+    if (e.setsMaxPowerHp) {
       let m = maxEngineMult?.get(part.id);
       if (m === undefined) {
         m = computeMaxEngineMult(store, part);
@@ -213,12 +249,19 @@ function applyPart(
   if (
     e.powerMultiplier &&
     engineSupports(agg, part) &&
-    baseEngineAllows(agg.baseEngineType, agg.engineUpgrades !== undefined, part)
+    (agg.hasExactEngineData ||
+      baseEngineAllows(agg.baseEngineType, agg.engineUpgrades !== undefined, part))
   )
     agg.powerMult *= e.powerMultiplier;
   if (e.powerHpDelta) agg.powerDelta += e.powerHpDelta;
   if (e.massMultiplier) agg.massMult *= e.massMultiplier;
   if (e.massKgDelta) agg.massDelta += e.massKgDelta;
+  if (e.weightDistFrontPctDelta) agg.weightDistFrontPct += e.weightDistFrontPctDelta;
+  if (e.setsTorqueNm) agg.torqueNm = e.setsTorqueNm;
+  if (e.setsRedlineRpm) agg.redlineRpm = e.setsRedlineRpm;
+  if (e.setsPowerPeakRpm) agg.powerPeakRpm = e.setsPowerPeakRpm;
+  if (e.setsPowerDeliverySmoothness !== undefined)
+    agg.powerDeliverySmoothness = e.setsPowerDeliverySmoothness;
   if (e.gripMultiplier) agg.gripMult *= e.gripMultiplier;
   if (e.brakingMultiplier) agg.brakingMult *= e.brakingMultiplier;
   if (e.launchMultiplier) agg.launchMult *= e.launchMultiplier;
@@ -230,7 +273,7 @@ function applyPart(
   if (part.category === 'springs_dampers') agg.suspensionTier = part.tier;
   if (part.category === 'differential') agg.diffTier = part.tier;
   if (part.category === 'transmission') agg.transmissionTier = part.tier;
-  agg.cost += part.cost;
+  agg.cost += resolved.cost;
 }
 
 const EMPTY_UNLOCKS = new Set<never>();
@@ -255,8 +298,12 @@ function deriveFromAgg(car: ResolvedCar, agg: Agg, surface: Surface): BuiltSpec 
     diffTier: agg.diffTier,
     transmissionTier: agg.transmissionTier,
     massKg,
-    weightDistFrontPct: car.weightDistFrontPct,
+    weightDistFrontPct: agg.weightDistFrontPct,
+    torqueNm: agg.torqueNm,
     powerHp,
+    redlineRpm: agg.redlineRpm,
+    powerPeakRpm: agg.powerPeakRpm,
+    powerDeliverySmoothness: agg.powerDeliverySmoothness,
     powerToWeight: powerHp / (massKg / 1000),
     gripFactor: tireGrip(agg.tireCompound, surface) * agg.gripMult,
     gripFactorTarmac: tireGrip(agg.tireCompound, 'tarmac') * agg.gripMult,
@@ -321,7 +368,7 @@ export function optimizeSelection(
   };
 
   const evaluate = (sel: PartSelection): Eval => {
-    const agg = initAgg(car, baseEngineType);
+    const agg = initAgg(store, car, baseEngineType);
     for (const cat of cats) {
       const id = sel[cat];
       const part = (id ? store.getPart(id) : undefined) ?? stockOf(cat);
@@ -402,8 +449,21 @@ export function optimizeSelection(
   const twoOpt = (start: PartSelection): { sel: PartSelection; e: Eval } => {
     const sel = { ...start };
     let curE = evaluate(sel);
-    const multi = cats.filter((c) => candidates.get(c)!.length > 1);
-    for (let pass = 0; pass < 2; pass++) {
+    const coupled = new Set<UpgradeCategory>([
+      'engine_swap',
+      'drivetrain_swap',
+      'forced_induction',
+      'camshaft',
+      'tire_compound',
+      'front_tire_width',
+      'rear_tire_width',
+      'springs_dampers',
+      'weight_reduction',
+      'transmission',
+      'differential',
+    ]);
+    const multi = cats.filter((c) => coupled.has(c) && candidates.get(c)!.length > 1);
+    for (let pass = 0; pass < 1; pass++) {
       let changed = false;
       for (let ia = 0; ia < multi.length; ia++) {
         const ca = multi[ia]!;
@@ -443,7 +503,9 @@ export function optimizeSelection(
   // If the constrained search space is small enough, enumerate it exhaustively and
   // return the *certified* global optimum (targeting a class, or a car with limited
   // options, usually lands here). Otherwise fall back to the heuristic.
-  const EXACT_THRESHOLD = 150_000;
+  // Game-file engine menus create many real combinations; exhaustive search above
+  // this bound is slower than multi-start coordinate ascent with no practical gain.
+  const EXACT_THRESHOLD = 20_000;
   let product = 1;
   for (const c of multi) {
     product *= candidates.get(c)!.length;
@@ -541,7 +603,7 @@ export function bruteForceOptimize(
 
   const maxEngineMult = new Map<string, number>();
   const evaluate = (sel: PartSelection): Eval => {
-    const agg = initAgg(car, baseEngineType);
+    const agg = initAgg(store, car, baseEngineType);
     for (const cat of cats) {
       const p = store.getPart(sel[cat]!);
       if (p) applyPart(store, agg, p, maxEngineMult);

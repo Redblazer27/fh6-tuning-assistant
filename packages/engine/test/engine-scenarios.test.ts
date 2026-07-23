@@ -65,32 +65,31 @@ describe('constraints', () => {
       }),
     );
     expect(s.builtSpec.drivetrain).toBe('AWD');
-    expect(s.selection.drivetrain_swap).toBe('dt-swap-awd');
+    expect(s.selection.drivetrain_swap).not.toBe(store.getStockPart('drivetrain_swap')!.id);
   });
 
   it('uses a preferred engine swap', () => {
-    // Mustang GT has no per-car profile, so the generic swap is available.
+    const swapId = store.getUpgradeProfile('ford-mustang-gt-2018')!.availableEngineSwapIds![0]!;
     const s = topOf(
       makeRequest({
         carId: 'ford-mustang-gt-2018',
         discipline: 'top_speed',
-        constraints: { preferredEngineSwapId: 'engine-swap-highperf', allowEngineSwap: true },
+        constraints: { preferredEngineSwapId: swapId, allowEngineSwap: true },
       }),
     );
-    expect(s.selection.engine_swap).toBe('engine-swap-highperf');
+    expect(s.selection.engine_swap).toBe(swapId);
   });
 
   it('a locked-swap profile overrides an explicit engine-swap request', () => {
-    // A car whose profile forbids swaps can't apply one, even when explicitly requested.
+    const swapId = store.getUpgradeProfile('ford-mustang-gt-2018')!.availableEngineSwapIds![0]!;
     const raw = structuredClone(rawSeed);
-    raw.carUpgradeProfiles!.push({
-      source: 'community-tuning-consensus',
-      confidence: 'low',
-      dataVersion: raw.version.dataVersion,
-      carId: 'ford-mustang-gt-2018',
+    const index = raw.carUpgradeProfiles!.findIndex((p) => p.carId === 'ford-mustang-gt-2018');
+    const current = raw.carUpgradeProfiles![index]!;
+    raw.carUpgradeProfiles![index] = {
+      ...current,
       availableEngineSwapIds: [],
       availableDrivetrainSwapIds: [],
-    });
+    };
     const locked = createDataStore(loadDataset(raw));
     const s = generateBuild(
       locked,
@@ -98,7 +97,7 @@ describe('constraints', () => {
         carId: 'ford-mustang-gt-2018',
         discipline: 'top_speed',
         targetClass: 'R',
-        constraints: { preferredEngineSwapId: 'engine-swap-highperf', allowEngineSwap: true },
+        constraints: { preferredEngineSwapId: swapId, allowEngineSwap: true },
       }),
     ).strategies[0]!;
     expect(s.selection.engine_swap).toBe(locked.getStockPart('engine_swap')!.id);
@@ -110,7 +109,7 @@ describe('constraints', () => {
       makeRequest({
         carId: 'porsche-911-gt3-991-2018',
         discipline: 'road',
-        targetClass: 'S2',
+        targetClass: 'R',
         constraints: { noAero: true },
       }),
     );

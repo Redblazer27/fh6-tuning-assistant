@@ -6,6 +6,14 @@ import type { Source } from '../types.ts';
  */
 export const sources: Source[] = [
   {
+    id: 'fh6-game-files',
+    name: 'Forza Horizon 6 game database and physics tables',
+    type: 'official',
+    defaultConfidence: 'high',
+    notes:
+      'Authoritative extracted game data, Steam build 24241019. Preferred whenever it conflicts with community sources.',
+  },
+  {
     id: 'forza-official-cars',
     name: 'Forza Horizon 6 — Official Car List',
     url: 'https://forza.net/fh6cars',

@@ -25,6 +25,11 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg'],
+      workbox: {
+        // The authoritative offline game database is intentionally bundled so the
+        // installed tuner keeps all cars and engine menus without a network call.
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
+      },
       manifest: {
         name: 'FH6 Tuning Assistant',
         short_name: 'FH6 Tune',

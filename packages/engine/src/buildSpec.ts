@@ -1,5 +1,5 @@
 import type { EngineType, Drivetrain, Surface, TuningCategory, UpgradeCategory } from '@fh6/shared';
-import type { DataStore, Part } from '@fh6/data';
+import type { DataStore, Part, PartEffects } from '@fh6/data';
 import { tireGrip } from './constants.ts';
 import type { ResolvedCar } from './effectiveCar.ts';
 import type { AeroCapability, BuiltSpec, PartSelection } from './types.ts';
@@ -7,8 +7,9 @@ import type { AeroCapability, BuiltSpec, PartSelection } from './types.ts';
 export const LAUNCH_BASE: Record<Drivetrain, number> = { AWD: 1.2, RWD: 1.0, FWD: 0.85 };
 
 /** Engine-internal upgrade categories gated by a swap engine's per-engine upgrade list. */
-const ENGINE_UPGRADE_CATEGORIES = new Set<UpgradeCategory>([
+export const ENGINE_UPGRADE_CATEGORIES = new Set<UpgradeCategory>([
   'intake',
+  'intake_manifold',
   'fuel_system',
   'ignition',
   'exhaust',
@@ -18,6 +19,9 @@ const ENGINE_UPGRADE_CATEGORIES = new Set<UpgradeCategory>([
   'pistons_compression',
   'oil_cooling',
   'intercooler',
+  'forced_induction',
+  'restrictor_plate',
+  'aspiration',
   'flywheel',
 ]);
 
@@ -53,6 +57,44 @@ export function baseEngineAllows(
   return true;
 }
 
+export interface ResolvedPartData {
+  effects: PartEffects;
+  cost: number;
+  supported: boolean;
+}
+
+/** Apply game-file engine compatibility and per-car conversion overrides to a catalog part. */
+export function resolvePartData(
+  store: DataStore,
+  carId: string,
+  activeGameEngineId: number | undefined,
+  part: Part,
+): ResolvedPartData {
+  const profile = store.getUpgradeProfile(carId);
+  let effects = part.effects;
+  let cost = part.cost;
+  let supported = true;
+  const override = store.getPartOverride(carId, part.id);
+  if (override) {
+    effects = { ...effects, ...override.effects };
+    cost = override.cost ?? cost;
+  }
+  if (
+    profile?.stockGameEngineId !== undefined &&
+    part.tierRank > 0 &&
+    ENGINE_UPGRADE_CATEGORIES.has(part.category)
+  ) {
+    const spec = activeGameEngineId
+      ? store.getGameEngineUpgradeSpec(activeGameEngineId, part.id)
+      : undefined;
+    supported = spec !== undefined;
+    if (spec) {
+      effects = { ...effects, ...spec.effects };
+      cost = spec.cost;
+    }
+  }
+  return { effects, cost, supported };
+}
 /** Resolve the concrete part chosen for a category (falls back to the stock part). */
 export function resolvePart(
   store: DataStore,
@@ -91,6 +133,11 @@ export function buildSpec(
   let brakingMult = 1;
   let launchMult = 1;
   let totalCost = 0;
+  let weightDistFrontPct = car.weightDistFrontPct;
+  let redlineRpm = car.redlineRpm ?? 7000;
+  let powerPeakRpm = car.powerPeakRpm ?? redlineRpm * 0.8;
+  let powerDeliverySmoothness = car.powerDeliverySmoothness ?? 0.75;
+  let torqueNm = car.torqueNm;
 
   let drivetrain: Drivetrain = car.drivetrain;
   let aspiration = car.aspiration;
@@ -106,7 +153,11 @@ export function buildSpec(
 
   // A swapped engine only supports the upgrade tiers the wiki lists for it; parts it
   // can't take add no power (and so the optimizer won't pay for them).
-  const engineUpgrades = resolvePart(store, 'engine_swap', selection)?.engineUpgrades;
+  const profile = store.getUpgradeProfile(car.id);
+  const selectedEngineSwap = resolvePart(store, 'engine_swap', selection);
+  const engineUpgrades = selectedEngineSwap?.engineUpgrades;
+  const activeGameEngineId = selectedEngineSwap?.gameEngineId ?? profile?.stockGameEngineId;
+  const hasExactEngineData = profile?.stockGameEngineId !== undefined;
   const engineSupports = (part: Part): boolean => {
     if (!engineUpgrades || part.tierRank === 0) return true;
     if (!ENGINE_UPGRADE_CATEGORIES.has(part.category)) return true;
@@ -114,26 +165,35 @@ export function buildSpec(
     return tiers ? tiers.includes(part.tier) : false;
   };
   // Base-engine platform gate: a stock rotary/electric can't take piston internals.
-  const baseEngineType: EngineType = store.getUpgradeProfile(car.id)?.engineType ?? 'piston';
+  const baseEngineType: EngineType = profile?.engineType ?? 'piston';
   const hasRealSwap = engineUpgrades !== undefined;
 
   for (const category of store.categories) {
     const part = resolvePart(store, category, selection);
     if (!part) continue;
+    const resolved = resolvePartData(store, car.id, activeGameEngineId, part);
+    if (!resolved.supported) continue;
     resolvedSelection[category] = part.id;
 
-    const e = part.effects;
+    const e = resolved.effects;
     if (e.setsPowerHp) basePowerHp = e.setsPowerHp;
     if (e.setsMaxPowerHp) maxPowerHp = e.setsMaxPowerHp;
+    if (e.setsTorqueNm) torqueNm = e.setsTorqueNm;
+    if (e.setsRedlineRpm) redlineRpm = e.setsRedlineRpm;
+    if (e.setsPowerPeakRpm) powerPeakRpm = e.setsPowerPeakRpm;
+    if (e.setsPowerDeliverySmoothness !== undefined) {
+      powerDeliverySmoothness = e.setsPowerDeliverySmoothness;
+    }
     if (
       e.powerMultiplier &&
       engineSupports(part) &&
-      baseEngineAllows(baseEngineType, hasRealSwap, part)
+      (hasExactEngineData || baseEngineAllows(baseEngineType, hasRealSwap, part))
     )
       powerMult *= e.powerMultiplier;
     if (e.powerHpDelta) powerDelta += e.powerHpDelta;
     if (e.massMultiplier) massMult *= e.massMultiplier;
     if (e.massKgDelta) massDelta += e.massKgDelta;
+    if (e.weightDistFrontPctDelta) weightDistFrontPct += e.weightDistFrontPctDelta;
     if (e.gripMultiplier) gripMult *= e.gripMultiplier;
     if (e.brakingMultiplier) brakingMult *= e.brakingMultiplier;
     if (e.launchMultiplier) launchMult *= e.launchMultiplier;
@@ -148,7 +208,7 @@ export function buildSpec(
     if (category === 'transmission') transmissionTier = part.tier;
 
     for (const u of part.unlocks) unlockedTuning.add(u);
-    totalCost += part.cost;
+    totalCost += resolved.cost;
   }
 
   // A swap engine with a known max power interpolates stock→max by how far the
@@ -192,7 +252,11 @@ export function buildSpec(
     diffTier,
     transmissionTier,
     massKg,
-    weightDistFrontPct: car.weightDistFrontPct,
+    weightDistFrontPct,
+    torqueNm,
+    redlineRpm,
+    powerPeakRpm,
+    powerDeliverySmoothness,
     powerHp,
     powerToWeight,
     gripFactor,

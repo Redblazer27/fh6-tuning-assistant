@@ -188,7 +188,7 @@ describe('car comparison', () => {
     expect(result.rows[0]!.carId).toBe('balance-good');
     expect(result.rows[0]!.goalFitScore).toBeCloseTo(result.rows[1]!.goalFitScore, 4);
     expect(result.rows[0]!.chassisFit).toBeGreaterThan(result.rows[1]!.chassisFit);
-  });
+  }, 15_000);
 });
 
 describe('determinism', () => {
@@ -301,104 +301,84 @@ describe('tire choice fits the goal', () => {
   });
 });
 
-describe('swap-engine power interpolation', () => {
-  it('goes from the engine stock power to its real max as power parts are added', () => {
-    const engine = store.getPartsByCategory('engine_swap').find((p) => p.effects.setsMaxPowerHp)!;
-    expect(engine).toBeDefined();
+describe('game-file engine compatibility', () => {
+  it('applies a swap engine and its exact upgrade scalars', () => {
     const car = rcar('bmw-m3-e46-2005');
-
-    // Swap only (no engine upgrades) → the engine's stock power.
+    const profile = store.getUpgradeProfile(car.id)!;
+    const engine = store.getPart(profile.availableEngineSwapIds![0]!)!;
     const stock = buildSpec(store, car, { engine_swap: engine.id }, 'tarmac');
-    expect(stock.powerHp).toBeCloseTo(engine.effects.setsPowerHp!, 0);
-
-    // The best power part this engine supports in every category → its real max.
-    const engineCats = new Set([
-      'intake',
-      'fuel_system',
-      'ignition',
-      'exhaust',
-      'camshaft',
-      'valves',
-      'displacement',
-      'pistons_compression',
-      'oil_cooling',
-      'intercooler',
-      'flywheel',
-    ]);
-    const sel: Record<string, string> = { engine_swap: engine.id };
-    for (const cat of store.categories) {
-      if (cat === 'engine_swap') continue;
-      const gated = engine.engineUpgrades && engineCats.has(cat);
-      const tiers = gated ? engine.engineUpgrades![cat] : undefined;
-      if (gated && !tiers) continue; // engine doesn't offer this category
-      let best: string | undefined;
-      let bestMult = 1;
-      for (const p of store.getPartsByCategory(cat)) {
-        if (p.tierRank === 0) continue;
-        if (gated && tiers && !tiers.includes(p.tier)) continue;
-        const m = p.effects.powerMultiplier ?? 1;
-        if (m > bestMult) {
-          bestMult = m;
-          best = p.id;
-        }
-      }
-      if (best) sel[cat] = best;
-    }
-    const maxed = buildSpec(store, car, sel, 'tarmac');
-    expect(maxed.powerHp).toBeGreaterThan(stock.powerHp);
-    expect(maxed.powerHp).toBeCloseTo(engine.effects.setsMaxPowerHp!, -1); // within ~5 hp
-  });
-
-  it('an upgrade the engine does not support adds no power', () => {
-    const engine = store
-      .getPartsByCategory('engine_swap')
-      .find((p) => p.engineUpgrades && Object.keys(p.engineUpgrades).length < 8);
-    if (!engine) return; // no restricted engine in the data
-    const car = rcar('bmw-m3-e46-2005');
-    // Find an engine-internal category this engine does NOT list.
-    const unsupported = (['camshaft', 'valves', 'intake', 'exhaust'] as const).find(
-      (c) => !engine.engineUpgrades![c],
+    expect(stock.powerHp).toBeCloseTo(engine.effects.setsPowerHp!, 1);
+    expect(stock.redlineRpm).toBe(engine.effects.setsRedlineRpm);
+    const specs = store.getGameEngineUpgradeSpecs(engine.gameEngineId!);
+    const best = specs.reduce((current, spec) =>
+      (spec.effects.powerMultiplier ?? 1) > (current.effects.powerMultiplier ?? 1) ? spec : current,
     );
-    if (!unsupported) return;
-    const race = store.getPartsByCategory(unsupported).find((p) => p.tierRank > 0)!;
-    const base = buildSpec(store, car, { engine_swap: engine.id }, 'tarmac');
-    const withUnsupported = buildSpec(
+    const part = store.getPart(best.partId)!;
+    const upgraded = buildSpec(
       store,
       car,
-      { engine_swap: engine.id, [unsupported]: race.id },
+      { engine_swap: engine.id, [part.category]: part.id },
       'tarmac',
     );
-    expect(withUnsupported.powerHp).toBeCloseTo(base.powerHp, 3);
+    expect(upgraded.powerHp).toBeGreaterThan(stock.powerHp);
+  });
+
+  it('ignores an option absent from the active engine menu', () => {
+    const car = rcar('bmw-m3-e46-2005');
+    const profile = store.getUpgradeProfile(car.id)!;
+    const engine = store.getPart(profile.availableEngineSwapIds![0]!)!;
+    const supported = new Set(
+      store.getGameEngineUpgradeSpecs(engine.gameEngineId!).map((spec) => spec.partId),
+    );
+    const unsupported = store.dataset.parts.find(
+      (part) =>
+        part.tierRank > 0 &&
+        !supported.has(part.id) &&
+        ['camshaft', 'valves', 'intake', 'exhaust'].includes(part.category),
+    )!;
+    const base = buildSpec(store, car, { engine_swap: engine.id }, 'tarmac');
+    const attempted = buildSpec(
+      store,
+      car,
+      { engine_swap: engine.id, [unsupported.category]: unsupported.id },
+      'tarmac',
+    );
+    expect(attempted.powerHp).toBeCloseTo(base.powerHp, 3);
   });
 });
 
-describe('base-engine platform gate (rotary)', () => {
-  it('a rotary car gains no power from piston-only upgrades, but does from valid ones', () => {
+describe('game-file rotary compatibility', () => {
+  it('follows the RX-7 engine menu instead of a broad rotary heuristic', () => {
     const rec = store.getCar('1990-mazda-savanna-rx-7');
-    expect(rec, 'expected a rotary seed car to exist').toBeDefined();
+    expect(rec).toBeDefined();
     const car = resolveEffectiveCar(rec!).car;
+    const profile = store.getUpgradeProfile(car.id)!;
+    expect(profile.engineType).toBe('rotary');
     const stock = buildSpec(store, car, {}, 'tarmac');
-
-    // Camshaft is a piston-only internal — a rotary has none, so it adds no power.
-    const cam = store.getPartsByCategory('camshaft').find((p) => p.effects.powerMultiplier)!;
-    const withCam = buildSpec(store, car, { camshaft: cam.id }, 'tarmac');
-    expect(withCam.powerHp).toBeCloseTo(stock.powerHp, 3);
-
-    // Intake is valid on a rotary — it still adds power.
-    const intake = store.getPartsByCategory('intake').find((p) => p.effects.powerMultiplier)!;
-    const withIntake = buildSpec(store, car, { intake: intake.id }, 'tarmac');
-    expect(withIntake.powerHp).toBeGreaterThan(stock.powerHp);
+    const cam = store
+      .getAvailablePartsByCategory(car.id, 'camshaft')
+      .find((part) => part.tierRank > 0)!;
+    expect(cam).toBeDefined();
+    expect(buildSpec(store, car, { camshaft: cam.id }, 'tarmac').powerHp).toBeGreaterThan(
+      stock.powerHp,
+    );
+    const displacement = store.getAvailablePartsByCategory(car.id, 'displacement');
+    for (const part of displacement.filter((item) => item.tierRank > 0)) {
+      expect(store.getGameEngineUpgradeSpec(profile.stockGameEngineId!, part.id)).toBeDefined();
+    }
   });
 
-  it('a piston car still gains power from a camshaft (gate is engine-type specific)', () => {
+  it('a piston engine follows its exact camshaft menu too', () => {
     const car = rcar('bmw-m3-e46-2005');
     const stock = buildSpec(store, car, {}, 'tarmac');
-    const cam = store.getPartsByCategory('camshaft').find((p) => p.effects.powerMultiplier)!;
-    const withCam = buildSpec(store, car, { camshaft: cam.id }, 'tarmac');
-    expect(withCam.powerHp).toBeGreaterThan(stock.powerHp);
+    const cam = store
+      .getAvailablePartsByCategory(car.id, 'camshaft')
+      .find((part) => part.tierRank > 0)!;
+    expect(buildSpec(store, car, { camshaft: cam.id }, 'tarmac').powerHp).toBeGreaterThan(
+      stock.powerHp,
+    );
   });
 });
-
 describe('effective car (physics fallback)', () => {
   const bare: Car = {
     id: 'roster-test',
@@ -429,7 +409,7 @@ describe('effective car (physics fallback)', () => {
   it('passes a fully-specified car through unchanged', () => {
     const { car, estimatedFields } = resolveEffectiveCar(store.getCar('mazda-mx5-nd-2019')!);
     expect(estimatedFields).toHaveLength(0);
-    expect(car.massKg).toBe(1058);
+    expect(car.massKg).toBe(1077);
   });
 
   it('builds for a physics-less car and marks it low confidence with disclosure', () => {

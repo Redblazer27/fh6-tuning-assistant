@@ -12,3 +12,5 @@ package-lock.json
 web/
 context/
 RUN.txt
+
+packages/data/src/seed/game-database.json

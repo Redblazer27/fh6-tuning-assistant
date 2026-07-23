@@ -1,8 +1,33 @@
 import { piToClass, type UpgradeCategory } from '@fh6/shared';
 import { CATEGORY_PHYSICS } from './part-physics.ts';
 import { datasetSchema } from './schemas.ts';
-import type { Car, CarUpgradeProfile, Dataset, Part, Source, TuneRanges } from './types.ts';
+import type {
+  Car,
+  CarUpgradeProfile,
+  Dataset,
+  GameEngineUpgradeSpec,
+  Part,
+  PartOverride,
+  Source,
+  TuneRanges,
+} from './types.ts';
 
+const GAME_ENGINE_CATEGORIES = new Set<UpgradeCategory>([
+  'intake',
+  'intake_manifold',
+  'fuel_system',
+  'ignition',
+  'exhaust',
+  'camshaft',
+  'valves',
+  'displacement',
+  'pistons_compression',
+  'intercooler',
+  'oil_cooling',
+  'flywheel',
+  'forced_induction',
+  'restrictor_plate',
+]);
 /**
  * Validate a raw dataset (seed or imported) against the schemas AND referential
  * integrity rules. Throws with a clear message on any problem, so bad data is
@@ -117,12 +142,20 @@ export interface DataStore {
   getTuneRanges(carId: string): TuneRanges;
   /** Per-car upgrade profile, if one is defined for this car. */
   getUpgradeProfile(carId: string): CarUpgradeProfile | undefined;
+  /** Exact purchasable upgrades/effects for a game engine row. */
+  getGameEngineUpgradeSpecs(engineId: number): GameEngineUpgradeSpec[];
+  getGameEngineUpgradeSpec(engineId: number, partId: string): GameEngineUpgradeSpec | undefined;
+  getPartOverride(carId: string, partId: string): PartOverride | undefined;
   /**
    * Parts available in a category *for a specific car*, applying its upgrade
    * profile (locked categories, engine/drivetrain swap allowlists, blocklist).
    * Stock is always retained. Cars without a profile get the full catalog.
    */
-  getAvailablePartsByCategory(carId: string, category: UpgradeCategory): Part[];
+  getAvailablePartsByCategory(
+    carId: string,
+    category: UpgradeCategory,
+    gameEngineId?: number,
+  ): Part[];
 }
 
 export function createDataStore(dataset: Dataset): DataStore {
@@ -146,13 +179,36 @@ export function createDataStore(dataset: Dataset): DataStore {
     dataset.tuneRanges.filter((tr) => tr.appliesToCarId).map((tr) => [tr.appliesToCarId!, tr]),
   );
   const profilesByCar = new Map(dataset.carUpgradeProfiles.map((p) => [p.carId, p]));
+  const gamePartIdsByEngineCategory = new Map<string, Set<string>>();
+  const gameSpecByEnginePart = new Map<string, GameEngineUpgradeSpec>();
+  for (const [engineId, specs] of Object.entries(dataset.gameEngineUpgradeSpecs)) {
+    for (const spec of specs) {
+      gameSpecByEnginePart.set(`${engineId}:${spec.partId}`, spec);
+      const category = partsById.get(spec.partId)?.category;
+      if (!category) continue;
+      const key = `${engineId}:${category}`;
+      const ids = gamePartIdsByEngineCategory.get(key) ?? new Set<string>();
+      ids.add(spec.partId);
+      gamePartIdsByEngineCategory.set(key, ids);
+    }
+  }
+  const partOverrideByCarPart = new Map<string, PartOverride>();
+  for (const profile of dataset.carUpgradeProfiles) {
+    for (const override of profile.partOverrides) {
+      partOverrideByCarPart.set(`${profile.carId}:${override.partId}`, override);
+    }
+  }
 
   // Concrete swap engines (id prefix `eng-`) are opt-in: a car only gets them
   // when its profile explicitly allowlists them, never by default. This keeps a
   // car with no documented swaps from being offered all ~130 real engines.
   const isRealEngine = (p: Part) => p.category === 'engine_swap' && p.id.startsWith('eng-');
 
-  const getAvailablePartsByCategory = (carId: string, category: UpgradeCategory): Part[] => {
+  const getAvailablePartsByCategory = (
+    carId: string,
+    category: UpgradeCategory,
+    gameEngineId?: number,
+  ): Part[] => {
     const all = partsByCategory.get(category) ?? [];
     const profile = profilesByCar.get(carId);
 
@@ -179,6 +235,15 @@ export function createDataStore(dataset: Dataset): DataStore {
         list = list.filter((p) => !isRealEngine(p));
       }
     }
+    const exactAllowed = gameEngineId
+      ? gamePartIdsByEngineCategory.get(`${gameEngineId}:${category}`)
+      : profile.availablePartIdsByCategory !== undefined && GAME_ENGINE_CATEGORIES.has(category)
+        ? (profile.availablePartIdsByCategory[category] ?? [])
+        : undefined;
+    if (exactAllowed !== undefined) {
+      const allow = new Set(exactAllowed);
+      list = list.filter((p) => p.tierRank === 0 || allow.has(p.id));
+    }
     if (category === 'drivetrain_swap' && profile.availableDrivetrainSwapIds !== undefined) {
       const allow = new Set(profile.availableDrivetrainSwapIds);
       list = list.filter((p) => p.tierRank === 0 || allow.has(p.id));
@@ -201,6 +266,10 @@ export function createDataStore(dataset: Dataset): DataStore {
     getStockPart: (category) => (partsByCategory.get(category) ?? []).find((p) => p.tierRank === 0),
     getTuneRanges: (carId) => rangesByCar.get(carId) ?? defaultRanges,
     getUpgradeProfile: (carId) => profilesByCar.get(carId),
+    getGameEngineUpgradeSpec: (engineId, partId) =>
+      gameSpecByEnginePart.get(`${engineId}:${partId}`),
+    getPartOverride: (carId, partId) => partOverrideByCarPart.get(`${carId}:${partId}`),
+    getGameEngineUpgradeSpecs: (engineId) => dataset.gameEngineUpgradeSpecs[String(engineId)] ?? [],
     getAvailablePartsByCategory,
   };
 }

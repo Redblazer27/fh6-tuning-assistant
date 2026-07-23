@@ -11,25 +11,20 @@ import {
 describe('seed dataset', () => {
   it('loads and passes integrity checks', () => {
     expect(() => loadDataset(rawSeed)).not.toThrow();
-    // Curated set + the full official roster.
-    expect(defaultDataset.cars.length).toBeGreaterThanOrEqual(600);
+    expect(defaultDataset.cars).toHaveLength(651);
+    expect(defaultDataset.gameDatabaseBuild).toBe('Steam build 24241019');
   });
 
-  it('includes the official roster, most cars enriched with real physics', () => {
-    const roster = defaultDataset.cars.filter((c) => c.source === 'forza-official-cars');
-    expect(roster.length).toBeGreaterThanOrEqual(500);
-    // Most roster cars are enriched from the community wiki (real physics, medium).
-    const enriched = roster.filter((c) => c.drivetrain && c.massKg && c.powerHp);
-    expect(enriched.length).toBeGreaterThanOrEqual(400);
-    expect(enriched[0]!.confidence).toBe('medium');
+  it('loads all game cars with authoritative physics', () => {
+    const roster = defaultDataset.cars.filter((c) => c.source === 'fh6-game-files');
+    expect(roster).toHaveLength(651);
+    expect(roster.every((c) => c.gameId && c.drivetrain && c.massKg && c.powerHp)).toBe(true);
+    expect(roster.every((c) => c.confidence === 'high')).toBe(true);
   });
 
   it('has per-car FH6 upgrade profiles (engine swaps, drivetrain, rotary)', () => {
-    const profiles = defaultDataset.carUpgradeProfiles.filter(
-      (p) => p.source === 'fandom-fh6-cars',
-    );
-    expect(profiles.length).toBeGreaterThanOrEqual(300);
-    expect(profiles.some((p) => p.engineSwapOptions.length > 0)).toBe(true);
+    const profiles = defaultDataset.carUpgradeProfiles.filter((p) => p.source === 'fh6-game-files');
+    expect(profiles).toHaveLength(651);
     expect(profiles.some((p) => (p.availableDrivetrainSwapIds?.length ?? 0) > 0)).toBe(true);
     expect(profiles.some((p) => p.engineType === 'rotary')).toBe(true);
   });
@@ -76,6 +71,30 @@ describe('seed dataset', () => {
     expect(race?.unlocks).toContain('springs');
     expect(race?.unlocks).toContain('damping');
   });
+
+  it('retains complete game engine, motor, physics and per-car range catalogs', () => {
+    expect(defaultDataset.gameEngines).toHaveLength(660);
+    expect(defaultDataset.gameMotors).toHaveLength(19);
+    expect(defaultDataset.gamePhysicsSettings).toHaveLength(1390);
+    expect(Object.values(defaultDataset.gameEngineUpgradeSpecs).flat()).toHaveLength(14912);
+    expect(defaultDataset.tuneRanges.filter((range) => range.appliesToCarId !== null)).toHaveLength(
+      651,
+    );
+  });
+
+  it('models the RX-7 forced-induction tiers including anti-lag from game rows', () => {
+    const rx7 = defaultDataset.cars.find((car) => car.gameId === 4144)!;
+    expect(rx7).toBeDefined();
+    const profile = defaultStore.getUpgradeProfile(rx7.id)!;
+    expect(profile.engineType).toBe('rotary');
+    const forced = defaultStore
+      .getGameEngineUpgradeSpecs(profile.stockGameEngineId!)
+      .map((spec) => defaultStore.getPart(spec.partId)!)
+      .filter((part) => part.category === 'forced_induction');
+    expect(forced.some((part) => part.tier === 'sport')).toBe(true);
+    expect(forced.some((part) => part.tier === 'race')).toBe(true);
+    expect(forced.some((part) => part.tier === 'race_anti_lag')).toBe(true);
+  });
 });
 
 describe('data store', () => {
@@ -94,18 +113,19 @@ describe('data store', () => {
 });
 
 describe('per-car upgrade profiles', () => {
-  // Curated cars with no generated FH6 profile — safe to attach synthetic ones.
   const NO_PROFILE = 'ford-mustang-gt-2018';
   const LOCK_CAR = 'porsche-911-gt3-991-2018';
   const withProfile = (carId: string, profile: Record<string, unknown>) => {
     const raw = structuredClone(rawSeed);
-    raw.carUpgradeProfiles!.push({
+    const index = raw.carUpgradeProfiles!.findIndex((item) => item.carId === carId);
+    const current = raw.carUpgradeProfiles![index]!;
+    raw.carUpgradeProfiles![index] = {
+      ...current,
       source: 'community-tuning-consensus',
       confidence: 'low',
       dataVersion: raw.version.dataVersion,
-      carId,
       ...profile,
-    });
+    };
     return createDataStore(loadDataset(raw));
   };
 
@@ -121,16 +141,16 @@ describe('per-car upgrade profiles', () => {
     expect(dt.every((p) => p.tierRank === 0)).toBe(true);
   });
 
-  it('a car without a profile gets the full catalog except opt-in real engines', () => {
-    expect(defaultStore.getUpgradeProfile(NO_PROFILE)).toBeUndefined();
-    // Non-swap categories are identical to the global catalog (backward compatible).
-    const intakeAll = defaultStore.getPartsByCategory('intake');
+  it('uses the exact stock-engine menu for every game car', () => {
+    const profile = defaultStore.getUpgradeProfile(NO_PROFILE)!;
+    expect(profile.stockGameEngineId).toBeDefined();
     const intakeForCar = defaultStore.getAvailablePartsByCategory(NO_PROFILE, 'intake');
-    expect(intakeForCar).toEqual(intakeAll);
-    // Engine swaps: the generic swap is offered, but concrete real engines are opt-in only.
-    const swaps = defaultStore.getAvailablePartsByCategory(NO_PROFILE, 'engine_swap');
-    expect(swaps.some((p) => p.id === 'engine-swap-highperf')).toBe(true);
-    expect(swaps.some((p) => p.id.startsWith('eng-'))).toBe(false);
+    expect(
+      intakeForCar.every(
+        (part) =>
+          part.tierRank === 0 || profile.availablePartIdsByCategory?.intake?.includes(part.id),
+      ),
+    ).toBe(true);
   });
 
   it('a car whose profile allowlists real engines can use them (with real power)', () => {
@@ -138,7 +158,7 @@ describe('per-car upgrade profiles', () => {
       (p) => (p.availableEngineSwapIds?.length ?? 0) > 0,
     )!;
     const swaps = defaultStore.getAvailablePartsByCategory(profiled.carId, 'engine_swap');
-    const realEngines = swaps.filter((p) => p.id.startsWith('eng-'));
+    const realEngines = swaps.filter((p) => p.id.startsWith('game-engine-'));
     expect(realEngines.length).toBeGreaterThan(0);
     expect(realEngines.every((e) => (e.effects.setsPowerHp ?? 0) > 0)).toBe(true);
   });
@@ -168,19 +188,23 @@ describe('per-car upgrade profiles', () => {
   });
 
   it('restricts swaps to an allowlist, blocklists parts, and locks categories', () => {
+    const allowedSwap = defaultStore.getUpgradeProfile(NO_PROFILE)!.availableEngineSwapIds![0]!;
+    const blockedExhaust = defaultStore
+      .getAvailablePartsByCategory(NO_PROFILE, 'exhaust')
+      .find((part) => part.tierRank > 0)!.id;
     const store = withProfile(NO_PROFILE, {
-      availableEngineSwapIds: ['engine-swap-highperf'],
+      availableEngineSwapIds: [allowedSwap],
       lockedCategories: ['intake'],
-      restrictedPartIds: ['exhaust-race'],
+      restrictedPartIds: [blockedExhaust],
     });
     const swaps = store.getAvailablePartsByCategory(NO_PROFILE, 'engine_swap');
-    expect(swaps.map((p) => p.id).sort()).toEqual(['engine-swap-highperf', 'engine_swap-stock']);
+    expect(swaps.some((part) => part.id === allowedSwap)).toBe(true);
 
     const intake = store.getAvailablePartsByCategory(NO_PROFILE, 'intake');
     expect(intake.every((p) => p.tierRank === 0)).toBe(true);
 
     const exhaust = store.getAvailablePartsByCategory(NO_PROFILE, 'exhaust');
-    expect(exhaust.some((p) => p.id === 'exhaust-race')).toBe(false);
+    expect(exhaust.some((p) => p.id === blockedExhaust)).toBe(false);
     expect(exhaust.some((p) => p.tierRank === 0)).toBe(true);
   });
 });
@@ -205,23 +229,25 @@ describe('integrity failures', () => {
 
   it('throws when a profile references an unknown or wrong-category swap part', () => {
     const unknown = structuredClone(rawSeed);
-    unknown.carUpgradeProfiles!.push({
-      source: 'community-tuning-consensus',
-      confidence: 'low',
-      dataVersion: unknown.version.dataVersion,
-      carId: 'mazda-mx5-nd-2019',
+    const unknownIndex = unknown.carUpgradeProfiles!.findIndex(
+      (p) => p.carId === 'mazda-mx5-nd-2019',
+    );
+    const unknownCurrent = unknown.carUpgradeProfiles![unknownIndex]!;
+    unknown.carUpgradeProfiles![unknownIndex] = {
+      ...unknownCurrent,
       availableEngineSwapIds: ['not-a-real-part'],
-    });
+    };
     expect(() => loadDataset(unknown)).toThrow(/unknown part/);
 
     const wrongCat = structuredClone(rawSeed);
-    wrongCat.carUpgradeProfiles!.push({
-      source: 'community-tuning-consensus',
-      confidence: 'low',
-      dataVersion: wrongCat.version.dataVersion,
-      carId: 'mazda-mx5-nd-2019',
-      availableEngineSwapIds: ['intake-sport'], // exists, but wrong category
-    });
+    const wrongIndex = wrongCat.carUpgradeProfiles!.findIndex(
+      (p) => p.carId === 'mazda-mx5-nd-2019',
+    );
+    const wrongCurrent = wrongCat.carUpgradeProfiles![wrongIndex]!;
+    wrongCat.carUpgradeProfiles![wrongIndex] = {
+      ...wrongCurrent,
+      availableEngineSwapIds: ['susp-race'],
+    };
     expect(() => loadDataset(wrongCat)).toThrow(/not a engine_swap/);
   });
 

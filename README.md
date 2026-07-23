@@ -80,25 +80,27 @@ is used as a numerical authority.
 
 ## Scripts
 
-| Command                   | What it does                                                         |
-| ------------------------- | -------------------------------------------------------------------- |
-| `npm run dev`             | Start the web app (Vite dev server)                                  |
-| `npm run build`           | Build the web PWA to `apps/web/dist`                                 |
-| `npm run bridge`          | Run the telemetry bridge + local app server                          |
-| `npm test`                | Run the full Vitest suite                                            |
-| `npm run coverage`        | Tests with coverage                                                  |
-| `npm run lint`            | ESLint                                                               |
-| `npm run typecheck`       | TypeScript type check (no emit)                                      |
-| `npm run format`          | Prettier write                                                       |
-| `npm run check`           | format check + lint + typecheck + test                               |
-| `npm run package:release` | Build downloadable standalone bundles (used by the release workflow) |
+| Command                    | What it does                                                         |
+| -------------------------- | -------------------------------------------------------------------- |
+| `npm run dev`              | Start the web app (Vite dev server)                                  |
+| `npm run build`            | Build the web PWA to `apps/web/dist`                                 |
+| `npm run bridge`           | Run the telemetry bridge + local app server                          |
+| `npm test`                 | Run the full Vitest suite                                            |
+| `npm run coverage`         | Tests with coverage                                                  |
+| `npm run data:import-game` | Regenerate the authoritative seed from the sibling FH6 game database |
+| `npm run lint`             | ESLint                                                               |
+| `npm run typecheck`        | TypeScript type check (no emit)                                      |
+| `npm run format`           | Prettier write                                                       |
+| `npm run check`            | format check + lint + typecheck + test                               |
+| `npm run package:release`  | Build downloadable standalone bundles (used by the release workflow) |
 
 ## Data & accuracy
 
-FH6 is a live game; cars, parts, and PI change with updates and DLC. This project treats all of that as
-**versioned data**. Every record carries a **source** and a **confidence** level (`high` = official,
-`medium` = reputable community, `low` = inferred). Seed data is a small, clearly-labelled starter set;
-use the in-app **Admin / Import** tools to expand and correct it. See
+The bundled seed is generated from FH6 game files (Steam build `24241019`) and is the authoritative
+source for car physics, engines, swaps, upgrade compatibility/effects and tuning ranges. Community data
+only fills fields the game tables do not provide, such as ownership labels and wheelbase hints. Every
+record remains versioned and carries source/confidence metadata. See
+[`docs/game-database-integration.md`](docs/game-database-integration.md) and
 [`docs/data-policy.md`](docs/data-policy.md).
 
 ## Reporting in-game results

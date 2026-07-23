@@ -70,6 +70,7 @@ export const carStatsSchema = z.object({
   acceleration: z.number().min(0).max(10),
   launch: z.number().min(0).max(10),
   braking: z.number().min(0).max(10),
+  offroad: z.number().min(0).max(10).optional(),
 });
 
 export const carSchema = provenanceSchema.extend({
@@ -83,7 +84,7 @@ export const carSchema = provenanceSchema.extend({
   name: z.string().min(1),
   /** How the player obtains it: base game, or a DLC/car-pack name. */
   ownership: z.string().min(1),
-  isBaseGame: z.boolean(),
+  isBaseGame: z.boolean().nullable().optional(),
   stockClass: classLetterSchema,
   stockPI: z.number().int().min(100).max(999),
   // Physics fields are OPTIONAL: the official roster provides authoritative
@@ -108,6 +109,23 @@ export const carSchema = provenanceSchema.extend({
   redlineRpm: z.number().positive().optional(),
   powerPeakRpm: z.number().positive().optional(),
   stockTopSpeedKmh: z.number().positive().optional(),
+  /** Stable row id from the authoritative FH6 game database. */
+  gameId: z.number().int().positive().optional(),
+  variant: z.string().optional(),
+  bodyStyle: z.string().optional(),
+  enginePlacement: z.string().optional(),
+  numGears: z.number().int().positive().optional(),
+  baseCost: z.number().min(0).optional(),
+  frontTireWidthMm: z.number().positive().optional(),
+  rearTireWidthMm: z.number().positive().optional(),
+  frontRideHeightM: z.number().positive().optional(),
+  rearRideHeightM: z.number().positive().optional(),
+  gameBundle: z.string().optional(),
+  /** Exact stock engine row used to select game-file part compatibility. */
+  stockGameEngineId: z.number().int().positive().optional(),
+  stockGameMotorId: z.number().int().positive().optional(),
+  /** 0..1 linearity estimate derived from the stock full-throttle torque curve. */
+  powerDeliverySmoothness: z.number().min(0).max(1).optional(),
 });
 
 // --- Parts (upgrades you buy) -------------------------------------------------
@@ -130,6 +148,11 @@ export const partEffectsSchema = z.object({
   gripMultiplier: z.number().positive().optional(),
   brakingMultiplier: z.number().positive().optional(),
   launchMultiplier: z.number().positive().optional(),
+  setsRedlineRpm: z.number().positive().optional(),
+  setsPowerPeakRpm: z.number().positive().optional(),
+  setsPowerDeliverySmoothness: z.number().min(0).max(1).optional(),
+  weightDistFrontPctDelta: z.number().optional(),
+  setsTorqueNm: z.number().positive().optional(),
   /** Adjustable aero capability unlocked by this part. */
   aeroFront: aeroCapabilitySchema.optional(),
   aeroRear: aeroCapabilitySchema.optional(),
@@ -169,6 +192,8 @@ export const partSchema = provenanceSchema.extend({
    * power model respect each engine's real upgrade set.
    */
   engineUpgrades: z.record(upgradeCategorySchema, z.array(z.string().min(1))).optional(),
+  /** Exact game engine this swap or engine-specific upgrade belongs to. */
+  gameEngineId: z.number().int().positive().optional(),
 });
 
 // --- Per-car upgrade profile --------------------------------------------------
@@ -176,6 +201,18 @@ export const partSchema = provenanceSchema.extend({
 // cars, hypercars with locked upgrade paths, and cars with limited swap options
 // differ from the global catalog. Every field is optional/defaulted so that a car
 // WITHOUT a profile behaves exactly as before (full global catalog available).
+export const partOverrideSchema = z.object({
+  partId: z.string().min(1),
+  cost: z.number().min(0).optional(),
+  effects: partEffectsSchema.optional(),
+});
+
+export const gameEngineUpgradeSpecSchema = z.object({
+  partId: z.string().min(1),
+  level: z.number().int().min(0),
+  cost: z.number().min(0).default(0),
+  effects: partEffectsSchema.default({}),
+});
 export const carUpgradeProfileSchema = provenanceSchema.extend({
   /** The car this profile applies to. */
   carId: z.string().min(1),
@@ -193,6 +230,19 @@ export const carUpgradeProfileSchema = provenanceSchema.extend({
   lockedCategories: z.array(upgradeCategorySchema).default([]),
   /** Specific part ids this car cannot use (blocklist; stock is always allowed). */
   restrictedPartIds: z.array(z.string().min(1)).default([]),
+  stockGameEngineId: z.number().int().positive().optional(),
+  stockGameMotorId: z.number().int().positive().optional(),
+  /** Exact non-stock global part ids exposed by each game upgrade menu. */
+  availablePartIdsByCategory: z
+    .record(upgradeCategorySchema, z.array(z.string().min(1)))
+    .optional(),
+  /** Per-car prices/effects for chassis and drivetrain parts sharing global ids. */
+  partOverrides: z.array(partOverrideSchema).default([]),
+  /** Exact compatibility/effects keyed by active game engine id. */
+  engineUpgradeSpecs: z.record(z.string(), z.array(gameEngineUpgradeSpecSchema)).optional(),
+  /** Numeric drivetrain row used by exact drivetrain-option imports. */
+  stockGameDrivetrainId: z.number().int().min(0).optional(),
+  gameCarPartIds: z.array(z.string().min(1)).default([]),
   /**
    * Real FH6 conversion options for this car, by display name (from the community
    * wiki). Descriptive: they record what the game actually offers so the app can
@@ -257,4 +307,10 @@ export const datasetSchema = z.object({
   tuneRanges: z.array(tuneRangesSchema).min(1),
   /** Per-car upgrade profiles. Optional — cars without one use the full catalog. */
   carUpgradeProfiles: z.array(carUpgradeProfileSchema).default([]),
+  /** Authoritative game-file catalogs retained for engine-aware optimization. */
+  gameEngines: z.array(z.record(z.string(), z.unknown())).default([]),
+  gameMotors: z.array(z.record(z.string(), z.unknown())).default([]),
+  gamePhysicsSettings: z.array(z.record(z.string(), z.unknown())).default([]),
+  gameEngineUpgradeSpecs: z.record(z.string(), z.array(gameEngineUpgradeSpecSchema)).default({}),
+  gameDatabaseBuild: z.string().optional(),
 });

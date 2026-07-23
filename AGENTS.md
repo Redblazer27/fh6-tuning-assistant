@@ -16,7 +16,7 @@ things are the way they are, what was just done, and what's next.
 - **Never push to the remote without the user explicitly asking.** All work so far has
   been committed locally to `main` and left unpushed for the user to review.
 - Run `npm run check` (format:check + lint + typecheck + test) before considering any
-  change done. It must stay green — 95 tests as of this writing.
+  change done. It must stay green — 97 tests as of this writing.
 - Also run `npm run build` (web) after touching `apps/web` or shared types.
 - Don't add scope beyond what's asked. Several backlog items below were deliberately
   **not** "fixed" because the evidence said the existing behavior was already correct
@@ -237,7 +237,7 @@ platform gate (rotary)')`) against `1990-mazda-savanna-rx-7` (a curated rotary c
 plus a piston control car, to make sure the gate is engine-type-specific and doesn't
 accidentally block piston cars.
 
-## Active thread: forza.nerdyderg.com data (NOT YET INTEGRATED — likely next task)
+## Historical thread: forza.nerdyderg.com data (superseded by game files)
 
 The user found **https://forza.nerdyderg.com/** ("Nova's Autoshow", a fan-made,
 wiki-sourced, manually-curated FH6 car database) and asked for it to be scraped and
@@ -343,3 +343,13 @@ contradicts an existing high-confidence value.
   rule). They show up in every `git status`; leave them alone unless asked — they
   aren't source and aren't meant to be committed, but they're also not cleanup debt
   to worry about.
+
+### Current game-database layer (2026-07-23)
+
+The sibling `../FH6-Database` extracted from Steam build `24241019` is now the primary source. `scripts/import-game-database.mjs` generates a compact committed JSON seed and typed wrapper. The runtime contains all 651 game cars, 660 engines, 19 motors, 151 swaps, 14,912 non-stock engine options, 1,390 physics settings and per-car suspension range envelopes. Game values always win; community data only fills fields absent from game tables.
+
+Exact compatibility is dynamic by active engine. `DataStore.getAvailablePartsByCategory` accepts an optional game-engine id, while `resolvePartData` applies O(1)-indexed engine specs and per-car conversion overrides. Generated strategies return `buildSpec`’s sanitized selection so unsupported parts cannot leak out. For explicit swaps, candidate generation switches to that engine’s exact menu. `PowertrainId` maps directly: 0=FWD, 1–3/7=RWD, 4–6=AWD.
+
+The previous broad rotary gate is now fallback-only for non-game records. Game-backed rotaries follow their real rows: rotary camshafts exist, and FI tiers/anti-lag are exact. Read `docs/game-database-integration.md` before changing the importer or engine compatibility.
+
+Validation is green: Prettier, ESLint, TypeScript, 97 tests and production PWA build. The offline database makes the main JS approximately 4.82 MB uncompressed / 435 KB gzip; Workbox’s precache limit is intentionally 6 MiB.

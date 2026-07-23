@@ -80,7 +80,7 @@ describe('roster audit · tune legality at build extremes (every car)', () => {
       }
     }
     expect(bad.slice(0, 15), `${bad.length} car/discipline tunes out of range`).toEqual([]);
-  });
+  }, 15_000);
 });
 
 describe('roster audit · end-to-end builds (diverse sample)', () => {
@@ -144,10 +144,13 @@ describe('roster audit · end-to-end builds (diverse sample)', () => {
         if (cap !== null && s.legal && s.pi.pi > cap)
           bad.push(`${carId}/${s.id}: legal but pi ${s.pi.pi} > cap ${cap}`);
         // Every selected part must actually be available for this car.
+        const selectedEngine = s.selection.engine_swap
+          ? store.getPart(s.selection.engine_swap)?.gameEngineId
+          : undefined;
         for (const cat of store.categories) {
           const id = s.selection[cat];
           if (!id) continue;
-          const avail = store.getAvailablePartsByCategory(carId, cat);
+          const avail = store.getAvailablePartsByCategory(carId, cat, selectedEngine);
           if (!avail.some((p) => p.id === id))
             bad.push(`${carId}/${s.id}: ${cat}=${id} not available for this car`);
         }

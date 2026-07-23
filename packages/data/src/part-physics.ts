@@ -18,6 +18,10 @@ export const CATEGORY_PHYSICS: Record<UpgradeCategory, string> = {
     'Changes how the engine is fed air (naturally aspirated vs forced induction), the biggest lever on how much power it can make.',
   intake:
     'A freer-flowing intake feeds the engine more air, adding power across the rev range — more at higher tiers.',
+  intake_manifold:
+    'Improves airflow distribution into the engine; the game-file engine row supplies the exact power scalar.',
+  restrictor_plate:
+    'Changes the engine air restriction where that engine exposes a restrictor-plate upgrade.',
   fuel_system:
     'More fuel delivery matches the extra air from other upgrades, letting the engine safely make more power.',
   ignition:

@@ -151,7 +151,7 @@ function computeGearing(
   discipline: Discipline,
   rationale: TuneResult['rationale'],
 ): TuneSpec['gearing'] {
-  const redline = car.redlineRpm ?? 7000;
+  const redline = spec.redlineRpm;
   const r = DEFAULT_TIRE_RADIUS_M;
   const stockTop = car.stockTopSpeedKmh ?? 250;
   const vmax = stockTop * Math.cbrt(spec.powerHp / car.powerHp);

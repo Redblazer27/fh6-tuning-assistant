@@ -38,6 +38,10 @@ export interface BuiltSpec {
   massKg: number;
   weightDistFrontPct: number;
   powerHp: number;
+  torqueNm?: number;
+  redlineRpm: number;
+  powerPeakRpm: number;
+  powerDeliverySmoothness: number;
   /** hp per tonne. */
   powerToWeight: number;
   /** Dimensionless lateral grip index for the discipline's surface (stock street ≈ 1.0). */

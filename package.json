@@ -18,6 +18,7 @@
     "bridge": "npm run start -w @fh6/bridge",
     "capture": "npm run build && npm run build -w @fh6/bridge && node apps/bridge/dist/fh6-bridge.cjs --web apps/web/dist",
     "package:release": "node scripts/package-release.mjs",
+    "data:import-game": "node --experimental-strip-types scripts/import-game-database.mjs",
     "preview": "npm run preview -w @fh6/web",
     "test": "vitest run",
     "test:watch": "vitest",
