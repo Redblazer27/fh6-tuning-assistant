@@ -15,6 +15,11 @@ interface Props {
 
 export function StrategyDetail({ car, strategy, store, locks, onSetLock, onRemoveLock }: Props) {
   const upgrades = strategy.parts.filter((p) => p.isUpgrade);
+  const profile = store.getUpgradeProfile(car.id);
+  const selectedEngine = strategy.selection.engine_swap
+    ? store.getPart(strategy.selection.engine_swap)
+    : undefined;
+  const activeGameEngineId = selectedEngine?.gameEngineId ?? profile?.stockGameEngineId;
 
   return (
     <div className="stack">
@@ -41,10 +46,11 @@ export function StrategyDetail({ car, strategy, store, locks, onSetLock, onRemov
                 const selectedId = strategy.selection[category];
                 // Car-aware list: a car's profile may lock a category or restrict
                 // parts, so this can be a subset of the global catalog.
-                const options = store.getAvailablePartsByCategory(car.id, category);
+                const options = store.getAvailablePartsByCategory(car.id, category, activeGameEngineId);
                 const canUpgrade = options.some((o) => o.tierRank > 0);
                 const locked = category in locks;
                 const part = selectedId ? store.getPart(selectedId) : undefined;
+                const partLine = strategy.parts.find((line) => line.category === category);
                 const isUpgrade = (part?.tierRank ?? 0) > 0;
                 // The real body-kit names this car offers (we model them as one
                 // generic Widebody part, but show the actual kits from the wiki).
@@ -96,7 +102,7 @@ export function StrategyDetail({ car, strategy, store, locks, onSetLock, onRemov
                         </span>
                       )}
                     </td>
-                    <td className="num">{part?.cost ? credits(part.cost) : '—'}</td>
+                    <td className="num">{partLine?.cost ? credits(partLine.cost) : '—'}</td>
                     <td className="dim" style={{ fontSize: '0.78rem' }}>
                       {part?.unlocks.length ? part.unlocks.join(', ') : ''}
                     </td>

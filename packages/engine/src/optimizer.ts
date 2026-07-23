@@ -120,15 +120,47 @@ function candidatesFor(
     list = list.filter((p) => !p.cosmeticVisible || p.tierRank === 0);
   }
 
-  if (category === 'differential' && request.discipline === 'drift') {
-    const rally = list.find((part) => part.tier === 'rally');
-    if (rally) list = [rally];
+  const driftRequiredTier: Partial<Record<UpgradeCategory, string>> = {
+    brakes: 'race',
+    springs_dampers: 'drift',
+    front_arb: 'race',
+    rear_arb: 'race',
+    transmission: 'race',
+    driveline: 'race',
+    differential: 'rally',
+    tire_compound: 'street',
+  };
+  let driftChoiceForced = false;
+  if (request.discipline === 'drift') {
+    const driftStockCategories = new Set<UpgradeCategory>([
+      'flywheel',
+      'chassis_reinforcement',
+      'front_aero',
+      'rear_aero',
+      'body_kit',
+    ]);
+    if (driftStockCategories.has(category) && stock) {
+      // Avoid drift-harmful flywheel, chassis, aero, and visible body-kit upgrades.
+      list = [stock];
+      driftChoiceForced = true;
+    } else {
+      const requiredTier = driftRequiredTier[category];
+      const required = requiredTier ? list.find((part) => part.tier === requiredTier) : undefined;
+      if (required) {
+        list = [required];
+        driftChoiceForced = true;
+      } else if (category === 'tire_compound' && stock) {
+        // If Street is unavailable, stock is the nearest low-grip drift compound.
+        list = [stock];
+        driftChoiceForced = true;
+      }
+    }
   }
   const forcedChoice =
     locked !== undefined ||
     (category === 'engine_swap' && Boolean(c.preferredEngineSwapId)) ||
     (category === 'drivetrain_swap' && Boolean(c.preferredDrivetrain)) ||
-    (category === 'differential' && request.discipline === 'drift');
+    driftChoiceForced;
   if (stock && !forcedChoice && !list.some((p) => p.tierRank === 0)) list.push(stock);
   return list.length ? list : onlyStock();
 }
@@ -137,6 +169,7 @@ function candidatesFor(
 interface Agg {
   powerMult: number;
   powerDelta: number;
+  powerScaleDelta: number;
   basePowerHp: number;
   maxPowerHp: number | null;
   maxEngineMult: number;
@@ -170,6 +203,7 @@ const initAgg = (store: DataStore, car: ResolvedCar, baseEngineType: EngineType)
   carId: car.id,
   powerMult: 1,
   powerDelta: 0,
+  powerScaleDelta: 0,
   basePowerHp: car.powerHp,
   maxPowerHp: null,
   maxEngineMult: 1,
@@ -253,6 +287,13 @@ function applyPart(
       baseEngineAllows(agg.baseEngineType, agg.engineUpgrades !== undefined, part))
   )
     agg.powerMult *= e.powerMultiplier;
+  if (
+    e.powerScaleDelta &&
+    engineSupports(agg, part) &&
+    (agg.hasExactEngineData ||
+      baseEngineAllows(agg.baseEngineType, agg.engineUpgrades !== undefined, part))
+  )
+    agg.powerScaleDelta += e.powerScaleDelta;
   if (e.powerHpDelta) agg.powerDelta += e.powerHpDelta;
   if (e.massMultiplier) agg.massMult *= e.massMultiplier;
   if (e.massKgDelta) agg.massDelta += e.massKgDelta;
@@ -281,12 +322,12 @@ const EMPTY_UNLOCKS = new Set<never>();
 /** Derive a scorable BuiltSpec from aggregates (mirrors buildSpec's tail exactly). */
 function deriveFromAgg(car: ResolvedCar, agg: Agg, surface: Surface): BuiltSpec {
   let powerHp: number;
-  if (agg.maxPowerHp !== null && agg.maxPowerHp > agg.basePowerHp) {
+  if (!agg.hasExactEngineData && agg.maxPowerHp !== null && agg.maxPowerHp > agg.basePowerHp) {
     const progress =
       agg.maxEngineMult > 1 ? clamp((agg.powerMult - 1) / (agg.maxEngineMult - 1), 0, 1) : 0;
     powerHp = agg.basePowerHp + (agg.maxPowerHp - agg.basePowerHp) * progress + agg.powerDelta;
   } else {
-    powerHp = agg.basePowerHp * agg.powerMult + agg.powerDelta;
+    powerHp = agg.basePowerHp * agg.powerMult * (1 + agg.powerScaleDelta) + agg.powerDelta;
   }
   const massKg = car.massKg * agg.massMult + agg.massDelta;
   return {

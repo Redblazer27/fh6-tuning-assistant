@@ -26,7 +26,7 @@ things are the way they are, what was just done, and what's next.
   change. Look at `git log` for the exact style.
 - This is a solo project (one user, `Redblazer27`), git history is linear on `main`.
 
-## Where things stand (as of 2026-07-23, commit `cf3cebf`)
+## Where things stand (as of 2026-07-23, commit `ea22e2a`)
 
 Recent commits, newest first:
 
@@ -353,3 +353,7 @@ Exact compatibility is dynamic by active engine. `DataStore.getAvailablePartsByC
 The previous broad rotary gate is now fallback-only for non-game records. Game-backed rotaries follow their real rows: rotary camshafts exist, and FI tiers/anti-lag are exact. Read `docs/game-database-integration.md` before changing the importer or engine compatibility.
 
 Validation is green: Prettier, ESLint, TypeScript, 97 tests and production PWA build. The offline database makes the main JS approximately 4.82 MB uncompressed / 435 KB gzip; Workbox’s precache limit is intentionally 6 MiB.
+
+## Active uncommitted work: first real RX-7 telemetry calibration
+
+The user supplied a 5,968-frame 1992 RX-7 drift session plus screenshots and measured final specs (331 kW, 468 Nm, 1,126 kg, 50% front, A class). The current working tree fixes the issues exposed by it: exact additive engine-scalar composition, per-car platform masses/prices/compatibility, N/mm spring display, true limiter RPM, substantially taller drift gearing, actual PI capture, and limiter/tire-temperature diagnosis. The exact build now predicts 327.95 kW / 1,133.2 kg / A 692. See the latest section of `PROGRESS.md` and regression tests in `packages/engine/test/engine-core.test.ts`. Do not push without explicit permission.

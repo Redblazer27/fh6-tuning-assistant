@@ -66,6 +66,18 @@ describe('telemetry diagnosis (closing the loop)', () => {
     expect(road.findings.some((f) => f.symptomId === 'oversteer-exit')).toBe(true);
   });
 
+  it('flags limiter time and overheated rear tires for drift', () => {
+    const d = diagnoseTelemetry(
+      summary({
+        understeerIndex: -1.5,
+        nearLimiterPct: 24,
+        meanTireTempC: [160, 165, 225, 230],
+      }),
+      'drift',
+    );
+    expect(d.notes.join(' ')).toMatch(/near the limiter/i);
+    expect(d.notes.join(' ')).toMatch(/overheating the rear tires/i);
+  });
   it('flags understeer for a drift car that pushes at the front', () => {
     const d = diagnoseTelemetry(summary({ understeerIndex: 0.2 }), 'drift');
     expect(d.findings.some((f) => f.symptomId === 'understeer-entry')).toBe(true);

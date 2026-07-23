@@ -207,19 +207,31 @@ function computeGearing(
 
   let finalDrive: number;
   if (discipline === 'drift') {
-    // Don't target a top speed. Raise the final drive so 3rd/4th (the drift gears)
-    // sit high in the powerband at corner speeds and never bounce off the limiter
-    // mid-slide. Anchor 4th gear's redline speed to a moderate drift speed that
-    // scales gently with power; a low-power, high-revving car therefore gets a
-    // shorter overall gearing (fixing the old "rev-limiter at ~109 km/h" build).
-    const vDrift4 = clamp(115 + (spec.powerHp - 300) * 0.03, 105, 150); // km/h at redline in 4th
-    const gear4 = gears[3] ?? gears[gears.length - 1]!;
-    const wheelRpm4 = ((vDrift4 / 3.6 / r) * 60) / (2 * Math.PI);
-    finalDrive = snapRange(ranges.finalDrive, redline / (wheelRpm4 * gear4));
+    // Real drift telemetry needs wheel-speed reserve: driven-wheel slip makes the
+    // engine reach redline before road speed catches the no-slip calculation.
+    const targetThirdKmh = clamp(145 + (spec.powerHp - 450) * 0.04, 135, 160);
+    finalDrive = snapRange(ranges.finalDrive, clamp(4.1 - (spec.powerHp - 450) * 0.001, 3.8, 4.3));
+    const ratioFor = (speedKmh: number): number =>
+      snapRange(
+        ranges.gearRatio,
+        (redline * 2 * Math.PI * r * 60) / (finalDrive * speedKmh * 1000),
+      );
+    const gear3 = ratioFor(targetThirdKmh);
+    const gear4 = ratioFor(targetThirdKmh * 1.28);
+    gears.splice(
+      0,
+      gears.length,
+      snapRange(ranges.gearRatio, 3.0),
+      snapRange(ranges.gearRatio, Math.max(2.15, gear3 * 1.3)),
+      gear3,
+      gear4,
+      snapRange(ranges.gearRatio, gear4 * 0.8),
+      snapRange(ranges.gearRatio, gear4 * 0.64),
+    );
     rationale.gearing =
-      'Drift: final drive raised so 3rd and 4th are the drift gears — high in the powerband at corner ' +
-      'speed, no rev-limiter bounce mid-slide. 1st/2nd short, 5th/6th just cruise. If 4th bogs at low ' +
-      'speed, shorten it (or raise the final drive) a touch.';
+      'Drift: 3rd and 4th include wheelspin reserve, so the engine stays in its powerband without ' +
+      'running out of gear mid-slide. 1st/2nd handle initiation; 5th/6th remain cruising gears. ' +
+      'Shorten one drift gear only if it falls below the useful powerband.';
   } else {
     // Final drive so redline in top gear lands at the target top speed.
     const vTarget = targetTop / 3.6; // m/s

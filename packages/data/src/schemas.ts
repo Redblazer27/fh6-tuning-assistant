@@ -137,6 +137,11 @@ export const aeroCapabilitySchema = z.object({
 
 export const partEffectsSchema = z.object({
   powerMultiplier: z.number().positive().optional(),
+  /**
+   * Additive engine torque/power scale relative to stock. FH6 combines the
+   * non-cam engine upgrade scalars additively around the selected torque curve.
+   */
+  powerScaleDelta: z.number().optional(),
   powerHpDelta: z.number().optional(),
   /** Absolute base power (hp) an engine swap installs, replacing the stock engine's. */
   setsPowerHp: z.number().positive().optional(),
@@ -242,6 +247,8 @@ export const carUpgradeProfileSchema = provenanceSchema.extend({
   engineUpgradeSpecs: z.record(z.string(), z.array(gameEngineUpgradeSpecSchema)).optional(),
   /** Numeric drivetrain row used by exact drivetrain-option imports. */
   stockGameDrivetrainId: z.number().int().min(0).optional(),
+  /** Numeric stock body row used by exact body-dependent upgrade imports. */
+  stockGameBodyId: z.number().int().min(0).optional(),
   gameCarPartIds: z.array(z.string().min(1)).default([]),
   /**
    * Real FH6 conversion options for this car, by display name (from the community

@@ -35,6 +35,10 @@ export interface TelemetryFrame {
   /** FH6-specific fields. */
   carGroup?: number;
   carOrdinal?: number;
+  carClass?: number;
+  carPerformanceIndex?: number;
+  drivetrainType?: number;
+  numCylinders?: number;
 }
 
 export interface TelemetrySummary {
@@ -42,6 +46,14 @@ export interface TelemetrySummary {
   durationSec: number;
   topSpeedKmh: number;
   maxRpm: number;
+  /** EngineMaxRpm reported by the game, distinct from highest RPM observed. */
+  engineMaxRpm?: number;
+  /** Actual in-game class code and PI carried in the FH6 packet. */
+  carClass?: number;
+  carPerformanceIndex?: number;
+  /** Share of moving frames at or above 90% of the reported engine maximum. */
+  nearLimiterPct?: number;
+  meanTireTempC?: Wheels;
   /** Mean absolute combined slip per wheel (grip usage signature). */
   meanCombinedSlip: Wheels;
   /** Mean absolute front vs rear slip angle — >0 front means understeer tendency. */
@@ -71,6 +83,12 @@ export function summarizeTelemetry(frames: TelemetryFrame[]): TelemetrySummary {
   let maxRpm = 0;
   const slipSum: Wheels = [0, 0, 0, 0];
   const travelSum: Wheels = [0, 0, 0, 0];
+  let engineMaxRpm = 0;
+  let carClass: number | undefined;
+  let carPerformanceIndex: number | undefined;
+  let activeFrames = 0;
+  let nearLimiterFrames = 0;
+  const tempSum: Wheels = [0, 0, 0, 0];
   let frontAngle = 0;
   let rearAngle = 0;
 
@@ -80,6 +98,18 @@ export function summarizeTelemetry(frames: TelemetryFrame[]): TelemetrySummary {
     slipSum[0] += Math.abs(f.combinedSlip[0]);
     slipSum[1] += Math.abs(f.combinedSlip[1]);
     slipSum[2] += Math.abs(f.combinedSlip[2]);
+    engineMaxRpm = Math.max(engineMaxRpm, f.maxRpm);
+    if (f.carClass !== undefined) carClass = f.carClass;
+    if (f.carPerformanceIndex !== undefined && f.carPerformanceIndex > 0)
+      carPerformanceIndex = f.carPerformanceIndex;
+    if (f.speedKmh > 5 && f.maxRpm > 0) {
+      activeFrames += 1;
+      if (f.rpm >= f.maxRpm * 0.9) nearLimiterFrames += 1;
+    }
+    tempSum[0] += f.tireTempC[0];
+    tempSum[1] += f.tireTempC[1];
+    tempSum[2] += f.tireTempC[2];
+    tempSum[3] += f.tireTempC[3];
     slipSum[3] += Math.abs(f.combinedSlip[3]);
     travelSum[0] += f.suspensionTravel[0];
     travelSum[1] += f.suspensionTravel[1];
@@ -100,6 +130,11 @@ export function summarizeTelemetry(frames: TelemetryFrame[]): TelemetrySummary {
     maxRpm,
     meanCombinedSlip: mean(slipSum),
     understeerIndex: (frontAngle - rearAngle) / n,
+    engineMaxRpm,
+    carClass,
+    carPerformanceIndex,
+    nearLimiterPct: activeFrames > 0 ? (nearLimiterFrames / activeFrames) * 100 : 0,
+    meanTireTempC: mean(tempSum),
     meanSuspensionTravel: mean(travelSum),
   };
 }

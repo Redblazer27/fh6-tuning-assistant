@@ -91,6 +91,20 @@ export function diagnoseTelemetry(
         `Drift session: the rear leads the slide (balance index ${ui.toFixed(2)}) and averages ${rearSlip.toFixed(1)} slip vs ${frontSlip.toFixed(1)} front — that's the goal. Judge it on holding and transitioning angle; if the rear snaps or spins uncontrollably, reduce differential accel lock and soften the rear.`,
       );
     }
+    if ((summary.nearLimiterPct ?? 0) >= 10) {
+      notes.push(
+        `${summary.nearLimiterPct!.toFixed(1)}% of moving frames were near the limiter — lengthen the active drift gears before changing handling settings.`,
+      );
+    }
+    if (summary.meanTireTempC) {
+      const frontTemp = (summary.meanTireTempC[0] + summary.meanTireTempC[1]) / 2;
+      const rearTemp = (summary.meanTireTempC[2] + summary.meanTireTempC[3]) / 2;
+      if (rearTemp >= 160 || rearTemp - frontTemp >= 40) {
+        notes.push(
+          `Rear tires averaged ${rearTemp.toFixed(0)}°C vs ${frontTemp.toFixed(0)}°C front — sustained wheelspin is overheating the rear tires; use a longer gear and smoother throttle before removing rear grip.`,
+        );
+      }
+    }
     return { findings, notes };
   }
 

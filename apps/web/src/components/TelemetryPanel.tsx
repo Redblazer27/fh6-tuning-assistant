@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
+  piToClass,
   summarizeTelemetry,
   type Discipline,
   type TelemetryFrame,
@@ -93,6 +94,12 @@ export function TelemetryPanel({
         frames: summary.frames,
         durationSec: Number(summary.durationSec.toFixed(1)),
         topSpeedKmh: Number(summary.topSpeedKmh.toFixed(1)),
+        ...(summary.carPerformanceIndex !== undefined
+          ? { actualPI: summary.carPerformanceIndex }
+          : {}),
+        ...(summary.nearLimiterPct !== undefined
+          ? { nearLimiterPct: Number(summary.nearLimiterPct.toFixed(1)) }
+          : {}),
         understeerIndex: Number(summary.understeerIndex.toFixed(3)),
         meanSlipFL: Number(summary.meanCombinedSlip[0].toFixed(3)),
         meanSlipFR: Number(summary.meanCombinedSlip[1].toFixed(3)),
@@ -174,6 +181,12 @@ export function TelemetryPanel({
             <Metric k="Throttle" v={`${Math.round((frame.accel / 255) * 100)}%`} />
             <Metric k="Brake" v={`${Math.round((frame.brake / 255) * 100)}%`} />
             <Metric k="Power" v={`${fmt(frame.powerKw, 0)} kW`} />
+            {frame.carPerformanceIndex !== undefined && (
+              <Metric
+                k="Actual class / PI"
+                v={`${piToClass(frame.carPerformanceIndex)} ${frame.carPerformanceIndex}`}
+              />
+            )}
           </div>
           <h3 style={{ marginTop: 12 }}>Tire combined slip</h3>
           <div className="telemetry-grid">

@@ -204,6 +204,159 @@ const tableDefinitions = [
 ];
 const tableData = new Map();
 for (const [table] of tableDefinitions) tableData.set(table, await readGame(table));
+const platformTableNames = [
+  'List_UpgradeBrakes',
+  'List_UpgradeSpringDamper',
+  'List_UpgradeAntiSwayFront',
+  'List_UpgradeAntiSwayRear',
+  'List_UpgradeCarBody',
+  'List_UpgradeCarBodyWeight',
+  'List_UpgradeCarBodyChassisStiffness',
+  'List_UpgradeCarBodyTireWidthFront',
+  'List_UpgradeCarBodyTireWidthRear',
+  'List_UpgradeDrivetrainClutch',
+  'List_UpgradeDrivetrainTransmission',
+  'List_UpgradeDrivetrainDriveline',
+  'List_UpgradeDrivetrainDifferential',
+  'List_UpgradeTireCompound',
+  'List_UpgradeRimSizeFront',
+  'List_UpgradeRimSizeRear',
+];
+const platformTableData = new Map();
+for (const table of platformTableNames) platformTableData.set(table, await readGame(table));
+
+const stockBodyIdByCar = new Map(
+  platformTableData
+    .get('List_UpgradeCarBody')
+    .filter((row) => row.IsStock)
+    .map((row) => [row.Ordinal, row.CarBodyID]),
+);
+const stockDrivetrainIdByCar = new Map(
+  drivetrainConversions.filter((row) => row.IsStock).map((row) => [row.Ordinal, row.DrivetrainID]),
+);
+
+const platformMappings = [
+  [
+    'List_UpgradeBrakes',
+    'ordinal',
+    'brakes',
+    { 1: 'brakes-street', 2: 'brakes-sport', 3: 'brakes-race' },
+  ],
+  [
+    'List_UpgradeSpringDamper',
+    'ordinal',
+    'springs_dampers',
+    { 2: 'susp-sport', 3: 'susp-race', 4: 'susp-rally', 5: 'susp-drift' },
+  ],
+  ['List_UpgradeAntiSwayFront', 'ordinal', 'front_arb', { 3: 'arb-front-race' }],
+  ['List_UpgradeAntiSwayRear', 'ordinal', 'rear_arb', { 3: 'arb-rear-race' }],
+  [
+    'List_UpgradeCarBodyChassisStiffness',
+    'body',
+    'chassis_reinforcement',
+    { 1: 'chassis-street', 2: 'chassis-sport', 3: 'chassis-race' },
+  ],
+  [
+    'List_UpgradeCarBodyWeight',
+    'body',
+    'weight_reduction',
+    { 1: 'weight-street', 2: 'weight-sport', 3: 'weight-race' },
+  ],
+  [
+    'List_UpgradeCarBodyTireWidthFront',
+    'body',
+    'front_tire_width',
+    { 1: 'front-width-1', 2: 'front-width-2' },
+  ],
+  [
+    'List_UpgradeCarBodyTireWidthRear',
+    'body',
+    'rear_tire_width',
+    { 1: 'rear-width-1', 2: 'rear-width-2' },
+  ],
+  ['List_UpgradeDrivetrainClutch', 'drivetrain', 'clutch', { 2: 'clutch-sport', 3: 'clutch-race' }],
+  [
+    'List_UpgradeDrivetrainTransmission',
+    'drivetrain',
+    'transmission',
+    { 2: 'trans-sport', 3: 'trans-race' },
+  ],
+  [
+    'List_UpgradeDrivetrainDriveline',
+    'drivetrain',
+    'driveline',
+    { 2: 'driveline-sport', 3: 'driveline-race' },
+  ],
+  [
+    'List_UpgradeDrivetrainDifferential',
+    'drivetrain',
+    'differential',
+    { 2: 'diff-sport', 3: 'diff-race', 5: 'diff-rally', 6: 'diff-drift', 7: 'diff-offroad' },
+  ],
+  [
+    'List_UpgradeTireCompound',
+    'ordinal',
+    'tire_compound',
+    {
+      1: 'tire-street',
+      2: 'tire-sport',
+      3: 'tire-semi-slick',
+      5: 'tire-rally',
+      6: 'tire-slick',
+      7: 'tire-offroad',
+      8: 'tire-snow',
+      9: 'tire-drag',
+      15: 'tire-drift',
+    },
+  ],
+];
+
+const exactPlatformData = (carId) => {
+  const bodyId = stockBodyIdByCar.get(carId);
+  const drivetrainId = stockDrivetrainIdByCar.get(carId);
+  const availableByCategory = {};
+  const overrides = [];
+  const seen = new Set();
+  const add = (category, partId, row, extraEffects = {}) => {
+    if (!partId || seen.has(partId)) return;
+    seen.add(partId);
+    availableByCategory[category] ??= [];
+    availableByCategory[category].push(partId);
+    const effects = { ...extraEffects };
+    if (Number.isFinite(row.MassDiff) && row.MassDiff !== 0)
+      effects.massKgDelta = round(row.MassDiff, 6);
+    overrides.push({ partId, cost: row.Price ?? 0, effects });
+  };
+  for (const [table, scope, category, levelMap] of platformMappings) {
+    const rows = platformTableData.get(table).filter((row) => {
+      if (row.IsStock) return false;
+      if (scope === 'ordinal') return row.Ordinal === carId;
+      if (scope === 'body') return (row.CarBodyId ?? row.CarbodyId ?? row.CarBodyID) === bodyId;
+      return (row.DrivetrainID ?? row.DrivetrainId) === drivetrainId;
+    });
+    for (const row of rows) {
+      const partId = levelMap[row.Level];
+      if (category === 'weight_reduction' && partId) {
+        add(category, partId, row, {
+          massMultiplier: 1,
+          massKgDelta: round(row.Mass - row.InitialMass, 6),
+        });
+      } else {
+        add(category, partId, row);
+      }
+    }
+  }
+  const rimRows = ['List_UpgradeRimSizeFront', 'List_UpgradeRimSizeRear']
+    .flatMap((table) => platformTableData.get(table))
+    .filter((row) => row.Ordinal === carId && !row.IsStock && row.Level === 1);
+  if (rimRows.length === 2) {
+    add('rim_size', 'rim-size-up', {
+      Price: rimRows.reduce((sum, row) => sum + (row.Price ?? 0), 0),
+      MassDiff: rimRows.reduce((sum, row) => sum + (row.MassDiff ?? 0), 0),
+    });
+  }
+  return { bodyId, drivetrainId, availableByCategory, overrides };
+};
 
 const stockCamByEngine = new Map(
   tableData
@@ -219,7 +372,7 @@ for (const engine of engines) {
   engineBaseStats.set(engine.id, {
     powerHp: stockCar ? round((stockCar.SimPeakPower * 0.1) / 0.745699872, 2) : curve.powerHp,
     torqueNm: stockCar ? round(stockCar.SimPeakTorque * 100, 2) : curve.torqueNm,
-    redlineRpm: stockCam?.RedlineRPM ?? engine.redline,
+    redlineRpm: stockCam?.TorqueCurveMaxRPM ?? stockCam?.RedlineRPM ?? engine.redline,
     powerPeakRpm: stockCar ? round(stockCar.SimPeakAngVel * 9.549296596, 0) : curve.powerPeakRpm,
     smoothness: curve.smoothness,
   });
@@ -267,7 +420,7 @@ for (const [table, category, forcedAspiration] of tableDefinitions) {
     const scalar = row.TorqueScale ?? row.MaxScaleScale;
     const stockScalar = stock?.TorqueScale ?? stock?.MaxScaleScale ?? 1;
     if (Number.isFinite(scalar) && scalar > 0)
-      effects.powerMultiplier = round(scalar / stockScalar, 6);
+      effects.powerScaleDelta = round(scalar / stockScalar - 1, 6);
     if (category === 'forced_induction' && Number.isFinite(row.MaxScale)) {
       const allStockForced = tableDefinitions
         .filter((definition) => definition[1] === 'forced_induction')
@@ -282,7 +435,8 @@ for (const [table, category, forcedAspiration] of tableDefinitions) {
         : engineBaseStats.get(row.EngineID);
       if (candidate.powerHp && baseline?.powerHp)
         effects.powerMultiplier = round(candidate.powerHp / baseline.powerHp, 6);
-      if (row.RedlineRPM) effects.setsRedlineRpm = row.RedlineRPM;
+      if (row.TorqueCurveMaxRPM ?? row.RedlineRPM)
+        effects.setsRedlineRpm = row.TorqueCurveMaxRPM ?? row.RedlineRPM;
       if (candidate.powerPeakRpm) effects.setsPowerPeakRpm = candidate.powerPeakRpm;
       if (candidate.smoothness !== undefined)
         effects.setsPowerDeliverySmoothness = candidate.smoothness;
@@ -297,16 +451,24 @@ const maxPowerByEngine = new Map();
 for (const engine of engines) {
   const base = engineBaseStats.get(engine.id)?.powerHp;
   if (!base) continue;
-  const bestByCategory = new Map();
+  const bestMultiplierByCategory = new Map();
+  const bestScaleDeltaByCategory = new Map();
   for (const spec of specsByEngine.get(engine.id) ?? []) {
     const category = genericPartsById.get(spec.partId)?.category;
     if (!category) continue;
-    const multiplier = spec.effects.powerMultiplier ?? 1;
-    bestByCategory.set(category, Math.max(bestByCategory.get(category) ?? 1, multiplier));
+    bestMultiplierByCategory.set(
+      category,
+      Math.max(bestMultiplierByCategory.get(category) ?? 1, spec.effects.powerMultiplier ?? 1),
+    );
+    bestScaleDeltaByCategory.set(
+      category,
+      Math.max(bestScaleDeltaByCategory.get(category) ?? 0, spec.effects.powerScaleDelta ?? 0),
+    );
   }
   let multiplier = 1;
-  for (const value of bestByCategory.values()) multiplier *= value;
-  maxPowerByEngine.set(engine.id, round(base * multiplier, 2));
+  for (const value of bestMultiplierByCategory.values()) multiplier *= value;
+  const scaleDelta = [...bestScaleDeltaByCategory.values()].reduce((sum, value) => sum + value, 0);
+  maxPowerByEngine.set(engine.id, round(base * multiplier * (1 + scaleDelta), 2));
 }
 
 const swapEngineIds = new Set(
@@ -475,6 +637,13 @@ for (const gameCar of cars) {
         availableByCategory[category].push(spec.partId);
     }
   }
+  const platform = exactPlatformData(gameCar.id);
+  for (const [category, partIds] of Object.entries(platform.availableByCategory)) {
+    availableByCategory[category] ??= [];
+    for (const partId of partIds)
+      if (!availableByCategory[category].includes(partId))
+        availableByCategory[category].push(partId);
+  }
   const engineType =
     motorId && !engineId
       ? 'electric'
@@ -488,6 +657,8 @@ for (const gameCar of cars) {
     engineType,
     stockGameEngineId: engineId,
     stockGameMotorId: motorId,
+    stockGameBodyId: platform.bodyId,
+    stockGameDrivetrainId: platform.drivetrainId,
     availableEngineSwapIds: engineLinks.map((link) => `game-engine-${link.engine_id}`),
     availableDrivetrainSwapIds: driveLinks.map((row) => `game-drivetrain-${row.PowertrainId}`),
     availablePartIdsByCategory: availableByCategory,
@@ -502,6 +673,7 @@ for (const gameCar of cars) {
         cost: row.Price,
         effects: { massKgDelta: row.MassDiff, weightDistFrontPctDelta: row.WeightDistDiff * 100 },
       })),
+      ...platform.overrides,
     ],
     source: 'fh6-game-files',
     confidence: 'high',

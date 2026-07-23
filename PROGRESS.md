@@ -105,3 +105,14 @@ Last updated: 2026-07-21
 - Verification: format, ESLint, TypeScript and 97 tests pass; production PWA build passes. The bundle is intentionally ~4.82 MB uncompressed (~435 KB gzip) because the full offline engine-option database is included.
 
 The old “community-sourced seed / estimated physics for ~620 cars” notes above are historical and superseded by this section. Remaining inferred areas are the PI delta model and tuning heuristics themselves, not the underlying stock car/engine/compatibility data.
+
+## 2026-07-23 — first real RX-7 drift session calibrated
+
+- Replayed the user's 5,968-frame 1992 RX-7 session. The old setup reached the 10,000-rpm limiter around 102 km/h in 3rd and 109 km/h in 4th, with rear slip/temperature far above the front.
+- Fixed game engine composition: non-cam torque scalars combine additively around the cam torque curve. The exact installed build now predicts 327.95 kW and 1,133.2 kg versus the measured 331 kW and 1,126 kg.
+- Imported exact per-car platform compatibility, mass changes, and prices for brakes, suspension, ARBs, weight reduction, tires, clutch, transmission, driveline, differential and rim size.
+- Corrected metric springs from an erroneous kgf/mm display to FH6's N/mm. The RX-7 baseline is now shown as about 58/47 N/mm, not 5.8/4.7.
+- Drift gearing now uses `TorqueCurveMaxRPM` (the packet-confirmed 10,000-rpm limiter) and wheelspin reserve. The tested setup changed from final/3rd/4th `4.89/2.16/1.73` to `4.11/2.09/1.64`, roughly 20% taller overall.
+- Drift builds now enforce the authority-guide hardware baseline where available: race brakes/transmission/ARBs/driveline, drift suspension, rally diff, street tires, stock flywheel/chassis/aero/body.
+- FH6 packet parsing now captures actual class/PI, drivetrain and cylinder/rotor fields. Session summaries include limiter share and tire temperatures; drift diagnosis flags gearing-limiter and rear-overheat evidence.
+- Recalibrated the still-inferred PI delta coefficients from the observed A-class result: the exact build estimates A 692 instead of S1 781. This is provisional until exact PI from a new capture is available.

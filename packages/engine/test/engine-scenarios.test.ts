@@ -129,9 +129,9 @@ describe('constraints', () => {
 
   it('keeps user-locked parts across optimization', () => {
     const result = generateBuild(store, makeRequest({ discipline: 'road', targetClass: 'S1' }), {
-      locks: { tire_compound: 'tire-street' },
+      locks: { tire_compound: 'tire-slick' },
     });
-    for (const s of result.strategies) expect(s.selection.tire_compound).toBe('tire-street');
+    for (const s of result.strategies) expect(s.selection.tire_compound).toBe('tire-slick');
   });
 });
 

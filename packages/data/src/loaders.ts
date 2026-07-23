@@ -235,11 +235,17 @@ export function createDataStore(dataset: Dataset): DataStore {
         list = list.filter((p) => !isRealEngine(p));
       }
     }
-    const exactAllowed = gameEngineId
-      ? gamePartIdsByEngineCategory.get(`${gameEngineId}:${category}`)
-      : profile.availablePartIdsByCategory !== undefined && GAME_ENGINE_CATEGORIES.has(category)
-        ? (profile.availablePartIdsByCategory[category] ?? [])
-        : undefined;
+    const profileHasCategory = Object.prototype.hasOwnProperty.call(
+      profile.availablePartIdsByCategory ?? {},
+      category,
+    );
+    const resolvedGameEngineId = gameEngineId ?? profile.stockGameEngineId;
+    const exactAllowed =
+      resolvedGameEngineId && GAME_ENGINE_CATEGORIES.has(category)
+        ? (gamePartIdsByEngineCategory.get(`${resolvedGameEngineId}:${category}`) ?? [])
+        : profileHasCategory
+          ? (profile.availablePartIdsByCategory?.[category] ?? [])
+          : undefined;
     if (exactAllowed !== undefined) {
       const allow = new Set(exactAllowed);
       list = list.filter((p) => p.tierRank === 0 || allow.has(p.id));

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { summarizeTelemetry } from '@fh6/shared';
 import { parsePacket, csvRow, CSV_HEADER } from '../src/parser.ts';
 
 function buildFh6Packet(): Buffer {
@@ -15,6 +16,10 @@ function buildFh6Packet(): Buffer {
   buf.writeInt32LE(7, 232); // carGroup (FH6)
   const dash = 244;
   buf.writeFloatLE(50, dash + 12); // speed m/s -> 180 km/h
+  buf.writeInt32LE(3, 216); // A class
+  buf.writeInt32LE(698, 220); // actual PI
+  buf.writeInt32LE(1, 224); // RWD
+  buf.writeInt32LE(2, 228); // two rotors/cylinders field
   buf.writeFloatLE(250000, dash + 16); // power W -> 250 kW
   [80, 81, 82, 83].forEach((v, i) => buf.writeFloatLE(v, dash + 24 + i * 4)); // tire temp
   buf.writeUInt8(200, dash + 71); // accel
@@ -39,10 +44,22 @@ describe('FH6 packet parser', () => {
     expect(f.steer).toBe(-20);
     expect(f.carGroup).toBe(7);
     expect(f.carOrdinal).toBe(42);
+    expect(f.carClass).toBe(3);
+    expect(f.carPerformanceIndex).toBe(698);
+    expect(f.drivetrainType).toBe(1);
+    expect(f.numCylinders).toBe(2);
     expect(f.combinedSlip[0]).toBeCloseTo(0.11, 4);
     expect(f.suspensionTravel[3]).toBeCloseTo(0.4, 4);
   });
 
+  it('carries actual PI, limiter and tire temperature into the summary', () => {
+    const summary = summarizeTelemetry([parsePacket(buildFh6Packet())!]);
+    expect(summary.carClass).toBe(3);
+    expect(summary.carPerformanceIndex).toBe(698);
+    expect(summary.engineMaxRpm).toBe(8000);
+    expect(summary.nearLimiterPct).toBe(0);
+    expect(summary.meanTireTempC).toEqual([80, 81, 82, 83]);
+  });
   it('returns null for a too-short packet', () => {
     expect(parsePacket(Buffer.alloc(100))).toBeNull();
   });

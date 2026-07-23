@@ -106,15 +106,15 @@ export const GRAVITY = 9.80665;
 // PI_est = stockPI + sum of these * (built - stock) metric deltas.
 export const PI_COEFF = {
   /** PI points per hp/tonne of power-to-weight delta. */
-  powerToWeight: 0.85,
+  powerToWeight: 0.65,
   /** PI points per unit of grip-factor delta. */
-  grip: 320,
+  grip: 80,
   /** PI points per kgf of total max downforce potential (front+rear). */
   aeroPerKgf: 0.05,
   /** PI points per unit braking-factor delta. */
-  braking: 90,
+  braking: 50,
   /** PI points per unit launch-factor delta. */
-  launch: 40,
+  launch: 20,
 };
 export const PI_UNCERTAINTY_BASE = 6;
 export const PI_UNCERTAINTY_SLOPE = 0.12;

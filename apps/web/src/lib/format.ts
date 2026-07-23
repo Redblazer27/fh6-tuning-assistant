@@ -5,7 +5,6 @@ import {
   kgfToLbf,
   lbfPerInToNPerMm,
   lbfToKgf,
-  nPerMmToKgfPerMm,
   nPerMmToLbfPerIn,
   psiToBar,
   type TuneSpec,
@@ -19,9 +18,9 @@ export const fmt = (n: number, d = 1): string =>
 
 /**
  * Display unit system. FH6 shows tune values in whichever system the player's game
- * is set to; the app defaults to metric (bar / kgf·mm / cm) — what most non-US
- * players, and both drift guides, use. Values are stored canonically (psi springs
- * in the data unit) and converted here for display only.
+ * is set to; the app defaults to metric (bar / N/mm / cm) — what FH6 displays for
+ * players. Pressure is stored canonically in psi; springs stay in the data-declared
+ * unit and are converted here for display only.
  */
 export type UnitSystem = 'metric' | 'imperial';
 
@@ -33,11 +32,11 @@ export function pressureText(psi: number, system: UnitSystem): string {
 const springToNPerMm = (v: number, unit: TuneUnits['springRate']): number =>
   unit === 'lbf/in' ? lbfPerInToNPerMm(v) : unit === 'kgf/mm' ? kgfPerMmToNPerMm(v) : v;
 
-/** Spring rate is stored in the car's data unit; show kgf/mm for metric, lbf/in for imperial. */
+/** Spring rate is stored in the car's data unit; show N/mm for metric, lbf/in for imperial. */
 export function springText(v: number, unit: TuneUnits['springRate'], system: UnitSystem): string {
   const nmm = springToNPerMm(v, unit);
   return system === 'metric'
-    ? `${nPerMmToKgfPerMm(nmm).toFixed(1)} kgf/mm`
+    ? `${nmm.toFixed(1)} N/mm`
     : `${nPerMmToLbfPerIn(nmm).toFixed(0)} lbf/in`;
 }
 

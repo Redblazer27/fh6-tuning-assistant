@@ -25,6 +25,10 @@ const O = {
   slipAngle: 164,
   combinedSlip: 180,
   carOrdinal: 212,
+  carClass: 216,
+  carPerformanceIndex: 220,
+  drivetrainType: 224,
+  numCylinders: 228,
   carGroupFh6: 232, // present only when the packet includes the FH6 fields
 };
 
@@ -88,6 +92,10 @@ export function parsePacket(buf: Buffer): TelemetryFrame | null {
     tireTempC: hasDash ? wheels4(f32, dashBase + D.tireTempC) : [0, 0, 0, 0],
     suspensionTravel: wheels4(f32, O.suspensionTravelNorm),
     carOrdinal: s32(O.carOrdinal),
+    carClass: s32(O.carClass),
+    carPerformanceIndex: s32(O.carPerformanceIndex),
+    drivetrainType: s32(O.drivetrainType),
+    numCylinders: s32(O.numCylinders),
     carGroup: hasFh6Fields ? s32(O.carGroupFh6) : undefined,
   };
   return frame;

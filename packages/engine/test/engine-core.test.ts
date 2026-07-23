@@ -291,13 +291,19 @@ describe('tire choice fits the goal', () => {
     // transmission for the gear-ratio unlock the drift gears need.
     const result = generateBuild(
       store,
-      makeRequest({ carId: car.id, discipline: 'drift', targetClass: 'S1' }),
+      makeRequest({ carId: '1992-mazda-rx-7-type-r', discipline: 'drift', targetClass: 'S1' }),
     );
     const top = result.strategies[0]!;
     expect(top.selection.springs_dampers).toBe('susp-drift');
     expect(top.selection.differential).toBe('diff-rally');
     expect(top.selection.tire_compound).toBe('tire-street');
     expect(top.selection.transmission).toBe('trans-race');
+    expect(top.selection.front_arb).toBe('arb-front-race');
+    expect(top.selection.rear_arb).toBe('arb-rear-race');
+    expect(top.selection.driveline).toBe('driveline-race');
+    expect(top.selection.flywheel).toBe('flywheel-stock');
+    expect(top.selection.chassis_reinforcement).toBe('chassis_reinforcement-stock');
+    expect(top.selection.body_kit).toBe('body_kit-stock');
   });
 });
 
@@ -377,6 +383,56 @@ describe('game-file rotary compatibility', () => {
     expect(buildSpec(store, car, { camshaft: cam.id }, 'tarmac').powerHp).toBeGreaterThan(
       stock.powerHp,
     );
+  });
+});
+describe('1992 RX-7 real-session regression', () => {
+  const selection = {
+    intake: 'game-intake-l3',
+    exhaust: 'game-exhaust-l3',
+    camshaft: 'game-camshaft-l1',
+    ignition: 'game-ignition-l3',
+    fuel_system: 'game-fuelsystem-l3',
+    intercooler: 'game-intercooler-l3',
+    oil_cooling: 'game-oilcooling-l3',
+    flywheel: 'game-flywheel-l3',
+    brakes: 'brakes-race',
+    springs_dampers: 'susp-drift',
+    front_arb: 'arb-front-race',
+    rear_arb: 'arb-rear-race',
+    weight_reduction: 'weight-sport',
+    clutch: 'clutch-race',
+    transmission: 'trans-race',
+    driveline: 'driveline-race',
+    differential: 'diff-rally',
+    tire_compound: 'tire-street',
+    front_tire_width: 'front-width-2',
+    rear_tire_width: 'rear-width-2',
+    rim_style: 'rim-sport',
+    rim_size: 'rim-size-up',
+  } as const;
+
+  it('matches measured power, mass and A class after exact game-part composition', () => {
+    const car = rcar('1992-mazda-rx-7-type-r');
+    const spec = buildSpec(store, car, selection, 'tarmac');
+    expect(spec.powerHp * 0.745699872).toBeCloseTo(328, 0);
+    expect(spec.massKg).toBeCloseTo(1133.2, 0);
+    expect(estimatePI(car, spec).class).toBe('A');
+    expect(spec.redlineRpm).toBe(10000);
+  });
+
+  it('lengthens the telemetry-proven short third and fourth gears', () => {
+    const car = rcar('1992-mazda-rx-7-type-r');
+    const spec = buildSpec(store, car, selection, 'tarmac');
+    const tune = computeTune(
+      car,
+      spec,
+      store.getTuneRanges(car.id),
+      makeRequest({ carId: car.id, discipline: 'drift' }),
+    ).tune;
+    expect(tune.gearing.finalDrive).toBeCloseTo(4.11, 2);
+    expect(tune.gearing.gears[2]).toBeLessThan(2.16);
+    expect(tune.gearing.gears[3]).toBeLessThan(1.73);
+    expect(tune.springs.frontRate).toBeGreaterThan(50);
   });
 });
 describe('effective car (physics fallback)', () => {

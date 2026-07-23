@@ -11,7 +11,7 @@ import {
   type UpgradeCategory,
 } from '@fh6/shared';
 import type { Car, DataStore } from '@fh6/data';
-import { buildSpec } from './buildSpec.ts';
+import { buildSpec, resolvePart, resolvePartData } from './buildSpec.ts';
 import { DISCLAIMER } from './constants.ts';
 import { resolveEffectiveCar, type ResolvedCar } from './effectiveCar.ts';
 import { estimatePI } from './pi.ts';
@@ -26,19 +26,26 @@ const lowerConfidence = (a: Confidence, b: Confidence): Confidence =>
   CONFIDENCE_RANK[a] <= CONFIDENCE_RANK[b] ? a : b;
 
 /** Build the ordered part list (all categories; UI can filter to upgrades). */
-export function partLines(store: DataStore, selection: PartSelection): PartLine[] {
+export function partLines(store: DataStore, selection: PartSelection, carId?: string): PartLine[] {
   const lines: PartLine[] = [];
+  const selectedEngine = resolvePart(store, 'engine_swap', selection);
+  const activeGameEngineId =
+    selectedEngine?.gameEngineId ??
+    (carId ? store.getUpgradeProfile(carId)?.stockGameEngineId : undefined);
   for (const category of store.categories) {
     const partId = selection[category] ?? store.getStockPart(category)?.id;
     if (!partId) continue;
     const part = store.getPart(partId);
     if (!part) continue;
+    const resolved = carId
+      ? resolvePartData(store, carId, activeGameEngineId, part)
+      : { cost: part.cost };
     lines.push({
       category,
       partId: part.id,
       name: part.name,
       tier: part.tier,
-      cost: part.cost,
+      cost: resolved.cost,
       unlocks: part.unlocks,
       isUpgrade: part.tierRank > 0,
       rationale: part.rationale,
@@ -92,7 +99,7 @@ function makeStrategy(
       id: kind,
       label: STRATEGY_LABELS[kind],
       selection: spec.selection,
-      parts: partLines(store, spec.selection),
+      parts: partLines(store, spec.selection, car.id),
       totalCost: spec.totalCost,
       builtSpec: spec,
       pi,
