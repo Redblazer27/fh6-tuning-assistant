@@ -726,9 +726,10 @@ export const parts: PartInput[] = [
     tierRank: 4,
     tier: 'drag',
     setsTireCompound: 'drag',
+    effects: { launchMultiplier: 1.12 },
     cost: 40000,
     rationale:
-      'Drag tires: soft, sticky rubber built for maximum straight-line launch and traction off the line — poor lateral grip, so only for drag.',
+      'Drag tires: maximum straight-line launch. Since the June 15 FH6 physics update their cornering grip is deliberately poor, so use them only for drag.',
   }),
   P({
     id: 'tire-rally',

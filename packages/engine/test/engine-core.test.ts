@@ -237,6 +237,33 @@ describe('scoring transparency', () => {
     }
   });
 });
+describe('drift engine controllability', () => {
+  it('prefers a calmer engine package when performance is otherwise equal', () => {
+    const car = rcar('mazda-mx5-nd-2019');
+    const base = buildSpec(store, car, {}, 'tarmac');
+    const calm = {
+      ...base,
+      selection: {
+        ...base.selection,
+        flywheel: 'stock-flywheel',
+        camshaft: 'stock-camshaft',
+        forced_induction: 'stock-aspiration',
+      },
+    };
+    const aggressive = {
+      ...base,
+      selection: {
+        ...base.selection,
+        flywheel: 'game-flywheel-l3',
+        camshaft: 'game-camshaft-l3',
+        forced_induction: 'game-turbo-l4-anti-lag',
+      },
+    };
+    expect(normalizeMetrics(calm, 'drift').setupFit).toBeGreaterThan(
+      normalizeMetrics(aggressive, 'drift').setupFit,
+    );
+  });
+});
 
 describe('drivetrain fit steers the goal', () => {
   // Same build, only the drivetrain differs. The drivetrain-fit metric must flip

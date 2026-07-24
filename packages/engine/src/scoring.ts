@@ -35,6 +35,27 @@ function powerFitFor(discipline: Discipline, powerHp: number): number {
 const aeroPotential = (spec: BuiltSpec): number =>
   (spec.aeroFront?.maxKgf ?? 0) + (spec.aeroRear?.maxKgf ?? 0);
 
+/**
+ * Video-2 drift philosophy: retain engine inertia and a broad, controllable
+ * powerband. Big flywheel/cam/boost upgrades remain legal, but they are no
+ * longer free score when a calmer stock-tier choice reaches the power target.
+ */
+function driftEngineControlFit(spec: BuiltSpec): number {
+  const aggression = (partId: string | undefined): number => {
+    if (!partId || /stock/i.test(partId)) return 0;
+    if (/anti-lag|l4|race/i.test(partId)) return 4;
+    if (/l3/i.test(partId)) return 3;
+    if (/l2|sport/i.test(partId)) return 2;
+    return 1;
+  };
+
+  const flywheel = aggression(spec.selection.flywheel);
+  const camshaft = aggression(spec.selection.camshaft);
+  const boost = aggression(spec.selection.forced_induction);
+  const smoothnessBonus = clamp((spec.powerDeliverySmoothness - 0.85) * 0.4, 0, 0.06);
+  return clamp(1 + smoothnessBonus - flywheel * 0.12 - camshaft * 0.06 - boost * 0.04, 0.35, 1);
+}
+
 interface NormalizedMetrics {
   accel: number;
   grip: number;
@@ -72,10 +93,9 @@ export function normalizeMetrics(
   const launch = clamp((spec.launchFactor - 0.8) / 0.6, 0, 1);
   const topSpeed = clamp((spec.powerHp - 150) / 1250, 0, 1);
   const balance = DRIVETRAIN_FIT[discipline][spec.drivetrain];
-  // Setup fit blends the discipline-variant parts: tire compound (0.4), then
-  // springs, differential and transmission (0.2 each). A drift build scores well
-  // only when all four fit the goal (drift springs, a rally/drift diff, a race
-  // transmission for the gear unlock) — not the generic grippiest race options.
+  // Setup fit blends the discipline-variant parts. Drift additionally scores
+  // controllable engine character: retaining flywheel inertia and avoiding
+  // unnecessary max cam/boost tiers once the power sweet-spot is reached.
   const tireTable = TIRE_FIT[discipline];
   const tireFit = tireTable[spec.tireCompound] ?? tireTable.default;
   const suspTable = SUSPENSION_FIT[discipline];
@@ -84,7 +104,14 @@ export function normalizeMetrics(
   const diffFit = diffTable[spec.diffTier] ?? diffTable.default;
   const transTable = TRANSMISSION_FIT[discipline];
   const transFit = transTable[spec.transmissionTier] ?? transTable.default;
-  const setupFit = 0.4 * tireFit + 0.2 * suspFit + 0.2 * diffFit + 0.2 * transFit;
+  const setupFit =
+    discipline === 'drift'
+      ? 0.3 * tireFit +
+        0.17 * suspFit +
+        0.16 * diffFit +
+        0.17 * transFit +
+        0.2 * driftEngineControlFit(spec)
+      : 0.4 * tireFit + 0.2 * suspFit + 0.2 * diffFit + 0.2 * transFit;
   const powerFit = powerFitFor(discipline, spec.powerHp);
   return {
     accel,
@@ -153,7 +180,7 @@ const METRIC_LABELS: Record<keyof MetricWeights, string> = {
   launch: 'Launch / traction',
   topSpeed: 'Top-end speed',
   balance: 'Drivetrain fit for the goal',
-  setupFit: 'Setup fit (tires, springs, diff, transmission)',
+  setupFit: 'Setup fit (tires, suspension, diff, transmission, engine control)',
   powerFit: 'Power in the drift sweet-spot',
 };
 

@@ -208,6 +208,7 @@ export function App() {
                     carId: result.car.id,
                     carName: result.car.name,
                     discipline: request.discipline,
+                    drivetrain: selected.builtSpec.drivetrain,
                     targetClass: request.targetClass ?? null,
                     targetPI: request.targetPI ?? null,
                     strategyId: selected.id,

@@ -164,6 +164,58 @@ describe('discipline-specific builds', () => {
     );
     expect(['rally', 'offroad']).toContain(s.builtSpec.tireCompound);
   });
+
+  it('keeps post-patch drag tires out of road builds', () => {
+    const s = topOf(
+      makeRequest({ carId: 'ford-mustang-gt-2018', discipline: 'road', targetClass: 'S1' }),
+    );
+    expect(s.builtSpec.tireCompound).not.toBe('drag');
+  });
+
+  it('uses drivetrain-aware drag pressure and locking', () => {
+    const s = topOf(
+      makeRequest({
+        carId: 'ford-mustang-gt-2018',
+        discipline: 'drag',
+        targetClass: 'S2',
+        constraints: { allowDrivetrainSwap: false },
+      }),
+    );
+    expect(s.builtSpec.drivetrain).toBe('RWD');
+    expect(s.tune.tune.tires.frontPsi).toBeGreaterThan(s.tune.tune.tires.rearPsi);
+    expect(s.tune.tune.differential.accelRearPct ?? 0).toBeGreaterThanOrEqual(80);
+    expect(s.tune.tune.differential.decelRearPct ?? 100).toBeLessThanOrEqual(10);
+  });
+
+  it('uses low-camber, high-caster road alignment and softer bump than rebound', () => {
+    const s = topOf(
+      makeRequest({ carId: 'mazda-mx5-nd-2019', discipline: 'road', targetClass: 'A' }),
+    );
+    expect(Math.abs(s.tune.tune.alignment.camberFrontDeg)).toBeLessThanOrEqual(1.5);
+    expect(s.tune.tune.alignment.casterDeg).toBeGreaterThanOrEqual(6.5);
+    expect(s.tune.tune.damping.bumpFront).toBeLessThan(s.tune.tune.damping.reboundFront);
+    expect(s.tune.tune.damping.bumpRear).toBeLessThan(s.tune.tune.damping.reboundRear);
+  });
+
+  it('adds travel and compliance as surfaces get rougher', () => {
+    const road = topOf(
+      makeRequest({ carId: 'subaru-wrx-sti-2019', discipline: 'road', targetClass: 'A' }),
+    );
+    const rally = topOf(
+      makeRequest({ carId: 'subaru-wrx-sti-2019', discipline: 'rally', targetClass: 'A' }),
+    );
+    const cross = topOf(
+      makeRequest({ carId: 'subaru-wrx-sti-2019', discipline: 'cross_country', targetClass: 'A' }),
+    );
+    expect(rally.tune.tune.springs.frontRideHeight).toBeGreaterThan(
+      road.tune.tune.springs.frontRideHeight,
+    );
+    expect(cross.tune.tune.springs.frontRideHeight).toBeGreaterThanOrEqual(
+      rally.tune.tune.springs.frontRideHeight,
+    );
+    expect(rally.tune.tune.antiRollBars.front).toBeLessThan(road.tune.tune.antiRollBars.front);
+    expect(rally.tune.tune.damping.bumpFront).toBeLessThan(road.tune.tune.damping.bumpFront);
+  });
 });
 
 describe('symptom guidance', () => {

@@ -75,8 +75,32 @@ describe('telemetry diagnosis (closing the loop)', () => {
       }),
       'drift',
     );
-    expect(d.notes.join(' ')).toMatch(/near the limiter/i);
-    expect(d.notes.join(' ')).toMatch(/overheating the rear tires/i);
+    expect(d.findings.some((f) => f.symptomId === 'gearing-too-short')).toBe(true);
+    expect(d.findings.find((f) => f.symptomId === 'gearing-too-short')!.evidence).toMatch(
+      /near the limiter/i,
+    );
+    expect(d.notes.join(' ')).toMatch(/overheating them|overheating the rear tires/i);
+  });
+
+  it('uses the actual driven axle when diagnosing wheelspin', () => {
+    const fwd = diagnoseTelemetry(
+      summary({ meanCombinedSlip: [1.5, 1.5, 0.5, 0.5] }),
+      'road',
+      'FWD',
+    );
+    expect(fwd.findings.some((x) => x.symptomId === 'poor-launch')).toBe(true);
+
+    const rwd = diagnoseTelemetry(
+      summary({ meanCombinedSlip: [1.5, 1.5, 0.5, 0.5] }),
+      'road',
+      'RWD',
+    );
+    expect(rwd.findings.some((x) => x.symptomId === 'poor-launch')).toBe(false);
+  });
+
+  it('turns sustained limiter time into a concrete gearing finding', () => {
+    const d = diagnoseTelemetry(summary({ nearLimiterPct: 30 }), 'rally', 'AWD');
+    expect(d.findings.some((x) => x.symptomId === 'gearing-too-short')).toBe(true);
   });
   it('flags understeer for a drift car that pushes at the front', () => {
     const d = diagnoseTelemetry(summary({ understeerIndex: 0.2 }), 'drift');

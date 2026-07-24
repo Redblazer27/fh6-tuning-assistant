@@ -23,8 +23,11 @@ export const TIRE_GRIP: Record<'tarmac' | 'dirt' | 'snow', Record<TireCompound, 
     sport: 1.14,
     semi_slick: 1.22,
     slick: 1.3,
-    drag: 1.1,
-    rally: 0.98,
+    // Series 2 (2026-06-15) deliberately removed the lateral-grip exploit:
+    // drag tires retain their launch behavior but are no longer a road-race tire.
+    drag: 0.8,
+    // FH6 community testing finds rally rubber useful in PI-limited road builds.
+    rally: 1.17,
     offroad: 0.88,
     snow: 0.85,
     drift: 1.02,
@@ -65,36 +68,56 @@ export function tireGrip(compound: TireCompound, surface: Surface): number {
 
 // --- Suspension ride frequency (Hz) target per surface -------------------------
 export const RIDE_FREQUENCY: Record<Surface, { front: number; rear: number }> = {
-  tarmac: { front: 2.2, rear: 2.35 },
-  dirt: { front: 1.5, rear: 1.6 },
-  snow: { front: 1.4, rear: 1.5 },
-  mixed: { front: 1.85, rear: 1.95 },
+  tarmac: { front: 1.95, rear: 2.05 },
+  dirt: { front: 1.4, rear: 1.48 },
+  snow: { front: 1.35, rear: 1.42 },
+  mixed: { front: 1.6, rear: 1.7 },
 };
 
 // --- Damping (fraction of the slider range) ------------------------------------
 export const DAMPING_REBOUND_FRACTION: Record<Surface, number> = {
-  tarmac: 0.6,
-  dirt: 0.42,
-  snow: 0.36,
-  mixed: 0.5,
+  tarmac: 0.72,
+  dirt: 0.34,
+  snow: 0.3,
+  mixed: 0.38,
 };
-/** Bump damping as a fraction of rebound damping (bump softer than rebound). */
-export const BUMP_TO_REBOUND_RATIO = 0.7;
+/** Bump/rebound ratio. Loose surfaces need especially low bump for compliance. */
+export const BUMP_TO_REBOUND_RATIO: Record<Surface, number> = {
+  tarmac: 0.42,
+  dirt: 0.25,
+  snow: 0.22,
+  mixed: 0.28,
+};
 
 // --- Anti-roll bar base stiffness (fraction of slider range) -------------------
 export const ARB_BASE_STIFFNESS: Record<Surface, number> = {
-  tarmac: 0.62,
-  dirt: 0.36,
-  snow: 0.3,
-  mixed: 0.5,
+  // Moderate baseline: extreme 1/65 is a competitive archetype, not a default.
+  tarmac: 0.46,
+  dirt: 0.12,
+  snow: 0.09,
+  mixed: 0.14,
 };
 
-// --- Tire pressure base (psi, warm target-ish) ---------------------------------
+// --- Tire pressure base (psi, cold menu values) --------------------------------
 export const TIRE_PRESSURE_BASE: Record<Surface, number> = {
   tarmac: 29.0,
-  dirt: 26.0,
-  snow: 25.0,
-  mixed: 27.0,
+  dirt: 25.0,
+  snow: 23.0,
+  mixed: 26.0,
+};
+
+/** Compound correction on top of the surface baseline. */
+export const TIRE_PRESSURE_COMPOUND_ADJUST: Record<TireCompound, number> = {
+  stock: -1,
+  street: -1,
+  sport: 0,
+  semi_slick: 1,
+  slick: 1,
+  drag: -2,
+  rally: 0,
+  offroad: -1,
+  snow: -1,
+  drift: 1,
 };
 
 // --- Physical constants --------------------------------------------------------
@@ -217,8 +240,24 @@ export const TIRE_FIT: Record<
   Discipline,
   { default: number } & Partial<Record<TireCompound, number>>
 > = {
-  road: { default: 0.5, slick: 1.0, semi_slick: 0.92, sport: 0.75, street: 0.6, drag: 0.7 },
-  street: { default: 0.5, slick: 1.0, semi_slick: 0.95, sport: 0.85, street: 0.72, drag: 0.7 },
+  road: {
+    default: 0.5,
+    semi_slick: 1.0,
+    slick: 0.98,
+    rally: 0.88,
+    sport: 0.8,
+    street: 0.65,
+    drag: 0.15,
+  },
+  street: {
+    default: 0.5,
+    semi_slick: 1.0,
+    slick: 0.95,
+    rally: 0.9,
+    sport: 0.9,
+    street: 0.78,
+    drag: 0.15,
+  },
   dirt: { default: 0.4, offroad: 1.0, rally: 0.96, snow: 0.6, sport: 0.5, street: 0.45 },
   rally: { default: 0.4, rally: 1.0, offroad: 0.9, snow: 0.6, sport: 0.5, street: 0.45 },
   cross_country: { default: 0.4, offroad: 1.0, rally: 0.85, snow: 0.6, sport: 0.5 },
@@ -227,8 +266,15 @@ export const TIRE_FIT: Record<
   // — grip is control, and you tune slip in elsewhere. Drift tires are a solid
   // second pick; sport is a touch grippy; rally is the fallback when street isn't
   // offered. Slicks/semi-slicks grip too hard to modulate a slide.
-  drift: { default: 0.4, street: 1.0, drift: 0.85, sport: 0.8, rally: 0.78, semi_slick: 0.55, slick: 0.5, drag: 0.45, offroad: 0.45, snow: 0.35 }, // prettier-ignore
-  top_speed: { default: 0.6, slick: 1.0, semi_slick: 0.92, drag: 0.9, sport: 0.85, street: 0.75 },
+  drift: { default: 0.4, street: 1.0, drift: 0.95, sport: 0.8, rally: 0.78, semi_slick: 0.5, slick: 0.35, drag: 0.4, offroad: 0.45, snow: 0.35 }, // prettier-ignore
+  top_speed: {
+    default: 0.6,
+    slick: 1.0,
+    semi_slick: 0.94,
+    sport: 0.85,
+    street: 0.75,
+    drag: 0.4,
+  },
   pr_stunts: {
     default: 0.55,
     slick: 0.95,
@@ -247,12 +293,12 @@ export const TIRE_FIT: Record<
  * though it grips a little less. Feeds `setupFit`. Tiers not listed use `default`.
  */
 export const SUSPENSION_FIT: Record<Discipline, { default: number } & Record<string, number>> = {
-  road: { default: 0.5, race: 1.0, sport: 0.72, rally: 0.45, drift: 0.5, stock: 0.35 },
-  street: { default: 0.5, race: 1.0, sport: 0.78, rally: 0.45, drift: 0.5, stock: 0.35 },
+  road: { default: 0.5, race: 1.0, sport: 0.9, rally: 0.55, drift: 0.5, stock: 0.45 },
+  street: { default: 0.5, race: 0.98, sport: 1.0, rally: 0.6, drift: 0.5, stock: 0.45 },
   dirt: { default: 0.45, rally: 1.0, race: 0.6, drift: 0.4, sport: 0.5, stock: 0.35 },
   rally: { default: 0.45, rally: 1.0, race: 0.6, drift: 0.4, sport: 0.5, stock: 0.35 },
   cross_country: { default: 0.45, rally: 1.0, race: 0.55, drift: 0.4, sport: 0.5, stock: 0.35 },
-  drag: { default: 0.5, race: 1.0, sport: 0.75, drift: 0.5, rally: 0.4, stock: 0.4 },
+  drag: { default: 0.5, race: 1.0, rally: 0.9, drift: 0.72, sport: 0.7, stock: 0.4 },
   drift: { default: 0.45, drift: 1.0, race: 0.55, rally: 0.5, sport: 0.5, stock: 0.4 },
   top_speed: { default: 0.5, race: 1.0, sport: 0.8, drift: 0.5, rally: 0.4, stock: 0.4 },
   pr_stunts: { default: 0.5, race: 1.0, rally: 0.7, sport: 0.6, drift: 0.5, stock: 0.4 },
@@ -330,11 +376,11 @@ export const DIFF_FIT: Record<Discipline, { default: number } & Record<string, n
  * only mildly (their gearing tune helps but isn't make-or-break). Feeds `setupFit`.
  */
 export const TRANSMISSION_FIT: Record<Discipline, { default: number } & Record<string, number>> = {
-  road: { default: 0.7, race: 0.82, sport: 0.72, stock: 0.6 },
-  street: { default: 0.7, race: 0.82, sport: 0.72, stock: 0.6 },
-  dirt: { default: 0.7, race: 0.82, sport: 0.72, stock: 0.6 },
-  rally: { default: 0.7, race: 0.82, sport: 0.72, stock: 0.6 },
-  cross_country: { default: 0.7, race: 0.82, sport: 0.72, stock: 0.6 },
+  road: { default: 0.7, race: 0.9, sport: 0.84, stock: 0.62 },
+  street: { default: 0.7, race: 0.88, sport: 0.86, stock: 0.62 },
+  dirt: { default: 0.7, race: 0.9, sport: 0.78, stock: 0.58 },
+  rally: { default: 0.7, race: 0.92, sport: 0.78, stock: 0.58 },
+  cross_country: { default: 0.7, race: 0.9, sport: 0.76, stock: 0.56 },
   drag: { default: 0.7, race: 0.9, sport: 0.74, stock: 0.55 },
   drift: { default: 0.5, race: 1.0, sport: 0.55, stock: 0.3 },
   top_speed: { default: 0.7, race: 0.88, sport: 0.74, stock: 0.55 },

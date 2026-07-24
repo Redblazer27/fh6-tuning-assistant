@@ -3,6 +3,7 @@ import {
   piToClass,
   summarizeTelemetry,
   type Discipline,
+  type Drivetrain,
   type TelemetryFrame,
   type TelemetrySummary,
 } from '@fh6/shared';
@@ -18,6 +19,7 @@ export interface SessionBuildContext {
   carId: string;
   carName: string;
   discipline: string;
+  drivetrain: Drivetrain;
   targetClass: string | null;
   targetPI: number | null;
   strategyId: string;
@@ -89,7 +91,13 @@ export function TelemetryPanel({
       setRecording(false);
       const summary = summarizeTelemetry(framesRef.current);
       setSummary(summary);
-      setDiagnosis(diagnoseTelemetry(summary, buildContext?.discipline as Discipline | undefined));
+      setDiagnosis(
+        diagnoseTelemetry(
+          summary,
+          buildContext?.discipline as Discipline | undefined,
+          buildContext?.drivetrain,
+        ),
+      );
       onSummary({
         frames: summary.frames,
         durationSec: Number(summary.durationSec.toFixed(1)),

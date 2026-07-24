@@ -66,19 +66,17 @@ up front (locks, no-swaps, no-aero, stock-looking, budget, preferred drivetrain/
 
 ## Scoring (`scoring.ts`)
 
-Seven metrics normalized 0..1 (accel = pw; grip = mechanical grip + aero bonus; braking; launch;
-top-speed = power; **balance** = the drivetrain's fit for the goal, `DRIVETRAIN_FIT[discipline][drivetrain]`;
-**setupFit** = how well the discipline-variant parts fit the goal), weighted per discipline (`SCORE_WEIGHTS`)
-and tilted per strategy (`STRATEGY_TILT`), re-normalized to sum 1. Total is `Σ normalized·weight·100`.
-`setupFit` blends three part choices — tire compound (`TIRE_FIT`, half), springs/dampers (`SUSPENSION_FIT`,
-a quarter) and differential (`DIFF_FIT`, a quarter) — so a **drift** build scores well only with drift
-tires, drift springs **and** a drift diff, even though a race setup grips harder in the raw metrics; loose
-surfaces likewise pull rally/off-road parts. `balance` and `setupFit` encode the decisions the raw numbers
-miss or get wrong, so the optimizer only takes a drivetrain swap or a non-grippiest variant part when it
-suits the goal (`launch` is kept low where AWD shouldn't be rewarded just for launching, and `grip` is
-trimmed where `setupFit` must pull parts off the grippiest race options). On tarmac the race parts win on
-both grip and fit, so `setupFit` just reinforces. The full breakdown is returned and shown, so ranking is
-never a black box.
+Eight metrics are normalized 0..1 (accel, grip, braking, launch, top speed, drivetrain **balance**,
+**setupFit**, and drift-only **powerFit**), weighted per discipline (`SCORE_WEIGHTS`) and tilted per
+strategy (`STRATEGY_TILT`). `setupFit` blends tire, suspension, differential and transmission suitability.
+For drift it also scores **engine control**: maximum flywheel, camshaft and forced-induction tiers lose
+points because a broad, predictable powerband is more controllable than maximum peak power. Street tires
+remain the authority-guide baseline, while drift tires still outrank slicks for controllable sliding.
+`powerFit` rewards the documented mid-power drift band instead of blindly maximizing horsepower.
+
+Road and street builds strongly reject the post-Series-2 drag-tire exploit and favor road compounds;
+loose modes favor rally/off-road hardware. Race transmission value includes its gearing unlock. Every
+metric contribution is returned to the UI, so the ranking remains inspectable rather than a black box.
 
 ## Car comparison (`compare.ts`)
 
@@ -94,17 +92,17 @@ place. Low confidence, and disclosed as such (cars without balance data fall bac
 
 Every value is clamped/snapped to the car's legal `TuneRanges`, so output is always in-game-valid.
 
-| Section                   | Heuristic                                                                                                                                                                                                          | Expected effect                                                                            |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
-| **Tire pressure**         | Warm-target base per surface (tarmac 29 psi, dirt 26, snow 25); ± small bias to the heavier axle; drag lowers front/raises rear; drift uses about 2.5 bar front / 1.5 bar rear; top-speed raises both.             | Grip near target temp; compliance on loose surfaces; launch/stability tilt per discipline. |
-| **Gearing**               | Non-drift builds use the top-speed/redline model. Drift uses the game-file limiter RPM and targets 3rd/4th wheel speeds with explicit wheelspin reserve; it never chases a fixed top speed.                        | Keeps 3rd/4th in the powerband without limiter bounce; requires race transmission.         |
-| **Alignment**             | Camber negative by surface (less for drag/top-speed, more for slicks); small front toe-out for turn-in, rear toe-in for stability; wheel drift uses about -2.5°/-0.3° camber, -1.0°/+0.5° toe, and maximum caster. | Cornering contact & responsive but stable steering.                                        |
-| **Anti-roll bars**        | Base stiffness fraction per surface, scaled to axle weight, then biased for balance (FWD stiffen rear, RWD stiffen front, style shifts rotation); drift is very soft at roughly 7.5 front / 5 rear.                | Primary handling-balance tool; stiffer rear = more rotation.                               |
-| **Springs + ride height** | Rate from **ride frequency**: `k = (2πf)²·m_cornerSprung` (tarmac ~2.2/2.35 Hz F/R, dirt ~1.5, drift stiffer front); ride height low for grip/aero, high for dirt, slight rake.                                    | Balanced body control tuned to each corner's sprung mass.                                  |
-| **Damping**               | From a target **damping ratio** as a fraction of the slider range (tarmac rebound 0.6, dirt 0.42); bump = 0.7×rebound; rear ~5% firmer.                                                                            | Controlled, planted body motion; softer on loose surfaces.                                 |
-| **Aero**                  | Downforce level per discipline (road high, drag/top-speed zero); front balanced to weight distribution, slightly less to avoid understeer; clamped to the installed wing's capability.                             | More grip vs. more drag trade-off; `null` when no aero.                                    |
-| **Brakes**                | Balance ~50% ± weight-distribution bias; pressure follows the discipline; drift uses about 75% front bias / 55% pressure.                                                                                          | Stable braking, fewer lock-ups on a pad.                                                   |
-| **Differential**          | Per drivetrain: RWD accel 40 (road)→95 (drift), decel 15–40; FWD low accel to cut understeer; AWD center 20–40% front + per-axle accel/decel; style shifts accel ±5.                                               | Corner-exit traction & braking stability tuned to the goal.                                |
+| Section                   | Heuristic                                                                                                                                                                                                                                                  | Expected effect                                                                                                     |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **Tire pressure**         | Cold-menu baseline by surface and compound, then a small axle-load correction. Drag lowers the **driven** axle and raises the free axle (RWD/FWD/AWD aware); drift keeps the tested ~2.5 bar front / ~1.5 bar rear baseline.                               | Correct construction/surface starting point; launch footprint and drift side bite without one universal pressure.   |
+| **Gearing**               | Every non-drift mode scales from the car's stock speed, built power, limiter and power peak. Dirt/rally/cross-country no longer chase fixed speeds. Drift anchors 3rd/4th with wheelspin reserve.                                                          | Post-shift RPM stays in the useful band; telemetry limiter share supplies the correction.                           |
+| **Alignment**             | Low camber, near-zero toe and about 6.5–7° caster for grip modes; almost zero camber for drag/top speed. Drift retains -2.5°/-0.3°, -1.0°/+0.5° and maximum caster.                                                                                        | Avoids scrub and exaggerated FH6 camber loss while preserving wheel self-centering.                                 |
+| **Anti-roll bars**        | Moderate tarmac baseline; very soft loose-surface bars; axle-load, drivetrain and style balance corrections. Drag uses driven-axle load-transfer profiles; drift remains very soft with front slightly stiffer.                                            | Keeps independent travel on rough surfaces and changes balance without defaulting to unstable competitive extremes. |
+| **Springs + ride height** | `k = (2πf)²·m_cornerSprung` with discipline-specific frequency. Road is controlled, rally is softer/higher, cross-country has maximum travel, drag follows driven-axle transfer, and drift targets roughly the tested 62/50 N/mm relationship on the RX-7. | Uses real mass and legal per-car ranges; prevents both impossible values and generic one-height setups.             |
+| **Damping**               | Rebound controls chassis motion; bump is substantially softer. Loose modes use especially low bump and slightly softer rear rebound. Drag is drivetrain-specific; drift retains high rebound/low bump.                                                     | Lets the tire follow the road while controlling weight transfer instead of making rough-surface cars harsh.         |
+| **Aero**                  | Road/street use front-biased downforce and only enough rear for stability; loose modes use less; drag/top speed start at minimum.                                                                                                                          | Front grip without excessive rear-induced understeer or unnecessary drag.                                           |
+| **Brakes**                | Grip modes start around the FH6 48–50% neutral region, with lower pressure on loose surfaces. Drift keeps ~75% front / ~55% force.                                                                                                                         | Stable threshold braking and discipline-appropriate wheel control.                                                  |
+| **Differential**          | Explicit FWD/RWD/AWD tables for every discipline. Road uses moderate accel/low coast, loose modes stronger lock, drag high accel/low coast, drift 95/85 rear with rear-biased AWD.                                                                         | Correct driven-axle behavior instead of applying an RWD assumption to every car.                                    |
 
 ### Simplifications (documented, for honesty)
 
@@ -118,15 +116,15 @@ Every value is clamped/snapped to the car's legal `TuneRanges`, so output is alw
 ## Symptom-based adjustments (`symptoms.ts`)
 
 A curated table maps a handling complaint → an **ordered, smallest-safe-first** list of changes with a
-one-line rationale (e.g., understeer-on-exit → reduce diff accel lock, then soften front ARB, then trim
-front aero). Condition modifiers (controller / wheel / wet) add global notes. These are guidance layered
+one-line rationale (e.g., understeer-on-exit → reduce diff accel lock, then soften front ARB, then add front aero
+(or reduce rear aero)). Condition modifiers (controller / wheel / wet) add global notes. These are guidance layered
 on the baseline — applying one is the user's choice and never rewrites the baseline tune.
 
 ## Telemetry diagnosis — closing the loop (`diagnose.ts`)
 
-`diagnoseTelemetry(summary)` turns a **recorded session** into a diagnosis: it reads what the car actually
-did — the mean front-vs-rear slip balance (`understeerIndex`) and per-wheel combined slip — and maps it to
-the matching `SYMPTOMS` entry, surfacing that symptom's smallest-safe-first fixes. So the loop runs
+`diagnoseTelemetry(summary, discipline, drivetrain)` turns a **recorded session** into a diagnosis: it reads what the car actually
+did — the mean front-vs-rear slip balance (`understeerIndex`), per-wheel combined slip, limiter time, tire temperatures and suspension travel — and maps it to
+the matching `SYMPTOMS` entry. Driven-wheel slip follows FWD/RWD/AWD instead of assuming the rear axle; it then surfaces that symptom's smallest-safe-first fixes. So the loop runs
 model → drive → measure → concrete tune fix, instead of the user guessing which complaint applies.
 Thresholds live in `TELEMETRY_DIAGNOSIS` and are **heuristic / low confidence** (FH6's slip units aren't
 documented) — flagged as such in the UI, and a prime target for calibration once real captures are

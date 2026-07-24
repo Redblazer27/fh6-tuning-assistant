@@ -15,7 +15,14 @@ export interface SymptomAdjustment {
 }
 
 export type SymptomGroup =
-  'understeer' | 'oversteer' | 'traction' | 'braking' | 'stability' | 'response' | 'ride';
+  | 'understeer'
+  | 'oversteer'
+  | 'traction'
+  | 'braking'
+  | 'stability'
+  | 'response'
+  | 'ride'
+  | 'gearing';
 
 export interface Symptom {
   id: string;
@@ -75,8 +82,8 @@ export const SYMPTOMS: Symptom[] = [
       },
       {
         area: 'aero',
-        change: 'Reduce front downforce a little',
-        rationale: 'Trims front-end push at speed.',
+        change: 'Add front downforce (or reduce rear) a little',
+        rationale: 'Moves high-speed aero balance toward front grip.',
       },
     ],
   },
@@ -87,8 +94,9 @@ export const SYMPTOMS: Symptom[] = [
     adjustments: [
       {
         area: 'differential',
-        change: 'Reduce decel (coast) lock 5–10%',
-        rationale: 'Calms the rear when lifting/braking into a corner.',
+        change: 'Increase decel (coast) lock 5–10%',
+        rationale:
+          'Adds off-throttle coupling and stabilizes the rear; reverse this if the car begins to push.',
       },
       {
         area: 'antiroll_bars',
@@ -98,8 +106,8 @@ export const SYMPTOMS: Symptom[] = [
       { area: 'alignment', change: 'Add rear toe-in 0.1°', rationale: 'Stabilizes the rear axle.' },
       {
         area: 'tires',
-        change: 'Raise rear tire pressure 1–2 psi',
-        rationale: 'Quick way to trim rear grip response.',
+        change: 'Lower rear tire pressure 1 psi',
+        rationale: 'Adds rear contact patch and grip with a small reversible change.',
       },
     ],
   },
@@ -121,8 +129,8 @@ export const SYMPTOMS: Symptom[] = [
       { area: 'aero', change: 'Add rear downforce', rationale: 'More high-speed rear stability.' },
       {
         area: 'tires',
-        change: 'Raise rear tire pressure 1 psi',
-        rationale: 'Small, reversible balance trim.',
+        change: 'Lower rear tire pressure 1 psi',
+        rationale: 'Adds a small amount of rear traction.',
       },
     ],
   },
@@ -133,8 +141,8 @@ export const SYMPTOMS: Symptom[] = [
     adjustments: [
       {
         area: 'differential',
-        change: 'Reduce decel lock 5–10%',
-        rationale: 'The most common cause — coast lock unsettles the rear.',
+        change: 'Increase decel lock 5–10%',
+        rationale: 'Adds coast stability under braking; stop if turn-in understeer appears.',
       },
       {
         area: 'brakes',
@@ -170,8 +178,9 @@ export const SYMPTOMS: Symptom[] = [
       },
       {
         area: 'springs',
-        change: 'Raise rear ride height / soften rear a touch',
-        rationale: 'Aids rearward weight transfer on launch.',
+        change: 'Use the drivetrain-specific launch spring/damper profile',
+        rationale:
+          'Load must transfer toward the actual driven axle; RWD and FWD need opposite changes.',
       },
       {
         area: 'gearing',
@@ -236,8 +245,65 @@ export const SYMPTOMS: Symptom[] = [
     ],
   },
   {
+    id: 'gearing-too-short',
+    label: 'Active gear reaches the limiter too early',
+    group: 'gearing',
+    adjustments: [
+      {
+        area: 'gearing',
+        change: 'Lengthen the active gear 5–10%',
+        rationale: 'Adds wheel-speed reserve without changing every gear.',
+      },
+      {
+        area: 'gearing',
+        change: 'Lower final drive slightly',
+        rationale: 'Use only when several gears are too short.',
+      },
+    ],
+  },
+  {
+    id: 'gearing-too-tall',
+    label: 'Engine falls below the powerband after shifts',
+    group: 'gearing',
+    adjustments: [
+      {
+        area: 'gearing',
+        change: 'Shorten the active gear 5–10%',
+        rationale: 'Keeps engine speed closer to peak power.',
+      },
+      {
+        area: 'gearing',
+        change: 'Raise final drive slightly',
+        rationale: 'Use only when the whole gearbox is too tall.',
+      },
+    ],
+  },
+  {
+    id: 'harsh-rough-surface',
+    label: 'Harsh or skipping over dirt and kerbs',
+    group: 'ride',
+    adjustments: [
+      {
+        area: 'damping',
+        change: 'Soften bump damping 1–2',
+        rationale: 'Lets the wheel move over the impact instead of deflecting the car.',
+      },
+      {
+        area: 'springs',
+        change: 'Soften springs modestly if travel remains available',
+        rationale: 'Adds compliance only after telemetry confirms the car is not bottoming.',
+      },
+      {
+        area: 'tires',
+        change: 'Lower tire pressure 1 psi',
+        rationale:
+          'Adds small-bump compliance; confirm temperature and sidewall stability afterward.',
+      },
+    ],
+  },
+  {
     id: 'bottoming-dirt',
-    label: 'Bottoming out / harsh on dirt or kerbs',
+    label: 'Bottoming out / using all suspension travel',
     group: 'ride',
     adjustments: [
       {
@@ -245,16 +311,20 @@ export const SYMPTOMS: Symptom[] = [
         change: 'Raise ride height',
         rationale: 'More travel before the car bottoms.',
       },
-      { area: 'springs', change: 'Soften springs', rationale: 'Absorbs bigger hits.' },
+      {
+        area: 'springs',
+        change: 'Stiffen springs modestly',
+        rationale: 'Prevents using all available travel after ride height is corrected.',
+      },
       {
         area: 'damping',
-        change: 'Soften bump damping 1–2',
-        rationale: 'Lets the wheel move over impacts.',
+        change: 'Increase bump damping 1–2',
+        rationale: 'Adds compression control if the suspension still reaches the stops.',
       },
       {
         area: 'tires',
-        change: 'Lower tire pressures 1–3 psi',
-        rationale: 'More compliance on rough surfaces.',
+        change: 'Check suspension travel telemetry',
+        rationale: 'Separates true bottoming from tire or damper harshness before another change.',
       },
     ],
   },
@@ -281,7 +351,7 @@ export const CONDITION_MODIFIERS: ConditionModifier[] = [
     id: 'wheel',
     label: 'Wheel',
     notes: [
-      'You can run a bit more front grip / lower caster for feel and precision.',
+      'Use roughly 6.5–7° caster as the wheel baseline; reduce it only if self-centering or FFB feels too sharp.',
       'Stiffer, more responsive setups are easier to place accurately.',
     ],
   },

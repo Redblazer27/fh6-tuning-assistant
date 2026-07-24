@@ -3,7 +3,7 @@
 Living status log. Categories: **Verified** (built + tested/run), **Assumed** (built on stated
 heuristics/data, needs real-world validation), **Missing**, **Next**.
 
-Last updated: 2026-07-21
+Last updated: 2026-07-24
 
 ---
 
@@ -116,3 +116,13 @@ The old “community-sourced seed / estimated physics for ~620 cars” notes abo
 - Drift builds now enforce the authority-guide hardware baseline where available: race brakes/transmission/ARBs/driveline, drift suspension, rally diff, street tires, stock flywheel/chassis/aero/body.
 - FH6 packet parsing now captures actual class/PI, drivetrain and cylinder/rotor fields. Session summaries include limiter share and tire temperatures; drift diagnosis flags gearing-limiter and rear-overheat evidence.
 - Recalibrated the still-inferred PI delta coefficients from the observed A-class result: the exact build estimates A 692 instead of S1 781. This is provisional until exact PI from a new capture is available.
+
+## 2026-07-24 — tuning research applied across every discipline
+
+- Reworked the full tune generator, not only drift: cold tire pressures now account for surface, compound and drivetrain; drag pressure/load-transfer settings follow the actual driven axle.
+- Removed fixed rally/dirt/cross-country speed targets. Gearing now uses each car's game-file limiter and power peak, built power and stock-speed baseline; telemetry can report a concrete too-short-gearing symptom.
+- Added discipline-specific alignment, ARB, spring/ride-height, damping, aero, brake and FWD/RWD/AWD differential profiles. Loose modes gain compliant low-bump suspension and travel; road modes use modest camber, near-zero toe, 6.5–7° caster and front-biased aero.
+- Applied the Series-2 drag-tire correction: drag tires keep launch benefit but lose road-cornering value, and road/street scoring strongly rejects them.
+- Drift scoring now includes engine controllability, penalizing maximum flywheel/camshaft/boost tiers; its tested pressure/alignment/diff/gearing behavior remains intact and the RX-7 spring baseline is back near the measured 62/50 N/mm relationship.
+- Corrected inverted symptom advice (aero, rear pressure, coast lock, bottoming) and made telemetry drive-axle aware, with limiter, temperature and suspension-travel evidence.
+- Added cross-discipline and telemetry regression coverage. Current suite: 110 tests.
